@@ -5,3 +5,6 @@ out/
 *-parts/
 *.mkv
 .env
+
+# Ljuden kommer ur Johans köpta YouTubeSFX-paket: får användas i filmer, men inte delas i ett publikt repo.
+choosewise/ljud/

@@ -1,0 +1,141 @@
+/* =====================================================================
+   CHOOSEWISE-TEMAT för förklarboards
+
+   Det här är Choosewise utseende för boards som synkas till Johans röst.
+   Färger, typsnitt och rörelsetempo är samma som i grafikramverkets
+   Choosewise-stil (AI-OS/brands/choosewise/grafik/tokens.css): riktning A
+   "Keynote" och tempot "Lugn". Ändra här, så ändras alla boards.
+
+   En board är 1920 × 1080 px. Allt mäts i board-pixlar.
+   ===================================================================== */
+
+/* ---------- Typsnitt (ligger i typsnitt/ bredvid den här filen) ---------- */
+@font-face {
+  font-family: 'Hanken Grotesk';
+  src: url('typsnitt/HankenGrotesk-VariableFont.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('typsnitt/InstrumentSerif-Italic.woff2') format('woff2');
+  font-style: italic;
+  font-display: block;
+}
+
+:root {
+  /* Mörk scen: blå toning, ljusast överst. */
+  --cw-mork-topp: #12345E;
+  --cw-mork-botten: #050E1C;
+  --cw-yta-mork: #0F2440;
+  --cw-kant-mork: rgba(239, 242, 246, .08);
+  --cw-text-mork: #EFF2F6;
+  --cw-text-mork-dampad: #8FA3BA;
+
+  /* Ljus scen. */
+  --cw-ljus: #FBFAF8;
+  --cw-ljus-alt: #EFF2F6;
+  --cw-kant-ljus: #DDE3EA;
+  --cw-text-ljus: #0C1A2E;
+  --cw-text-ljus-dampad: #4E5A68;
+
+  /* Accent (djupblå) och glöd (koppar). Kopparn betyder bara "titta här":
+     en sak i fokus åt gången, aldrig som dekoration. */
+  --cw-accent: #0B3A6F;
+  --cw-glod: #C2793A;
+  --cw-glod-text: #9C5A24;
+  --cw-glod-sken: rgba(194, 121, 58, .34);
+
+  /* Typsnitt och tjocklekar. Stor och tunn typografi är riktning A. */
+  --cw-font: 'Hanken Grotesk', -apple-system, 'Helvetica Neue', sans-serif;
+  --cw-font-serif: 'Instrument Serif', Georgia, serif;
+  --cw-vikt-tunn: 200;
+  --cw-vikt-display: 300;
+  --cw-vikt-text: 400;
+  --cw-vikt-stark: 600;
+
+  /* Minsta storlekar: ingen text får bli mindre än så här. */
+  --cw-min-rubrik: 66px;
+  --cw-min-etikett: 42px;
+  --cw-min-siffra: 96px;
+
+  /* Hörnradier och nedtoning av det som inte är i fokus. */
+  --cw-radie-kort: 42px;
+  --cw-radie-media: 24px;
+  --cw-dampning: 0.38;
+}
+
+/* ---------- Själva boarden ---------- */
+.cw {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  font-family: var(--cw-font);
+  font-weight: var(--cw-vikt-text);
+}
+.cw * { box-sizing: border-box; }
+
+/* Två scener, som i grafikramverket: mörk och ljus.
+   Regel (Johan 2026-10-28): LJUS är standard, eftersom Borumi-rutan med
+   Johans blå bakgrund annars smälter ihop med en blå board. MÖRK bara där
+   kamerarutan inte syns, till exempel kapitelrubriker och helbildsgrafik. */
+.cw.mork {
+  background: linear-gradient(180deg, var(--cw-mork-topp), var(--cw-mork-botten));
+  color: var(--cw-text-mork);
+}
+.cw.ljus {
+  background: var(--cw-ljus);
+  color: var(--cw-text-ljus);
+}
+
+/* Rubriken: stor och tunn, uppe till vänster med gott om luft. */
+.cw .rubrik {
+  position: absolute;
+  left: 120px;
+  top: 96px;
+  margin: 0;
+  font-size: 84px;
+  font-weight: var(--cw-vikt-display);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+/* Etikett: brödtext på en board, aldrig mindre än 42 px. */
+.cw .etikett {
+  font-size: var(--cw-min-etikett);
+  line-height: 1.2;
+}
+.cw.mork .dampad { color: var(--cw-text-mork-dampad); }
+.cw.ljus .dampad { color: var(--cw-text-ljus-dampad); }
+
+/* Exempeldata-märket: syns tills riktiga siffror med källa är inlagda. */
+.cw .exempel {
+  position: absolute;
+  font-size: 28px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--cw-glod-text);
+}
+
+/* ---------- Kamerazonen ----------
+   Här ligger Borumis kameraruta när filmen sätts ihop. Inget innehåll får
+   ligga i zonen: allt ska hålla sig till vänster om x 1570 eller ovanför
+   y 720. Rutan nedan syns bara i förhandsvisningen (tangenten K). */
+.cw .kamerazon {
+  position: absolute;
+  left: 1619px;
+  top: 768px;
+  width: 288px;
+  height: 288px;
+  border-radius: 40px;
+  border: 3px dashed rgba(143, 163, 186, .7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: rgba(143, 163, 186, .9);
+  z-index: 50;
+}
+.cw.ljus .kamerazon { border-color: rgba(78, 90, 104, .5); color: rgba(78, 90, 104, .8); }
+.dolj-kamera .kamerazon { display: none; }
