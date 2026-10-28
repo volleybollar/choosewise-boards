@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>F2 · Assessment rubric</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Rutnätet ----------
+     Tre kriterier (rader) mot fyra nivåer (kolumner). Kriteriernas namn
+     står i en kolumn som är 340 px bred, varje nivå är 270 px. Rutnätet går
+     från x 120 till x 1540 och slutar vid y 870, så att kamerazonen nere
+     till höger alltid är tom. */
+  .matris {
+    position: absolute; left: 120px; top: 260px;
+    display: grid; grid-template-columns: 340px repeat(4, 270px);
+    grid-template-rows: 100px repeat(3, 170px);
+  }
+  /* Nivåernas namn överst och kriteriernas namn till vänster. */
+  .huvud { display: flex; align-items: center; justify-content: center; color: var(--cw-text-ljus-dampad); }
+  .kriterium { display: flex; align-items: center; font-weight: var(--cw-vikt-stark); }
+  /* En tom ruta: ljusgrå med vitt mellanrum runt, så att rutnätet syns
+     utan några tunna linjer. */
+  .cell { margin: 8px; border-radius: 24px; background: var(--cw-ljus-alt); position: relative; }
+  /* Markeringen: en djupblå yta som fyller rutan när eleven hamnar där. */
+  .cell .mark {
+    position: absolute; inset: 0; border-radius: 24px; background: var(--cw-accent);
+    transform: scale(0);
+  }
+
+  /* Slutsatsen under rutnätet: nästa steg för eleven. */
+  .nasta { position: absolute; left: 120px; top: 900px; font-weight: var(--cw-vikt-stark); color: var(--cw-glod-text); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One essay, criterion by criterion</h1>
+
+  <!-- Rutnätet. data-niva på varje rad säger i vilken kolumn (1–4)
+       elevens prestation hamnar. Ändra siffran för att flytta markeringen. -->
+  <div class="matris">
+    <div></div>
+    <div class="huvud etikett">Emerging</div>
+    <div class="huvud etikett">Developing</div>
+    <div class="huvud etikett">Secure</div>
+    <div class="huvud etikett">Extending</div>
+
+    <div class="kriterium etikett">Argument</div>
+    <div class="cell" data-rad="0"><i class="mark"></i></div><div class="cell" data-rad="0"><i class="mark"></i></div><div class="cell" data-rad="0"><i class="mark"></i></div><div class="cell" data-rad="0"><i class="mark"></i></div>
+
+    <div class="kriterium etikett">Evidence</div>
+    <div class="cell" data-rad="1"><i class="mark"></i></div><div class="cell" data-rad="1"><i class="mark"></i></div><div class="cell" data-rad="1"><i class="mark"></i></div><div class="cell" data-rad="1"><i class="mark"></i></div>
+
+    <div class="kriterium etikett">Language</div>
+    <div class="cell" data-rad="2"><i class="mark"></i></div><div class="cell" data-rad="2"><i class="mark"></i></div><div class="cell" data-rad="2"><i class="mark"></i></div><div class="cell" data-rad="2"><i class="mark"></i></div>
+  </div>
+
+  <div class="nasta etikett">Next step: stronger evidence</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk markeras varje ruta när Johan nämner kriteriet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  // Elevens prestation: kolumn 1–4 för Argument, Evidence och Language.
+  var elev = [3, 2, 3];
+  // Kriteriet i fokus på slutet (0 = Argument, 1 = Evidence, 2 = Language).
+  var fokusRad = 1;
+
+  var celler = gsap.utils.toArray('.cell');
+  var traffar = elev.map(function (niva, rad) {
+    return celler.filter(function (c) { return +c.dataset.rad === rad; })[niva - 1];
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, nivåerna, kriterierna och de tomma rutorna.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.huvud, .kriterium', { opacity: 0, y: 16, stagger: 0.08 }, 0.3);
+  tl.from(celler, { opacity: 0, scale: 0.9, stagger: 0.03 }, 0.5);
+
+  // Rutorna markeras en i taget. Den senaste markeringen är koppar (fokus),
+  // den förra blir djupblå när nästa landar.
+  var tid = 2.2;
+  traffar.forEach(function (c, i) {
+    var mark = c.querySelector('.mark');
+    if (i > 0) tl.to(traffar[i - 1].querySelector('.mark'), { backgroundColor: '#0B3A6F', boxShadow: '0 0 0 0px rgba(194,121,58,0)', duration: 0.5 }, tid);
+    tl.to(mark, { scale: 1, duration: 0.6, ease: 'back.out(1.6)' }, tid);
+    tl.to(mark, { backgroundColor: '#C2793A', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.5 }, tid + 0.2);
+    tid += 1.4;
+  });
+
+  // Fokus: kriteriet med lägst nivå blir koppar igen, resten tonas ned,
+  // och nästa steg skrivs under rutnätet. Ett klick när fokus landar.
+  var tF = tid + 0.4;
+  var sista = traffar[traffar.length - 1].querySelector('.mark');
+  var fokus = traffar[fokusRad].querySelector('.mark');
+  tl.to(sista, { backgroundColor: '#0B3A6F', boxShadow: '0 0 0 0px rgba(194,121,58,0)', duration: 0.5 }, tF);
+  tl.to(fokus, { backgroundColor: '#C2793A', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(traffar.filter(function (c, i) { return i !== fokusRad; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(document.querySelectorAll('.kriterium')[fokusRad], { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.from('.nasta', { opacity: 0, y: 20 }, tF + 0.3);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

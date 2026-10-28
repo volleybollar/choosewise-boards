@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S127 · Three tries, one fix</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- De tre misslyckade försöken ----------
+     Tre kort i rad ovanför y 720 (x 120–1460). Varje kort har en liten
+     bild (en enkel egen teckning) och en rad om vad som gick fel. */
+  .forsok { position: absolute; top: 250px; width: 420px; }
+  .forsok .nr { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); line-height: 60px; }
+  .forsok svg {
+    display: block; width: 420px; height: 260px; margin-top: 12px;
+    border-radius: var(--cw-radie-media); border: 2px solid var(--cw-kant-ljus);
+  }
+  .forsok .fel { font-size: var(--cw-min-etikett); line-height: 60px; margin-top: 14px; white-space: nowrap; }
+  .forsok .kryss { color: var(--cw-text-ljus-dampad); margin-right: 10px; }
+
+  /* ---------- Rättelsen ----------
+     En bred list under korten (y 760–940, x 120–1460), alltså till vänster
+     om kamerazonen. Den får fokus i koppar när den landar. */
+  .fix {
+    position: absolute; left: 120px; top: 760px; width: 1340px; height: 190px;
+    background: var(--cw-ljus-alt); border-radius: var(--cw-radie-kort);
+    display: flex; align-items: center; gap: 44px; padding: 0 44px;
+  }
+  .fix svg { flex: 0 0 200px; height: 124px; border-radius: 16px; }
+  .fix .rubrik-fix { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); line-height: 1.25; }
+  .fix .prompt { font-size: var(--cw-min-etikett); line-height: 1.25; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Three tries, one fix</h1>
+
+  <!-- Försök 1: rätt bild, men texten i den går inte att läsa. -->
+  <div class="forsok" style="left:120px">
+    <div class="nr">Try 1</div>
+    <svg viewBox="0 0 420 260">
+      <rect width="420" height="260" fill="#FBFAF8"/>
+      <circle cx="80" cy="70" r="34" fill="#A9BBD0"/>
+      <path d="M0 260 L110 140 L200 260 Z" fill="#4A7FB5"/>
+      <rect x="200" y="210" width="220" height="50" fill="#A9BBD0"/>
+      <circle cx="270" cy="70" r="28" fill="#DDE3EA"/><circle cx="310" cy="64" r="34" fill="#DDE3EA"/>
+      <!-- Etiketter som bara är klotter -->
+      <path d="M230 130 q8 -14 16 0 t16 0 l8 -12 l6 12 M300 160 q10 -16 20 0 l6 -10 l6 10 M60 130 q8 -14 16 0 l8 12"
+            fill="none" stroke="#0C1A2E" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+    <div class="fel"><span class="kryss">✕</span>Garbled labels</div>
+  </div>
+
+  <!-- Försök 2: för mycket i bilden. -->
+  <div class="forsok" style="left:580px">
+    <div class="nr">Try 2</div>
+    <svg viewBox="0 0 420 260">
+      <rect width="420" height="260" fill="#FBFAF8"/>
+      <g fill="#4A7FB5"><circle cx="40" cy="40" r="22"/><circle cx="150" cy="200" r="30"/><circle cx="330" cy="60" r="26"/><circle cx="260" cy="170" r="18"/><circle cx="380" cy="210" r="24"/></g>
+      <g fill="#A9BBD0"><circle cx="100" cy="90" r="30"/><circle cx="210" cy="50" r="24"/><circle cx="60" cy="200" r="28"/><circle cx="300" cy="230" r="22"/><circle cx="390" cy="120" r="30"/></g>
+      <g fill="#0B3A6F"><rect x="170" y="100" width="40" height="40"/><rect x="20" y="120" width="30" height="30"/><rect x="320" y="140" width="34" height="34"/><rect x="240" y="20" width="26" height="26"/></g>
+      <path d="M10 250 L410 10 M10 10 L410 250 M210 0 L210 260" stroke="#4E5A68" stroke-width="4"/>
+    </svg>
+    <div class="fel"><span class="kryss">✕</span>Far too busy</div>
+  </div>
+
+  <!-- Försök 3: en "fotografisk" bild i stället för ett diagram. -->
+  <div class="forsok" style="left:1040px">
+    <div class="nr">Try 3</div>
+    <svg viewBox="0 0 420 260">
+      <defs><linearGradient id="himmel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A7FB5"/><stop offset="1" stop-color="#DDE3EA"/></linearGradient></defs>
+      <rect width="420" height="260" fill="url(#himmel)"/>
+      <circle cx="320" cy="80" r="40" fill="#FBFAF8" opacity=".7"/>
+      <path d="M0 260 L0 170 L70 120 L130 160 L200 90 L280 170 L350 130 L420 180 L420 260 Z" fill="#0B3A6F"/>
+      <path d="M0 260 L0 220 Q210 190 420 230 L420 260 Z" fill="#0C1A2E" opacity=".6"/>
+    </svg>
+    <div class="fel"><span class="kryss">✕</span>Photo style</div>
+  </div>
+
+  <!-- Rättelsen: den lilla bilden och tillägget i prompten som löste det. -->
+  <div class="fix">
+    <svg viewBox="0 0 200 124">
+      <rect width="200" height="124" fill="#FFFFFF"/>
+      <circle cx="40" cy="34" r="16" fill="#A9BBD0"/>
+      <path d="M0 124 L52 64 L96 124 Z" fill="#4A7FB5"/>
+      <rect x="96" y="100" width="104" height="24" fill="#A9BBD0"/>
+      <path d="M140 92 Q160 50 140 30" fill="none" stroke="#0B3A6F" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="150" cy="30" r="14" fill="#DDE3EA"/><circle cx="168" cy="28" r="16" fill="#DDE3EA"/>
+    </svg>
+    <div>
+      <div class="rubrik-fix">The fix, added to the prompt</div>
+      <div class="prompt">“Flat diagram, no text, white background”</div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje försök när Johan berättar om det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var forsok = gsap.utils.toArray('.forsok');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och de tre korten med sina nummer.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.forsok .nr', { opacity: 0, y: 16, stagger: STEG }, 0.2);
+
+  // Ett försök i taget: bilden, sedan vad som gick fel. Det förra tonas ned.
+  forsok.forEach(function (f, i) {
+    var t = 1.2 + i * 2.0;
+    if (i > 0) tl.to(forsok[i - 1], { opacity: 0.38, duration: 0.6 }, t);
+    tl.from(f.querySelector('svg'), { opacity: 0, y: 24 }, t);
+    tl.from(f.querySelector('.fel'), { opacity: 0, y: 16 }, t + 0.6);
+  });
+
+  // Rättelsen landar: det sista försöket tonas ned, listen får fokus i koppar.
+  // Ett klick, det är boardens viktigaste ögonblick.
+  var tF = 1.2 + forsok.length * 2.0 + 0.4;
+  tl.to(forsok[forsok.length - 1], { opacity: 0.38, duration: 0.6 }, tF);
+  tl.from('.fix', { opacity: 0, y: 30 }, tF);
+  tl.to('.fix', { boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF + 0.6);
+  tl.to('.fix .prompt', { color: '#9C5A24', duration: 0.6 }, tF + 0.6);
+  Tavla.ljud(tl, tF + 0.7, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

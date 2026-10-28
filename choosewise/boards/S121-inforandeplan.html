@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S121 · Rollout plan</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Planen (ett Gantt-schema) ----------
+     Till vänster står aktiviteterna, till höger månaderna. Varje aktivitet
+     är en stapel som växer åt höger över de månader den pågår.
+     Månadskolumnerna börjar vid x 660 och är 140 px breda (sex månader
+     slutar vid x 1500), så kamerazonen nere till höger är alltid tom. */
+  .manad {
+    position: absolute; top: 280px; width: 140px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  /* Tunna lodräta linjer mellan månaderna, som rutnät. */
+  .linje {
+    position: absolute; top: 350px; width: 2px; height: 520px;
+    background: var(--cw-kant-ljus); transform-origin: 50% 0;
+  }
+  /* En rad: namnet till vänster och stapeln i månadskolumnerna. */
+  /* z-index 1: staplarna ligger ovanpå rutnätets linjer. */
+  .rad { position: absolute; left: 0; width: 1920px; height: 90px; z-index: 1; }
+  .rad .namn {
+    position: absolute; left: 120px; top: 0; line-height: 90px; white-space: nowrap;
+    font-size: var(--cw-min-etikett);
+  }
+  .rad .stapel {
+    position: absolute; top: 14px; height: 62px; border-radius: 31px;
+    background: var(--cw-accent); transform-origin: 0 50%;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">An AI rollout, month by month</h1>
+  <!-- Planen är ett exempel. Byt månader och aktiviteter mot skolans egen plan. -->
+  <div class="exempel" style="left:120px; top:205px">Example plan · adapt to your own school</div>
+
+  <!-- Månaderna. data-m är kolumnens nummer (0 = första månaden). -->
+  <div class="manad" data-m="0">Aug</div>
+  <div class="manad" data-m="1">Sep</div>
+  <div class="manad" data-m="2">Oct</div>
+  <div class="manad" data-m="3">Nov</div>
+  <div class="manad" data-m="4">Dec</div>
+  <div class="manad" data-m="5">Jan</div>
+
+  <!-- Aktiviteterna. data-fran och data-till är första och sista månaden
+       (samma nummer som ovan). Byt texterna här; håll dem korta. -->
+  <div class="rad" style="top:380px" data-fran="0" data-till="1"><div class="namn">Staff training</div><div class="stapel"></div></div>
+  <div class="rad" style="top:500px" data-fran="1" data-till="3"><div class="namn">Pilot in two classes</div><div class="stapel"></div></div>
+  <div class="rad" style="top:620px" data-fran="2" data-till="4"><div class="namn">Shared AI rules</div><div class="stapel"></div></div>
+  <div class="rad" style="top:740px" data-fran="4" data-till="5"><div class="namn">Whole school</div><div class="stapel"></div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk växer varje stapel när Johan nämner aktiviteten. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var X0 = 660, BREDD = 140;                        // kolumnernas start och bredd
+
+  // Placera månaderna och rita en linje vid varje kolumngräns.
+  var cw = document.querySelector('.cw');
+  gsap.utils.toArray('.manad').forEach(function (m) {
+    m.style.left = (X0 + m.dataset.m * BREDD) + 'px';
+  });
+  for (var i = 0; i <= 6; i++) {
+    var l = document.createElement('div');
+    l.className = 'linje';
+    l.style.left = (X0 + i * BREDD - 1) + 'px';
+    cw.appendChild(l);
+  }
+  // Stapelns läge och längd räknas fram ur data-fran och data-till.
+  var rader = gsap.utils.toArray('.rad');
+  rader.forEach(function (r) {
+    var s = r.querySelector('.stapel');
+    s.style.left = (X0 + r.dataset.fran * BREDD + 10) + 'px';
+    s.style.width = ((r.dataset.till - r.dataset.fran + 1) * BREDD - 20) + 'px';
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, månaderna, rutnätet och namnen.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.manad', { opacity: 0, y: 16, stagger: 0.08 }, 0.3);
+  tl.from('.linje', { scaleY: 0, stagger: 0.05, duration: 0.6 }, 0.4);
+  tl.from('.rad .namn', { opacity: 0, x: -20, stagger: STEG }, 0.8);
+
+  // Staplarna växer en i taget (tyst: framväxt).
+  rader.forEach(function (r, i) {
+    tl.from(r.querySelector('.stapel'), { scaleX: 0, duration: 1.0 }, 2.0 + i * 1.3);
+  });
+
+  // Fokus: "Shared AI rules" blir koppar, de andra raderna tonas ned. Ett klick.
+  var fokus = rader[2];
+  var tF = 2.0 + rader.length * 1.3 + 0.6;
+  tl.to(rader.filter(function (r) { return r !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.stapel'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.namn'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

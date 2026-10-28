@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S128 · Settings panel</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Inställningspanelen ----------
+     En generisk panel till vänster (x 120–760) med tre inställningar.
+     Bara en av dem ändras: läsåldern. Resultatet står i kortet till höger,
+     som slutar vid x 1500 och y 700, långt från kamerazonen. */
+  .panel {
+    position: absolute; left: 120px; top: 260px; width: 640px; height: 680px;
+    background: var(--cw-ljus-alt); border-radius: var(--cw-radie-kort);
+  }
+  .rad { position: absolute; left: 48px; width: 544px; }
+  .rad .namn { font-size: var(--cw-min-etikett); line-height: 60px; }
+
+  /* Reglaget: en skena, en fylld del och en knopp som går att flytta.
+     Knoppens läge styrs av rörelsen nedan (left i px). */
+  .skena { position: absolute; left: 0; top: 104px; width: 400px; height: 12px; border-radius: 6px; background: var(--cw-kant-ljus); }
+  .fylld { position: absolute; left: 0; top: 0; height: 12px; border-radius: 6px; background: var(--cw-accent); }
+  .knopp {
+    position: absolute; top: -22px; width: 56px; height: 56px; margin-left: -28px;
+    border-radius: 50%; background: var(--cw-accent);
+  }
+  .varde {
+    position: absolute; left: 444px; top: 72px; width: 100px; text-align: right;
+    font-size: 64px; font-weight: var(--cw-vikt-tunn); line-height: 76px;
+  }
+
+  /* Längd: två lägen, "Short" är valt. */
+  .val { position: absolute; left: 0; top: 76px; display: flex; gap: 0; border-radius: 999px; background: var(--cw-ljus); }
+  .val span { font-size: var(--cw-min-etikett); padding: 6px 36px; border-radius: 999px; color: var(--cw-text-ljus-dampad); }
+  .val .vald { background: var(--cw-accent); color: #FFFFFF; }
+
+  /* Exempel: en strömbrytare som står på. */
+  .brytare { position: absolute; right: 0; top: 4px; width: 104px; height: 56px; border-radius: 28px; background: var(--cw-accent); }
+  .brytare i { position: absolute; right: 6px; top: 6px; width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; }
+
+  /* ---------- Resultatet ----------
+     Två versioner av samma förklaring ligger på varandra. Den första syns
+     från början; när reglaget flyttas tonas den ut och den andra in. */
+  .resultat {
+    position: absolute; left: 840px; top: 260px; width: 660px; height: 440px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus); border-radius: var(--cw-radie-kort);
+  }
+  .resultat .namn { position: absolute; left: 48px; top: 40px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .resultat .text { position: absolute; left: 48px; top: 130px; width: 564px; font-size: 48px; line-height: 1.3; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One setting, a different answer</h1>
+
+  <div class="panel">
+    <!-- Inställning 1: läsåldern. Den här ändras. -->
+    <div class="rad las" style="top:48px">
+      <div class="namn">Reading age</div>
+      <div class="skena"><div class="fylld"></div><div class="knopp"></div></div>
+      <div class="varde">15</div>
+    </div>
+    <!-- Inställning 2: längd. -->
+    <div class="rad ovrig" style="top:290px">
+      <div class="namn">Length</div>
+      <div class="val"><span class="vald">Short</span><span>Long</span></div>
+    </div>
+    <!-- Inställning 3: exempel på eller av. -->
+    <div class="rad ovrig" style="top:500px">
+      <div class="namn">Examples</div>
+      <div class="brytare"><i></i></div>
+    </div>
+  </div>
+
+  <!-- Resultatet: samma förklaring för 15-åringar och för 10-åringar. -->
+  <div class="resultat">
+    <div class="namn">Result</div>
+    <div class="text fore">Photosynthesis converts light energy into chemical energy.</div>
+    <div class="text efter">Plants use sunlight to make their own food.</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk flyttas reglaget när Johan säger "change the age". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var knopp = document.querySelector('.knopp');
+  var fylld = document.querySelector('.fylld');
+  var varde = document.querySelector('.varde');
+
+  // Reglaget går från ålder 6 (vänster) till 18 (höger) över 400 px.
+  var alder = { a: 15 };
+  function visa() {
+    var x = 400 * (alder.a - 6) / 12;
+    knopp.style.left = x + 'px';
+    fylld.style.width = x + 'px';
+    varde.textContent = Math.round(alder.a);
+  }
+  visa();
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, panelen med inställningarna och resultatet.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.panel, .resultat', { opacity: 0, y: 24, stagger: STEG }, 0.2);
+  tl.from('.panel .rad', { opacity: 0, y: 16, stagger: STEG }, 0.6);
+  tl.from('.resultat .fore', { opacity: 0, y: 16 }, 1.4);
+  tl.set('.resultat .efter', { opacity: 0 }, 0);
+
+  // Fokus på reglaget: de andra inställningarna tonas ned, knoppen blir koppar.
+  var tR = 3.4;
+  tl.to('.ovrig', { opacity: 0.38, duration: 0.6 }, tR);
+  tl.to('.knopp, .fylld', { backgroundColor: '#C2793A', duration: 0.6 }, tR);
+  tl.to(varde, { color: '#9C5A24', duration: 0.6 }, tR);
+  // Knoppen glider från 15 till 10.
+  tl.to(alder, { a: 10, duration: 1.4, ease: 'power2.inOut', onUpdate: visa }, tR + 0.6);
+
+  // Resultatet byts: den gamla texten ut, den nya in. Fokus flyttar dit.
+  // Ett klick när det nya svaret landar.
+  var tS = tR + 2.4;
+  tl.to('.resultat .fore', { opacity: 0, y: -16, duration: 0.5 }, tS);
+  tl.fromTo('.resultat .efter', { opacity: 0, y: 16 }, { opacity: 1, y: 0 }, tS + 0.3);
+  tl.to('.knopp, .fylld', { backgroundColor: '#0B3A6F', duration: 0.6 }, tS + 0.3);
+  tl.to(varde, { color: '#0C1A2E', duration: 0.6 }, tS + 0.3);
+  tl.to('.resultat', { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tS + 0.3);
+  tl.to('.resultat .efter', { color: '#9C5A24', duration: 0.6 }, tS + 0.3);
+  Tavla.ljud(tl, tS + 0.4, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

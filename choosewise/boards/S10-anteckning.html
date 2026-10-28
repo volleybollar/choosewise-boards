@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S10 · Note and arrow</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Innehållet ----------
+     En prompt i en ljus ruta. Det är det som anteckningen pekar på.
+     Rutan slutar vid x 1520 och y 800. */
+  .prompt {
+    position: absolute; left: 120px; top: 540px; width: 1400px; padding: 48px 56px;
+    background: var(--cw-ljus-alt); border-radius: var(--cw-radie-kort);
+    font-size: 54px; line-height: 1.3;
+  }
+  /* Ordet som pilen pekar på. */
+  .mal { position: relative; }
+
+  /* ---------- Anteckningen ----------
+     Handskriven känsla: den kursiva antikvan Instrument Serif i koppar.
+     Den står uppe till höger, ovanför y 720, där kamerazonen inte är. */
+  .anteckning {
+    position: absolute; left: 1060px; top: 250px; width: 720px;
+    font-family: var(--cw-font-serif); font-style: italic;
+    font-size: 72px; line-height: 1.05; color: var(--cw-glod-text); white-space: nowrap;
+    transform: rotate(-3deg);
+  }
+
+  /* ---------- Pilen ----------
+     En SVG över hela boarden. Linjen och spetsen ritas fram med strecket. */
+  .pil { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; overflow: visible; }
+  .pil path { fill: none; stroke: var(--cw-glod); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Read the prompt closely</h1>
+
+  <!-- Prompten. "for Year 5" är målet för pilen. -->
+  <div class="prompt">Write a water cycle quiz <span class="mal">for Year 5</span>, with answers.</div>
+
+  <!-- Anteckningen. -->
+  <div class="anteckning">this changes the answer</div>
+
+  <!-- Pilen: en böjd linje från anteckningen ned till "for Year 5", och en spets.
+       Koordinaterna är board-pixlar; flytta dem om texten ändras. -->
+  <svg class="pil" viewBox="0 0 1920 1080">
+    <path class="linje" d="M1050 375 C 950 395, 895 470, 889 572"/>
+    <path class="spets" d="M866 553 L889 576 L910 549"/>
+  </svg>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk skrivs anteckningen när Johan pekar ut detaljen. */
+  var IN = 0.8, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Linjerna i pilen görs osynliga från början.
+  gsap.utils.toArray('.pil path').forEach(function (p) {
+    var l = p.getTotalLength();
+    // opacity 0 också, annars syns den runda linjeänden som en prick.
+    gsap.set(p, { strokeDasharray: l, strokeDashoffset: l, opacity: 0 });
+  });
+
+  // Struktur först: rubriken och prompten.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.prompt', { opacity: 0, y: 30 }, 0.5);
+
+  // Anteckningen "skrivs" fram från vänster till höger med en mask.
+  var tF = 2.6;
+  tl.fromTo('.anteckning', { clipPath: 'inset(0% 100% 0% 0%)' },
+    { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.4, ease: 'power1.inOut' }, tF);
+
+  // Pilen ritas från anteckningen ned till ordet, sedan spetsen.
+  tl.set('.pil .linje', { opacity: 1 }, tF + 1.4);
+  tl.to('.pil .linje', { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut' }, tF + 1.4);
+  tl.set('.pil .spets', { opacity: 1 }, tF + 2.2);
+  tl.to('.pil .spets', { strokeDashoffset: 0, duration: 0.3 }, tF + 2.2);
+
+  // Fokus: ordet blir koppar när pilen landar. Ett klick.
+  tl.to('.mal', { color: '#9C5A24', duration: 0.6 }, tF + 2.2);
+  Tavla.ljud(tl, tF + 2.3, 'landa');
+  tl.to({}, { duration: 3 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

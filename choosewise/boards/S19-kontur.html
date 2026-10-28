@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S19 · Outline wipe</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Bildramen ----------
+     Två lager på varandra: underst bara konturerna (en skiss, "utan kod"),
+     överst den färdiga bilden ("med kod"). Den färdiga bilden torkas fram
+     från vänster till höger, och en lodrät linje visar var kanten går.
+     Ramen slutar vid x 1440 och y 950, långt från kamerazonen. */
+  .ram {
+    position: absolute; left: 140px; top: 250px; width: 1300px; height: 700px;
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    border: 2px solid var(--cw-kant-ljus); background: var(--cw-ljus);
+  }
+  .lager { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .lager svg { display: block; width: 100%; height: 100%; }
+  /* Den färdiga bilden är dold från start: klippt till noll bredd från höger. */
+  .lager.med { clip-path: inset(0 100% 0 0); }
+
+  /* Kanten på torkningen: en tunn lodrät linje som följer med. */
+  .kant {
+    position: absolute; left: 0; top: 0; width: 6px; height: 100%; margin-left: -3px;
+    background: var(--cw-accent); opacity: 0;
+  }
+
+  /* Etiketterna i bildens hörn. De byter plats genom att tona i varandra. */
+  .lapp {
+    position: absolute; left: 32px; top: 32px; padding: 8px 30px;
+    border-radius: 999px; background: var(--cw-ljus);
+    border: 2px solid var(--cw-kant-ljus);
+    font-size: var(--cw-min-etikett); line-height: 1.2;
+  }
+
+  /* ---------- Skissen (bara konturer) ----------
+     Varje form ritas fram som en linje. */
+  /* Formerna fylls med bakgrundsfärgen, så att linjer bakom dem döljs. */
+  .kontur svg * { fill: var(--cw-ljus); stroke: var(--cw-text-ljus-dampad); stroke-width: 4; stroke-linejoin: round; }
+  .kontur .himmel { stroke: none; }
+
+  /* ---------- Den färdiga bilden ---------- */
+  .med .himmel { fill: var(--cw-serie-3); }
+  .med .sol    { fill: var(--cw-ljus); }
+  .med .kulle-bak  { fill: var(--cw-serie-2); }
+  .med .kulle-fram { fill: var(--cw-serie-1); }
+  .med .hus    { fill: var(--cw-ljus); }
+  .med .tak, .med .dorr { fill: var(--cw-accent); }
+  .med .fonster { fill: var(--cw-serie-3); }
+  .med .stam   { fill: var(--cw-text-ljus); }
+  .med .krona  { fill: var(--cw-serie-2); }
+  .med svg * { stroke: var(--cw-text-ljus); stroke-width: 6; stroke-linejoin: round; }
+  .med .himmel { stroke: none; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">The code fills in the picture</h1>
+
+  <div class="ram">
+    <!-- Underst: skissen utan kod. Överst: bilden med kod. -->
+    <div class="lager kontur"></div>
+    <div class="lager med"></div>
+    <div class="kant"></div>
+    <span class="lapp utan-lapp">Without code</span>
+    <span class="lapp med-lapp">With code</span>
+  </div>
+
+  <!-- Motivet ritas en gång och kopieras till båda lagren av skriptet. -->
+  <template id="motiv">
+    <svg viewBox="0 0 1300 700" preserveAspectRatio="xMidYMid slice">
+      <rect class="himmel" width="1300" height="700"/>
+      <circle class="sol" cx="1060" cy="170" r="78"/>
+      <path class="kulle-bak" d="M0 470 Q 320 360 650 450 T 1300 420 V700 H0 Z"/>
+      <rect class="hus" x="430" y="300" width="400" height="250" rx="6"/>
+      <polygon class="tak" points="400,310 630,175 860,310"/>
+      <rect class="fonster" x="470" y="350" width="90" height="70" rx="6"/>
+      <rect class="fonster" x="700" y="350" width="90" height="70" rx="6"/>
+      <rect class="dorr" x="590" y="440" width="80" height="110" rx="6"/>
+      <path class="kulle-fram" d="M0 560 Q 400 490 800 560 T 1300 545 V700 H0 Z"/>
+      <rect class="stam" x="1000" y="440" width="24" height="110" rx="6"/>
+      <circle class="krona" cx="1012" cy="410" r="78"/>
+      <rect class="stam" x="200" y="460" width="22" height="100" rx="6"/>
+      <circle class="krona" cx="211" cy="430" r="66"/>
+    </svg>
+  </template>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  // Lägg in motivet i båda lagren.
+  var motiv = document.getElementById('motiv');
+  document.querySelectorAll('.lager').forEach(function (l) {
+    l.appendChild(motiv.content.cloneNode(true));
+  });
+  // Skissens linjer: pathLength 1 gör att varje form kan ritas från 0 till 1.
+  var linjer = document.querySelectorAll('.kontur svg *:not(.himmel)');
+  linjer.forEach(function (f) {
+    f.setAttribute('pathLength', 1);
+    f.style.strokeDasharray = 1;
+    f.style.strokeDashoffset = 1;
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk startar torkningen när Johan lägger till koden. */
+  var IN = 0.8, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och ramen. Sedan ritas skissen fram (tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.ram', { opacity: 0, y: 40 }, 0.3);
+  tl.to(linjer, { strokeDashoffset: 0, duration: 1.4, stagger: 0.08, ease: 'power2.inOut' }, 0.9);
+  tl.from('.utan-lapp', { opacity: 0, y: 16 }, 1.6);
+
+  // Torkningen: den färdiga bilden växer fram från vänster, kanten följer med.
+  var tW = 4.4, W = 2.4;
+  tl.to('.kant', { opacity: 1, duration: 0.3 }, tW - 0.2);
+  tl.to('.lager.med', { clipPath: 'inset(0 0% 0 0)', duration: W, ease: 'power1.inOut' }, tW);
+  tl.to('.kant', { left: 1300, duration: W, ease: 'power1.inOut' }, tW);
+  tl.to('.kant', { opacity: 0, duration: 0.4 }, tW + W);
+  // Etiketten byts när kanten har passerat den.
+  tl.to('.utan-lapp', { opacity: 0, duration: 0.4 }, tW + 0.4);
+  tl.from('.med-lapp', { opacity: 0, duration: 0.4 }, tW + 0.6);
+
+  // Fokus: "With code" blir koppar. Ett klick när den landar.
+  var tF = tW + W + 0.4;
+  tl.to('.med-lapp', { color: '#9C5A24', borderColor: '#C2793A', boxShadow: '0 0 0 6px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

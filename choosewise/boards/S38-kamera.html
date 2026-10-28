@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S38 · Virtual camera</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Ramen (kameran) ----------
+     Ramen står still hela tiden. Det är dokumentet bakom den som förstoras
+     och flyttas, så att det ser ut som att kameran zoomar in.
+     Ramen slutar vid x 1540 och y 980, till vänster om kamerazonen. */
+  .ram {
+    position: absolute; left: 140px; top: 280px; width: 1400px; height: 700px;
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    border: 2px solid var(--cw-kant-ljus); background: var(--cw-ljus-alt);
+  }
+
+  /* ---------- Dokumentet ----------
+     Ritat i full storlek, 4200 × 2100 px. I översikten visas det i en
+     tredjedels storlek, så att hela sidan ryms i ramen. Raderna är bara
+     grå streck: det är en sida text sedd på avstånd. */
+  .sida {
+    position: absolute; left: 0; top: 0; width: 4200px; height: 2100px;
+    background: #FFFFFF; transform-origin: 0 0;
+  }
+  .rad {
+    position: absolute; left: 300px; height: 52px; border-radius: 26px;
+    background: var(--cw-kant-ljus); transform-origin: 0 50%;
+  }
+  .rad.rubrikrad { height: 110px; border-radius: 30px; background: var(--cw-text-ljus-dampad); }
+  .rad.mellanrubrik { height: 70px; border-radius: 30px; background: var(--cw-text-mork-dampad); }
+
+  /* Raden som kameran zoomar in på. Strecket och texten ligger på samma
+     plats: strecket syns på avstånd, texten när kameran är nära. */
+  .nyckel { position: absolute; left: 300px; top: 1186px; }
+  .nyckel .text {
+    font-size: 56px; line-height: 80px; white-space: nowrap; opacity: 0;
+  }
+  .nyckel .rad { left: 0; top: 14px; width: 100%; }
+  /* Kopparstrecket under texten, ritas fram vid fokus. */
+  .nyckel .streck {
+    position: absolute; left: 0; right: 0; top: 84px; height: 7px; border-radius: 4px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Zoom in on one line</h1>
+  <!-- Raden är ett exempel. Byt mot den riktiga raden ur läroplanen. -->
+  <div class="exempel" style="left:120px; top:205px">Example text · replace with the real curriculum line</div>
+
+  <div class="ram">
+    <div class="sida">
+      <!-- Sidans rader: top = höjd på sidan, width = längd. Raderna strax
+           under nyckelraden är korta, så att de håller sig i ramen när
+           kameran är inzoomad. -->
+      <div class="rad rubrikrad" style="top:200px; width:2000px"></div>
+      <div class="rad" style="top:420px; width:3500px"></div>
+      <div class="rad" style="top:560px; width:3300px"></div>
+      <div class="rad" style="top:700px; width:3550px"></div>
+      <div class="rad" style="top:840px; width:2400px"></div>
+      <div class="rad mellanrubrik" style="top:1060px; width:1100px"></div>
+      <div class="nyckel">
+        <div class="rad"></div>
+        <div class="text">Use digital tools critically and responsibly.</div>
+        <b class="streck"></b>
+      </div>
+      <div class="rad" style="top:1340px; width:1000px"></div>
+      <div class="rad mellanrubrik" style="top:1600px; width:1100px"></div>
+      <div class="rad" style="top:1740px; width:3500px"></div>
+      <div class="rad" style="top:1880px; width:3400px"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== KAMERAN =====
+     Översikt: sidan i skala 1/3 i ramens hörn. Nära: skala 1, med
+     nyckelraden mitt i ramen (ramens mitt är 700, 350). */
+  var sida = document.querySelector('.sida');
+  var nyckel = document.querySelector('.nyckel');
+  var B = 1400, H = 700;
+  var oversikt = { x: 0, y: 0, scale: 1 / 3 };
+  var nara = {
+    x: B / 2 - (nyckel.offsetLeft + nyckel.offsetWidth / 2),
+    y: H / 2 - (nyckel.offsetTop + nyckel.offsetHeight / 2),
+    scale: 1
+  };
+
+  // Rader som hamnar helt utanför ramen döljs, och rader som sticker ut
+  // till höger kortas så att de slutar precis bakom ramens kant. Det syns
+  // inte (ramen klipper ändå), men annars når de förstorade raderna in i
+  // kamerazonen. Radens riktiga längd sparas i data-langd.
+  var rader = Array.prototype.slice.call(document.querySelectorAll('.sida > .rad'));
+  rader.forEach(function (r) { r.dataset.langd = r.offsetWidth; });
+  function synlighet() {
+    var x = gsap.getProperty(sida, 'x'), y = gsap.getProperty(sida, 'y'), s = gsap.getProperty(sida, 'scale');
+    rader.forEach(function (r) {
+      var langd = +r.dataset.langd;
+      var v = x + s * r.offsetLeft, h = v + s * langd;
+      var o = y + s * r.offsetTop, n = o + s * r.offsetHeight;
+      r.style.visibility = (h < 0 || v > B || n < 0 || o > H) ? 'hidden' : 'visible';
+      r.style.width = Math.min(langd, (B + 26 - v) / s) + 'px';
+    });
+  }
+  gsap.set(sida, oversikt);
+  synlighet();
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk zoomar kameran in när Johan läser raden. */
+  var IN = 0.8, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, märket och ramen med sidan.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: 0.18 }, 0);
+  tl.from('.ram', { opacity: 0, y: 40 }, 0.3);
+  tl.from('.sida .rad', { scaleX: 0, duration: 0.6, stagger: 0.06 }, 0.8);
+
+  // Kameran zoomar in på nyckelraden (tyst).
+  var tIn = 2.8, ZOOM = 2.2;
+  tl.to(sida, { x: nara.x, y: nara.y, scale: 1, duration: ZOOM, ease: 'power2.inOut', onUpdate: synlighet }, tIn);
+  // Nära: strecket blir till text.
+  tl.to('.nyckel .rad', { opacity: 0, duration: 0.5 }, tIn + ZOOM - 0.6);
+  tl.to('.nyckel .text', { opacity: 1, duration: 0.6 }, tIn + ZOOM - 0.5);
+
+  // Fokus: kopparstrecket ritas under raden och texten blir koppar. Ett klick.
+  var tF = tIn + ZOOM + 0.4;
+  tl.to('.nyckel .streck', { scaleX: 1, duration: 0.9 }, tF);
+  tl.to('.nyckel .text', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  // Kameran zoomar ut igen. Raden blir ett streck, nu i koppar.
+  var tUt = tF + 2.6;
+  tl.to('.nyckel .text, .nyckel .streck', { opacity: 0, duration: 0.5 }, tUt);
+  tl.to('.nyckel .rad', { opacity: 1, backgroundColor: '#C2793A', duration: 0.6 }, tUt + 0.2);
+  tl.to(sida, { x: oversikt.x, y: oversikt.y, scale: oversikt.scale, duration: ZOOM, ease: 'power2.inOut', onUpdate: synlighet }, tUt);
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

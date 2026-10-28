@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S17 · Blur teaser</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Kortet som visas suddigt ----------
+     En lista med tre frågor. Först är den suddig (filter: blur), så att
+     tittaren ser att något kommer men inte kan läsa det. Kortet slutar vid
+     x 1440 och y 940, till vänster om kamerazonen. */
+  .kort {
+    position: absolute; left: 120px; top: 290px; width: 1320px; height: 650px;
+    padding: 64px 72px; background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .10);
+  }
+  .innehall { filter: blur(18px); }
+  .punkt { display: flex; gap: 40px; align-items: baseline; margin-bottom: 52px; }
+  .punkt .nr {
+    flex: 0 0 80px; font-size: 96px; font-weight: var(--cw-vikt-tunn); line-height: 1;
+    color: var(--cw-accent);
+  }
+  .punkt .text { font-size: 60px; font-weight: var(--cw-vikt-display); line-height: 1.15; }
+
+  /* ---------- Löftet ----------
+     En pill mitt på kortet: "We'll get to this". Den försvinner när
+     kortet blir skarpt. */
+  .lofte {
+    position: absolute; left: 780px; top: 615px; transform: translate(-50%, -50%);
+    padding: 20px 48px; border-radius: 999px; white-space: nowrap;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+    background: var(--cw-accent); color: #FFFFFF;
+    box-shadow: 0 16px 40px rgba(11, 58, 111, .22);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Before you open the chatbot</h1>
+
+  <div class="kort">
+    <div class="innehall">
+      <div class="punkt"><div class="nr">1</div><div class="text">What should pupils learn?</div></div>
+      <div class="punkt nyckel"><div class="nr">2</div><div class="text">What could AI take away?</div></div>
+      <div class="punkt"><div class="nr">3</div><div class="text">How will I check it?</div></div>
+    </div>
+  </div>
+
+  <div class="lofte">We’ll get to this</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. I en riktig film kan det gå flera minuter mellan löftet och
+     det skarpa kortet: dela då upp boarden i två klipp, eller flytta tS. */
+  var IN = 0.8, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och det suddiga kortet.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.kort', { opacity: 0, y: 40 }, 0.5);
+
+  // Löftet landar på kortet (tyst).
+  tl.fromTo('.lofte', { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.6 }, 1.6);
+
+  // Senare: löftet försvinner och kortet blir skarpt.
+  var tS = 5.0;
+  tl.to('.lofte', { opacity: 0, duration: 0.5 }, tS);
+  tl.to('.innehall', { filter: 'blur(0px)', duration: 1.2, ease: 'power2.inOut' }, tS + 0.2);
+
+  // Fokus: fråga 2 blir koppar, de andra tonas ned. Ett klick.
+  var tF = tS + 2.2;
+  tl.to('.punkt:not(.nyckel)', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.nyckel .nr, .nyckel .text', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 3 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

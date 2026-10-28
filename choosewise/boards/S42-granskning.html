@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S42 · Audit: what was missing</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Granskningslistan ----------
+     Fem punkter som en lektionsplanering från AI ska innehålla. En ljus
+     markering glider nedåt och granskar en punkt i taget: finns punkten
+     får den en bock, saknas den får den en streckad ruta och ordet
+     "Missing". Listan slutar vid x 1060, så kamerazonen är tom. */
+  .punkt { position: absolute; left: 120px; width: 1120px; height: 90px; z-index: 1; }
+  .ruta {
+    position: absolute; left: 24px; top: 8px; width: 74px; height: 74px;
+    border: 4px solid var(--cw-kant-ljus); border-radius: 16px; background: #FFFFFF;
+  }
+  /* Den streckade rutan för det som saknas. Den tonas in över den vanliga. */
+  .tom {
+    position: absolute; left: 24px; top: 8px; width: 74px; height: 74px;
+    border: 4px dashed var(--cw-text-ljus-dampad); border-radius: 16px; background: #FFFFFF;
+  }
+  .bock { position: absolute; left: 16px; top: -10px; width: 100px; height: 100px; overflow: visible; }
+  .bock path { fill: none; stroke: #0B3A6F; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; }
+  .text { position: absolute; left: 140px; top: 0; line-height: 90px; font-size: 48px; white-space: nowrap; }
+  .saknas {
+    position: absolute; left: 720px; top: 0; line-height: 90px; white-space: nowrap;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* Markeringen som granskar: en ljusgrå list bakom raden som läses. */
+  .lasare {
+    position: absolute; left: 120px; top: 0; width: 940px; height: 90px;
+    border-radius: 24px; background: var(--cw-ljus-alt);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Auditing an AI lesson plan</h1>
+
+  <div class="lasare"></div>
+
+  <!-- Punkterna. data-finns="ja" får en bock, "nej" markeras som saknad.
+       Byt texterna här; håll dem korta. -->
+  <div class="punkt" data-finns="ja" style="top:290px"><div class="ruta"></div><svg class="bock" viewBox="0 0 100 100"><path d="M18,52 L42,76 L92,14"/></svg><div class="text">Learning goal</div></div>
+  <div class="punkt" data-finns="ja" style="top:410px"><div class="ruta"></div><svg class="bock" viewBox="0 0 100 100"><path d="M18,52 L42,76 L92,14"/></svg><div class="text">Activities</div></div>
+  <div class="punkt" data-finns="ja" style="top:530px"><div class="ruta"></div><svg class="bock" viewBox="0 0 100 100"><path d="M18,52 L42,76 L92,14"/></svg><div class="text">Time plan</div></div>
+  <div class="punkt" data-finns="nej" style="top:650px"><div class="ruta"></div><div class="tom"></div><div class="text">How you check learning</div><div class="saknas">Missing</div></div>
+  <div class="punkt" data-finns="ja" style="top:770px"><div class="ruta"></div><svg class="bock" viewBox="0 0 100 100"><path d="M18,52 L42,76 L92,14"/></svg><div class="text">Materials</div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk stannar markeringen på varje punkt när Johan läser
+     den. Klicket ligger på det som saknas. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var punkter = gsap.utils.toArray('.punkt');
+  var saknad = punkter.filter(function (p) { return p.dataset.finns === 'nej'; })[0];
+
+  // Bockarna göms genom att streckmönstret skjuts ut helt.
+  gsap.utils.toArray('.bock path').forEach(function (b) {
+    var langd = b.getTotalLength();
+    b.style.strokeDasharray = langd;
+    b.style.strokeDashoffset = langd;
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och alla punkter med tomma rutor.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(punkter, { opacity: 0, y: 24, stagger: STEG }, 0.3);
+  tl.set('.tom, .saknas', { opacity: 0 }, 0);
+
+  // Markeringen börjar vid första punkten och glider sedan nedåt.
+  tl.set('.lasare', { y: 290, opacity: 0 }, 0);
+  tl.to('.lasare', { opacity: 1, duration: 0.5 }, 1.6);
+  var MELLAN = 1.3;
+  punkter.forEach(function (p, i) {
+    var t = 1.8 + i * MELLAN;
+    if (i > 0) tl.to('.lasare', { y: parseFloat(p.style.top), duration: 0.6, ease: 'power2.inOut' }, t - 0.6);
+    if (p.dataset.finns === 'ja') {
+      tl.to(p.querySelector('.bock path'), { strokeDashoffset: 0, duration: 0.5 }, t);
+    } else {
+      tl.to(p.querySelectorAll('.tom, .saknas'), { opacity: 1, duration: 0.5 }, t);
+    }
+  });
+  var tSlut = 1.8 + punkter.length * MELLAN;
+  tl.to('.lasare', { opacity: 0, duration: 0.5 }, tSlut - 0.6);
+
+  // Fokus: det som saknas blir koppar, resten tonas ned. Ett klick.
+  var tF = tSlut;
+  tl.to(punkter.filter(function (p) { return p !== saknad; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(saknad.querySelector('.tom'), { borderColor: '#C2793A', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(saknad.querySelectorAll('.text, .saknas'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

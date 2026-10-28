@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S129 · Prompt, version by version</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Versionerna ----------
+     Tre rader under varandra: versionsnummer till vänster, prompten och en
+     kort rad om vad som ändrades. Raderna slutar vid x 1500, och den sista
+     ligger ovanför y 900, så kamerazonen är tom. */
+  .version { position: absolute; left: 120px; width: 1380px; height: 180px; }
+  .version .nr {
+    position: absolute; left: 0; top: -6px; width: 170px;
+    font-size: var(--cw-min-siffra); font-weight: var(--cw-vikt-tunn); line-height: 1;
+  }
+  /* Prompten i en ljusgrå bubbla, som i en chatt. */
+  .version .prompt {
+    position: absolute; left: 190px; top: 0; white-space: nowrap;
+    font-size: var(--cw-min-etikett); line-height: 1.2;
+    background: var(--cw-ljus-alt); border-radius: 30px; padding: 14px 32px;
+  }
+  /* Det som är nytt i den här versionen. Färgen sätts av rörelsen. */
+  .version .ny { position: relative; }
+  .version .andring {
+    position: absolute; left: 222px; top: 96px; white-space: nowrap;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One prompt, three versions</h1>
+
+  <!-- Version 1–3. Det som är nytt i varje version ligger i <span class="ny">. -->
+  <div class="version" style="top:280px">
+    <div class="nr">v1</div>
+    <div class="prompt">Write a quiz on fractions.</div>
+    <div class="andring">The first try</div>
+  </div>
+  <div class="version" style="top:500px">
+    <div class="nr">v2</div>
+    <div class="prompt">Write a quiz on fractions <span class="ny">for Year 5.</span></div>
+    <div class="andring">+ who it is for</div>
+  </div>
+  <div class="version" style="top:720px">
+    <div class="nr">v3</div>
+    <div class="prompt">Write <span class="ny">5 questions</span> on fractions for Year 5.</div>
+    <div class="andring">+ how much</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje version när Johan säger "version two"
+     osv. Klicket ligger på sista versionen, den som fungerar. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var versioner = gsap.utils.toArray('.version');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och de tre versionsnumren.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.version .nr', { opacity: 0, y: 16, stagger: STEG }, 0.2);
+
+  // En version i taget. Den nya delen blir koppar; förra versionen tonas ned.
+  versioner.forEach(function (v, i) {
+    var t = 1.2 + i * 2.4;
+    if (i > 0) {
+      var forra = versioner[i - 1];
+      tl.to(forra, { opacity: 0.38, duration: 0.6 }, t);
+      tl.to(forra.querySelectorAll('.nr, .ny'), { color: '#0C1A2E', duration: 0.6 }, t);
+    }
+    tl.from(v.querySelector('.prompt'), { opacity: 0, x: -24 }, t);
+    tl.from(v.querySelector('.andring'), { opacity: 0, y: 12 }, t + 0.6);
+    tl.to(v.querySelectorAll('.nr, .ny'), { color: '#9C5A24', duration: 0.6 }, t + 0.5);
+  });
+  // Ett klick när den sista versionen landar.
+  Tavla.ljud(tl, 1.2 + 2 * 2.4 + 0.6, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S106 · Three generic chatbots, one approved</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tre verktyg ----------
+     Generiska rutor i stället för logotyper: en enkel form och ett namn.
+     Inga riktiga varumärken. Allt slutar vid x 1420 och y 820, långt från
+     kamerazonen nere till höger. */
+  .verktyg { position: absolute; top: 300px; width: 300px; text-align: center; }
+  .verktyg .ikon {
+    width: 300px; height: 300px; border-radius: var(--cw-radie-kort);
+    background: var(--cw-ljus-alt); border: 4px solid transparent;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .verktyg .namn { margin-top: 28px; }
+
+  /* Etiketten under det valda verktyget, osynlig tills fokus. */
+  .godkand {
+    position: absolute; left: 490px; top: 760px; width: 600px; text-align: center;
+    color: var(--cw-glod-text); opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+  <h1 class="rubrik">Which chatbot may students use?</h1>
+
+  <!-- Varje verktyg har en egen enkel form så att de går att skilja åt. -->
+  <div class="verktyg" style="left:160px">
+    <div class="ikon"><svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="56" fill="none" stroke="#0B3A6F" stroke-width="10"/></svg></div>
+    <div class="namn etikett">Chatbot A</div>
+  </div>
+  <div class="verktyg vald" style="left:640px">
+    <div class="ikon"><svg width="140" height="140" viewBox="0 0 140 140"><path d="M70 14 L128 120 L12 120 Z" fill="none" stroke="#0B3A6F" stroke-width="10" stroke-linejoin="round"/></svg></div>
+    <div class="namn etikett">Chatbot B</div>
+  </div>
+  <div class="verktyg" style="left:1120px">
+    <div class="ikon"><svg width="140" height="140" viewBox="0 0 140 140"><rect x="16" y="16" width="108" height="108" rx="24" fill="none" stroke="#0B3A6F" stroke-width="10"/></svg></div>
+    <div class="namn etikett">Chatbot C</div>
+  </div>
+
+  <div class="godkand etikett">Approved by your school</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje verktyg när Johan nämner det. */
+  var IN = 0.8, EASE = 'power2.out';   // tempot "Lugn"
+  var verktyg = gsap.utils.toArray('.verktyg');
+  var vald = document.querySelector('.verktyg.vald');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken, sedan verktygen ett i taget (tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(verktyg, { opacity: 0, y: 40, stagger: 0.9 }, 0.6);
+
+  // Fokus: Chatbot B får kopparkant, de andra tonas ned, och etiketten
+  // stiger upp under. Ett klick när fokus landar.
+  var tF = 4.4;
+  tl.to(verktyg.filter(function (v) { return v !== vald; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(vald.querySelector('.ikon'), { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(vald.querySelector('.namn'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.3, 'landa');
+  tl.fromTo('.godkand', { opacity: 0, y: 24 }, { opacity: 1, y: 0 }, tF + 0.5);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

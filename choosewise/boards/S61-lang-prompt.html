@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S61 · Long prompt</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Promptrutan ----------
+     En stor vit ruta med en hel, strukturerad prompt. Den är delad i fyra
+     rader: rubriken för delen till vänster (Role, Task ...) och texten till
+     höger. Rutan slutar vid x 1520, så kamerazonen nere till höger är tom. */
+  .ruta {
+    position: absolute; left: 120px; top: 250px; width: 1400px; height: 730px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 40px 64px;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .10);
+  }
+  /* En rad = en del av prompten. Strecket till vänster blir koppar när
+     delen är i fokus. */
+  .del {
+    position: relative; display: flex; align-items: center; gap: 40px;
+    height: 162px; border-bottom: 2px solid var(--cw-ljus-alt);
+  }
+  .del:last-child { border-bottom: 0; }
+  .del .streck {
+    position: absolute; left: -64px; top: 30px; bottom: 30px; width: 8px;
+    border-radius: 0 4px 4px 0; background: var(--cw-glod);
+    transform-origin: 50% 50%; transform: scaleY(0);
+  }
+  .del .namn {
+    flex: 0 0 220px; font-size: var(--cw-min-etikett);
+    font-weight: var(--cw-vikt-stark); color: var(--cw-accent);
+  }
+  .del .text { font-size: var(--cw-min-etikett); line-height: 1.2; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">A prompt with four parts</h1>
+
+  <!-- Prompten. Byt texterna mot exemplet i videon; behåll fyra delar
+       (eller ta bort en hel .del-rad om du vill ha tre). -->
+  <div class="ruta">
+    <div class="del"><b class="streck"></b><div class="namn">Role</div><div class="text">You are a Year 7 science teacher.</div></div>
+    <div class="del"><b class="streck"></b><div class="namn">Task</div><div class="text">Write three exit questions on photosynthesis.</div></div>
+    <div class="del"><b class="streck"></b><div class="namn">Context</div><div class="text">Mixed class, two pupils new to English.</div></div>
+    <div class="del"><b class="streck"></b><div class="namn">Format</div><div class="text">A numbered list, one sentence each.</div></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje del när Johan säger dess namn.
+     Boarden är tyst: alla fyra delar är lika viktiga. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var delar = gsap.utils.toArray('.del');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, rutan och de fyra namnen (Role, Task ...).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.ruta', { opacity: 0, y: 40 }, 0.2);
+  tl.from('.namn', { opacity: 0, x: -16, stagger: STEG }, 0.6);
+
+  // Delarna fylls och markeras i tur och ordning. Den nya delen får fokus
+  // (koppar namn och streck), den förra tonas ned till 0,38.
+  delar.forEach(function (d, i) {
+    var t = 1.8 + i * 2.2;
+    if (i > 0) {
+      var forra = delar[i - 1];
+      tl.to(forra, { opacity: 0.38, duration: 0.6 }, t);
+      tl.to(forra.querySelector('.streck'), { scaleY: 0, duration: 0.6 }, t);
+      tl.to(forra.querySelector('.namn'), { color: '#0B3A6F', duration: 0.6 }, t);
+    }
+    tl.from(d.querySelector('.text'), { opacity: 0, x: 24 }, t);
+    tl.to(d.querySelector('.streck'), { scaleY: 1, duration: 0.6 }, t + 0.2);
+    tl.to(d.querySelector('.namn'), { color: '#9C5A24', duration: 0.6 }, t + 0.2);
+  });
+
+  // Till sist står hela prompten lika stark, utan fokus: det är helheten.
+  var tS = 1.8 + delar.length * 2.2 + 0.4;
+  var sista = delar[delar.length - 1];
+  tl.to(delar, { opacity: 1, duration: 0.6 }, tS);
+  tl.to(sista.querySelector('.streck'), { scaleY: 0, duration: 0.6 }, tS);
+  tl.to(sista.querySelector('.namn'), { color: '#0B3A6F', duration: 0.6 }, tS);
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

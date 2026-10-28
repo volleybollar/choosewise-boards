@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S150 · Community showcase</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Galleriet ----------
+     Sex rutor i två rader, en för varje medlemsarbete. Rutorna är
+     platshållare: byt dem mot riktiga skärmdumpar (med medlemmens
+     tillstånd). Galleriet slutar vid x 1460 och y 940. */
+  .ruta {
+    position: absolute; width: 420px; height: 320px; padding: 40px 40px 32px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  /* Grå rader överst: ser ut som ett dokument i miniatyr. */
+  .ruta .rader i {
+    display: block; height: 14px; border-radius: 7px; margin-bottom: 18px;
+    background: var(--cw-ljus-alt);
+  }
+  .ruta .rader i:first-child { width: 60%; background: var(--cw-kant-ljus); }
+  .ruta .rader i:nth-child(3) { width: 80%; }
+  .ruta .etikett { font-weight: var(--cw-vikt-display); }
+
+  /* Märket "Made by a member": ligger under den lyfta rutan och är
+     boardens fokus. */
+  .marke {
+    position: absolute; left: 600px; top: 946px; padding: 10px 32px; border-radius: 999px;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+    background: var(--cw-glod); color: #FFFFFF; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">What members have built</h1>
+
+  <!-- Rutorna: kolumner vid x 120, 580 och 1040, rader vid y 250 och 610.
+       Byt etiketterna mot det medlemmarna faktiskt har gjort. -->
+  <div class="ruta" style="left:120px;  top:250px"><div class="rader"><i></i><i></i><i></i></div><div class="etikett">Lesson plan</div></div>
+  <div class="ruta" style="left:580px;  top:250px"><div class="rader"><i></i><i></i><i></i></div><div class="etikett">Reading quiz</div></div>
+  <div class="ruta" style="left:1040px; top:250px"><div class="rader"><i></i><i></i><i></i></div><div class="etikett">Marking rubric</div></div>
+  <div class="ruta" style="left:120px;  top:610px"><div class="rader"><i></i><i></i><i></i></div><div class="etikett">Parent letter</div></div>
+  <div class="ruta lyft" style="left:580px;  top:610px"><div class="rader"><i></i><i></i><i></i></div><div class="etikett">Exit tickets</div></div>
+  <div class="ruta" style="left:1040px; top:610px"><div class="rader"><i></i><i></i><i></i></div><div class="etikett">Study guide</div></div>
+
+  <div class="marke">Made by a member</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Galleriet fylls ruta för ruta, sedan lyfts en ruta fram och
+     får märket "Made by a member". Ett klick när märket landar. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rutor = gsap.utils.toArray('.ruta');
+  var lyft = document.querySelector('.lyft');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken, sedan rutorna en i taget (tyst: framväxt).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(rutor, { opacity: 0, y: 24, stagger: 0.3 }, 0.6);
+
+  // Fokus: de andra tonas ned, den valda rutan lyfts lite och får en
+  // kopparkant. Märket kommer in under den. Ett klick.
+  var tF = 3.6;
+  tl.to(rutor.filter(function (r) { return r !== lyft; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(lyft, { scale: 1.06, y: -24, borderColor: '#C2793A',
+    boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.8 }, tF);
+  tl.to(lyft.querySelector('.etikett'), { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.from('.marke', { opacity: 0, y: 16 }, tF + 0.5);
+  Tavla.ljud(tl, tF + 0.8, 'landa');
+
+  tl.to({}, { duration: 3.5 });  // vila
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

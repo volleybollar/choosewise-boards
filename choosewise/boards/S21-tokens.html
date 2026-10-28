@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S21 · Token travel</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tre våningar ----------
+     Överst prompten (y 300), i mitten modellen (y 470–700), nederst svaret
+     (y 820). Allt slutar före x 1520, långt från kamerazonen. */
+
+  /* En bit (token). Från start ser bitarna ut som en vanlig mening:
+     ingen ram och ingen bakgrund. Rörelsen ger dem ram och glipor. */
+  .bit {
+    position: absolute; padding: 10px 20px;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett); line-height: 1.2;
+    white-space: pre; border: 2px solid transparent; border-radius: 16px;
+  }
+  .prompt .bit { top: 300px; }
+  .svar .bit { top: 820px; }
+
+  /* Modellen: en enkel ruta med ordet "Model". */
+  .modell {
+    position: absolute; left: 560px; top: 470px; width: 800px; height: 230px;
+    border: 4px solid var(--cw-accent); border-radius: var(--cw-radie-kort);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 66px; font-weight: var(--cw-vikt-display); color: var(--cw-accent);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">How a prompt enters the model</h1>
+  <!-- Uppdelningen är ett exempel: varje modell delar texten på sitt sätt. -->
+  <div class="exempel" style="left:120px; top:205px">Example · real token splits vary by model</div>
+
+  <!-- Prompten och svaret, redan delade i bitar. Ändra texten här.
+       Skriptet räknar ut var varje bit ska stå. Klassen "ihop" betyder att
+       biten hör ihop med ordet före (inget mellanslag i meningen). -->
+  <div class="prompt">
+    <span class="bit">Explain</span><span class="bit">photo</span><span class="bit ihop">synthesis</span><span class="bit">to</span><span class="bit">a</span><span class="bit">12</span><span class="bit ihop">-year</span><span class="bit ihop">-old</span>
+  </div>
+  <div class="modell">Model</div>
+  <div class="svar">
+    <span class="bit">Plants</span><span class="bit">turn</span><span class="bit">sun</span><span class="bit ihop">light</span><span class="bit">into</span><span class="bit">food</span><span class="bit">.</span>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== PLACERING =====
+     Bitarna ställs på rad från x 140 med 20 px glipa. I "meningsläget"
+     ligger de tätare: mellanrummet blir ett vanligt mellanslag, och en bit
+     med klassen "ihop" sitter helt ihop med biten före. */
+  var GLIPA = 20, MENING = -15, IHOP = -40, START = 140;
+  var MITT = { x: 960, y: 585 };   // modellrutans mittpunkt
+  function rada(bitar) {
+    var x = START, xm = START;
+    return bitar.map(function (b, i) {
+      var w = b.offsetWidth;
+      if (i > 0 && b.classList.contains('ihop')) xm += IHOP - MENING;
+      b.style.left = x + 'px';
+      var rad = { bit: b, tat: xm - x, mittX: MITT.x - (x + w / 2), mittY: MITT.y - (b.offsetTop + b.offsetHeight / 2) };
+      x += w + GLIPA; xm += w + MENING;
+      return rad;
+    });
+  }
+  var prompt = rada(gsap.utils.toArray('.prompt .bit'));
+  var svar = rada(gsap.utils.toArray('.svar .bit'));
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk delas prompten när Johan säger "tokens". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, märket och modellrutan.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.modell', { opacity: 0, y: 30 }, 0.4);
+
+  // Prompten syns som en vanlig mening (bitarna tätt ihop).
+  prompt.forEach(function (p) { gsap.set(p.bit, { x: p.tat }); });
+  tl.from('.prompt .bit', { opacity: 0, duration: 0.6 }, 1.0);
+
+  // Meningen delas i bitar: de glider isär och får ram (tyst).
+  var tDela = 2.4;
+  prompt.forEach(function (p) {
+    tl.to(p.bit, { x: 0, borderColor: '#DDE3EA', backgroundColor: '#EFF2F6', duration: 0.9, ease: 'power2.inOut' }, tDela);
+  });
+
+  // Bitarna färdas en i taget in i modellen och försvinner där.
+  var tIn = 4.0, IN_STEG = 0.3;
+  prompt.forEach(function (p, i) {
+    tl.to(p.bit, { x: p.mittX, y: p.mittY, scale: 0.5, opacity: 0, duration: 0.9, ease: 'power2.in' }, tIn + i * IN_STEG);
+  });
+  var tUt = tIn + prompt.length * IN_STEG + 1.0;
+
+  // Svaret kommer ut ur modellen bit för bit och landar på nedersta raden.
+  svar.forEach(function (s, i) {
+    gsap.set(s.bit, { borderColor: '#DDE3EA', backgroundColor: '#EFF2F6' });
+    tl.from(s.bit, { x: s.mittX, y: s.mittY, scale: 0.5, opacity: 0, duration: 0.9 }, tUt + i * IN_STEG);
+  });
+
+  // Fokus: svaret blir koppar när sista biten har landat. Ett klick.
+  var tF = tUt + svar.length * IN_STEG + 0.9;
+  tl.to('.svar .bit', { color: '#9C5A24', borderColor: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

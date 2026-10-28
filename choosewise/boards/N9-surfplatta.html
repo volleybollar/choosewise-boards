@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N9 · Tablet with scrolling content</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* Rubriken får brytas på två rader, så att den håller sig till vänster
+     om surfplattan. */
+  .rubrik { width: 640px; }
+
+  /* ---------- Surfplattan ----------
+     En generisk surfplatta på högkant, utan märke eller logotyp: en mörk
+     ram med jämn kant runt om och en liten kameraprick upptill. Den står
+     mellan x 840 och x 1500 och slutar vid y 990, så att kamerazonen nere
+     till höger alltid är tom. */
+  .platta {
+    position: absolute; left: 840px; top: 110px; width: 660px; height: 880px;
+    background: var(--cw-text-ljus); border-radius: 56px; padding: 30px;
+  }
+  .kamera { position: absolute; left: 50%; top: 11px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--cw-text-ljus-dampad); }
+  .skarm {
+    position: relative; width: 100%; height: 100%; border-radius: 28px;
+    background: var(--cw-ljus-alt); overflow: hidden;
+  }
+
+  /* ---------- Sidan i skärmen ----------
+     En lektionssida som rullar: rubrik, en bildplats, grå textstreck och
+     ett kort med en uppgift. Bara rubriken och kortet har riktig text. */
+  .sida { position: absolute; left: 36px; right: 36px; top: 40px; }
+  .sidrubrik { font-size: 56px; font-weight: var(--cw-vikt-display); margin-bottom: 28px; }
+  .bild {
+    height: 300px; border-radius: 24px; background: var(--cw-kant-ljus); margin-bottom: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  .streck { height: 18px; border-radius: 9px; background: var(--cw-kant-ljus); margin-bottom: 22px; }
+  .stycke { margin-bottom: 44px; }
+  .uppgift {
+    background: #FFFFFF; border-radius: 32px; padding: 34px 36px; margin-bottom: 44px;
+    font-size: var(--cw-min-etikett); line-height: 1.2;
+  }
+  .uppgift .typ { color: var(--cw-text-ljus-dampad); margin-bottom: 10px; }
+  .uppgift .vad { font-weight: var(--cw-vikt-stark); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">The lesson,<br>in their hands</h1>
+
+  <div class="platta">
+    <div class="kamera"></div>
+    <div class="skarm">
+      <!-- Sidan som rullar. Byt rubrik och uppgift mot er egen lektion. -->
+      <div class="sida">
+        <div class="sidrubrik">The water cycle</div>
+        <div class="bild">Image</div>
+        <div class="stycke">
+          <div class="streck" style="width:95%"></div><div class="streck" style="width:88%"></div>
+          <div class="streck" style="width:92%"></div><div class="streck" style="width:60%"></div>
+        </div>
+        <div class="stycke">
+          <div class="streck" style="width:90%"></div><div class="streck" style="width:94%"></div>
+          <div class="streck" style="width:72%"></div>
+        </div>
+        <!-- Uppgiften som rullningen stannar på (fokus). -->
+        <div class="uppgift">
+          <div class="typ">Your turn</div>
+          <div class="vad">Draw the four steps</div>
+        </div>
+        <div class="stycke">
+          <div class="streck" style="width:86%"></div><div class="streck" style="width:92%"></div>
+          <div class="streck" style="width:66%"></div>
+        </div>
+        <div class="bild">Image</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk stannar rullningen på ordet "task" eller "your turn". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+
+  // Surfplattan glider upp nedifrån och stannar (tyst).
+  tl.from('.platta', { y: 120, opacity: 0, duration: 1.1 }, 0.3);
+
+  // Sidans delar kommer in uppifrån och ned, som när en sida laddas.
+  tl.from('.sidrubrik, .bild, .stycke', { opacity: 0, y: 20, stagger: STEG }, 1.2);
+
+  // Sidan rullar mjukt uppåt i två tag och stannar med uppgiften i bild.
+  tl.to('.sida', { y: -300, duration: 1.8, ease: 'power2.inOut' }, 2.8);
+  tl.to('.sida', { y: -560, duration: 1.6, ease: 'power2.inOut' }, 5.0);
+
+  // Fokus: resten av sidan tonas ned och uppgiften får en kopparkant.
+  var tF = 6.8;
+  tl.to('.sidrubrik, .bild, .stycke', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.uppgift', { boxShadow: '0 0 0 6px #C2793A, 0 0 0 18px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to('.uppgift .vad', { color: '#9C5A24', duration: 0.6 }, tF);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

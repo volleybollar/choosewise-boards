@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S255 · Line to frame reveal</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Ramen ----------
+     Först ritas en vågrät linje på y 560. Den delar sig i två: överkanten
+     glider upp till y 340 och underkanten ner till y 780, samtidigt som
+     sidorna växer fram. Innehållet öppnas inuti, som en ridå.
+     Ramen går från x 220 till 1460, långt till vänster om kamerazonen. */
+  .kant { position: absolute; background: var(--cw-accent); }
+  .kant.topp, .kant.botten {
+    left: 220px; top: 557px; width: 1240px; height: 6px; border-radius: 3px;
+    transform-origin: 50% 50%;
+  }
+  .kant.vanster, .kant.hoger { top: 340px; width: 6px; height: 446px; transform-origin: 50% 50%; }
+  .kant.vanster { left: 220px; }
+  .kant.hoger { left: 1454px; }
+
+  /* Innehållet: klipps uppifrån och nedifrån så att det öppnas från mitten. */
+  .innehall {
+    position: absolute; left: 226px; top: 346px; width: 1228px; height: 434px;
+    display: flex; flex-direction: column; justify-content: center; gap: 28px;
+    padding: 0 90px; clip-path: inset(50% 0 50% 0);
+  }
+  .fraga { font-size: 66px; font-weight: var(--cw-vikt-display); line-height: 1.15; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">The trade-off question</h1>
+
+  <!-- Ramens fyra kanter. -->
+  <div class="kant topp"></div>
+  <div class="kant botten"></div>
+  <div class="kant vanster"></div>
+  <div class="kant hoger"></div>
+
+  <!-- Det som visas i ramen. Byt texten här. -->
+  <div class="innehall">
+    <div class="fraga">What will we get worse at?</div>
+    <div class="fraga nyckel">Does it matter?</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk öppnas ramen när Johan ställer frågan. */
+  var IN = 0.8, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken, sedan linjen som ritas från mitten och ut (tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.kant.topp, .kant.botten', { scaleX: 0, duration: 1.2, ease: 'power2.inOut' }, 0.6);
+
+  // Linjen delar sig: överkanten upp, underkanten ner, sidorna växer,
+  // och innehållet öppnas i samma takt.
+  var tO = 2.2, OPPNA = 1.4;
+  tl.to('.kant.topp', { y: -217, duration: OPPNA, ease: 'power2.inOut' }, tO);
+  tl.to('.kant.botten', { y: 223, duration: OPPNA, ease: 'power2.inOut' }, tO);
+  tl.from('.kant.vanster, .kant.hoger', { scaleY: 0, duration: OPPNA, ease: 'power2.inOut' }, tO);
+  tl.to('.innehall', { clipPath: 'inset(0% 0 0% 0)', duration: OPPNA, ease: 'power2.inOut' }, tO);
+
+  // Fokus: den andra frågan blir koppar, den första tonas ned. Ett klick.
+  var tF = tO + OPPNA + 1.6;
+  tl.to('.fraga:not(.nyckel)', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.fraga.nyckel', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

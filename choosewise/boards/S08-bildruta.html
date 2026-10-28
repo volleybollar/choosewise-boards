@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S08 · Footage tile</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Bildrutan ----------
+     En ruta för en skärminspelning eller en AI-bild. Bredden är fast och
+     höjden följer bildförhållandet (aspect-ratio), så att klippet aldrig
+     blir utdraget. Byt 16 / 9 mot 1 / 1 eller 4 / 5 för andra format.
+     Rutan slutar vid x 1240 och y 910, långt från kamerazonen. */
+  .ruta {
+    position: absolute; left: 120px; top: 280px; width: 1120px; aspect-ratio: 16 / 9;
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    background: var(--cw-ljus-alt); border: 2px solid var(--cw-kant-ljus);
+  }
+  /* Platshållaren mitt i rutan. Byt hela div:en mot
+     <img src="..."> eller <video src="..."> med style="width:100%;height:100%;object-fit:cover". */
+  .platshallare {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 28px;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  /* En enkel spelsymbol: en triangel i en ring. */
+  .spela { width: 120px; height: 120px; }
+  .spela circle { fill: none; stroke: var(--cw-text-ljus-dampad); stroke-width: 4; }
+  .spela path { fill: var(--cw-text-ljus-dampad); }
+
+  /* ---------- Etiketten ----------
+     Säger vad klippet visar. Står till höger om rutan, ovanför y 720. */
+  .etikett-ruta {
+    position: absolute; left: 1300px; top: 280px; width: 480px;
+  }
+  .etikett-ruta .typ {
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+    letter-spacing: .06em; text-transform: uppercase; color: var(--cw-text-ljus-dampad);
+  }
+  .etikett-ruta .vad {
+    font-size: 66px; font-weight: var(--cw-vikt-display); line-height: 1.1;
+    margin-top: 24px; letter-spacing: -0.01em;
+  }
+  /* Kopparstrecket till vänster om etiketten: fokus. */
+  .etikett-ruta .streck {
+    position: absolute; left: -32px; top: 0; width: 6px; height: 100%; border-radius: 3px;
+    background: var(--cw-glod); transform-origin: 50% 0; transform: scaleY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">What the pupil sees</h1>
+
+  <!-- Rutan med platshållaren. -->
+  <div class="ruta">
+    <div class="platshallare">
+      <svg class="spela" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56"/><path d="M48 38 L86 60 L48 82 Z"/></svg>
+      <div>Screen recording · 16:9</div>
+    </div>
+  </div>
+
+  <!-- Etiketten bredvid rutan. -->
+  <div class="etikett-ruta">
+    <b class="streck"></b>
+    <div class="typ">Chatbot A</div>
+    <div class="vad">Feedback on a Year 9 essay</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk öppnas rutan när Johan börjar visa klippet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+
+  // Rutan öppnas från mitten och ut (en mask), sedan syns platshållaren.
+  tl.fromTo('.ruta',
+    { clipPath: 'inset(50% 50% 50% 50% round 24px)' },
+    { clipPath: 'inset(0% 0% 0% 0% round 24px)', duration: 1.0, ease: 'power2.inOut' }, 0.8);
+  tl.from('.platshallare', { opacity: 0, duration: 0.6 }, 1.6);
+
+  // Etiketten: typen och sedan vad klippet visar.
+  tl.from('.etikett-ruta .typ, .etikett-ruta .vad', { opacity: 0, x: -20, stagger: STEG }, 2.4);
+
+  // Fokus: kopparstrecket ritas ned längs etiketten (tyst).
+  tl.to('.etikett-ruta .streck', { scaleY: 1, duration: 0.8 }, 3.8);
+  tl.to({}, { duration: 4 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N11 · Image wall</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Väggens fönster ----------
+     Bilderna ligger i ett fönster mellan rubriken och nederkanten
+     (y 232–1000). Allt utanför fönstret döljs, så när väggen glider
+     uppåt försvinner översta raderna in under rubriken. Fönstret slutar
+     vid x 1472, långt från Borumi-rutan. */
+  .fonster { position: absolute; left: 120px; top: 232px; width: 1352px; height: 768px; overflow: hidden; }
+
+  /* Själva väggen: fyra kolumner. Varje bild är 320 × 240 px, så stor
+     att man ser vad den föreställer även på en mindre skärm. */
+  .vagg { display: grid; grid-template-columns: repeat(4, 320px); gap: 24px; }
+  .vagg img {
+    width: 320px; height: 240px; object-fit: cover; display: block;
+    border-radius: var(--cw-radie-media); border: 2px solid var(--cw-kant-ljus);
+    background: var(--cw-ljus-alt);
+  }
+
+  /* Talet i rubriken räknas upp och landar i koppar. */
+  .antal { font-weight: var(--cw-vikt-tunn); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) =====
+     Två samlingar finns. Standard är visual codes. Lägg till
+     ?samling=infografik i adressen för infografikstilarna. -->
+<div class="cw ljus">
+  <h1 class="rubrik"><span class="antal">0</span> <span class="vad"></span></h1>
+  <div class="fonster"><div class="vagg"></div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== SAMLINGARNA =====
+     totalt = talet som rubriken landar på (hela samlingen, inte bara de
+     24 bilder som syns). bilder = filerna i media/. Byt eller lägg till
+     bilder här; fler än 24 syns inte, men talet visar hela samlingen. */
+  var SAMLINGAR = {
+    'visual-codes': {
+      totalt: 50, text: 'visual codes',
+      mapp: 'media/visual-codes/',
+      bilder: ['airplane-blueprint','airplane-cutaway','airplane-forceanalysis','basketball-motionpath',
+        'bicycle-annotatedphoto','bicycle-materialmap','bicycle-technicaldrawing','butterfly-educationalposter',
+        'butterfly-lifecycle','castle-timeline','chair-assemblysequence','clock-mechanism',
+        'corridor-vanishingpoint','cow-anatomy','cow-skeletonview','drone-cadview',
+        'earbuds-howitworks','fish-organmap','flashlight-schematic','house-ghosted',
+        'house-scalegrid','house-thermalview','lab-protectivegear','landscape-contourmap']
+    },
+    'infografik': {
+      totalt: 140, text: 'infographic styles',
+      mapp: 'media/infografik/',
+      bilder: Array.from({ length: 24 }, function (_, i) { return 'style-0' + String(i + 1).padStart(2, '0'); })
+    }
+  };
+  var namn = new URLSearchParams(location.search).get('samling') || 'visual-codes';
+  var s = SAMLINGAR[namn];
+
+  // Bygg väggen: en bild per fil.
+  document.querySelector('.vad').textContent = s.text;
+  var vagg = document.querySelector('.vagg');
+  s.bilder.forEach(function (b) {
+    var img = document.createElement('img');
+    img.src = s.mapp + b + '.jpg';
+    img.alt = '';
+    vagg.appendChild(img);
+  });
+  var bilder = gsap.utils.toArray('.vagg img');
+
+  /* ===== RÖRELSEN =====
+     1. Rubriken växer fram. 2. De första tolv bilderna tänds en i taget.
+     3. Väggen glider upp och visar tolv till. 4. Talet landar på hela
+     samlingen i koppar, med ett klick. Allt är tyst utom klicket. */
+  var tl = gsap.timeline({ paused: true, defaults: { ease: 'power2.out', duration: 0.8 } });
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(bilder.slice(0, 12), { opacity: 0, y: 20, scale: 0.97, duration: 0.6, stagger: 0.12 }, 0.5);
+  // De tolv nästa ligger under fönstret och tänds medan väggen glider upp.
+  tl.from(bilder.slice(12), { opacity: 0, duration: 0.6, stagger: 0.06 }, 2.6);
+  tl.to('.vagg', { y: -(240 + 24) * 3, duration: 3.2, ease: 'power2.inOut' }, 3.2);
+
+  // Talet räknas upp under hela förloppet och landar på totalen.
+  var raknare = { n: 0 };
+  var antal = document.querySelector('.antal');
+  tl.to(raknare, { n: s.totalt, duration: 6.4, ease: 'power1.inOut',
+    onUpdate: function () { antal.textContent = Math.round(raknare.n); } }, 0.5);
+  tl.to(antal, { color: '#9C5A24', duration: 0.5 }, 6.9);
+  Tavla.ljud(tl, 6.9, 'landa');
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

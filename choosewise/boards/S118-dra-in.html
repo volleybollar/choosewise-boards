@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S118 · Drag a clip onto the timeline and trim it</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tidslinjen ----------
+     Ett bildspår (Video) och under det rösten (Voice), ord för ord.
+     Allt slutar vid x 1500, så att kamerazonen nere till höger är tom. */
+  .spar-namn { position: absolute; left: 120px; width: 260px; }
+  .spar {
+    position: absolute; left: 400px; top: 560px; width: 1100px; height: 120px;
+    background: var(--cw-ljus-alt); border-radius: 16px;
+  }
+
+  /* Orden i rösten. Varje ord har en fast plats och bredd, så att klippet
+     kan trimmas exakt till slutet av ett ord (här "sunlight", x 970). */
+  .ord {
+    position: absolute; top: 720px; height: 100px; line-height: 96px; text-align: center;
+    font-size: var(--cw-min-etikett); background: #FFFFFF;
+    border: 2px solid var(--cw-kant-ljus); border-radius: 16px;
+  }
+
+  /* Klippet som dras in. Det börjar i "korgen" uppe till vänster och får
+     sedan tidslinjens mått. Måtten ändras av rörelsen nedan. */
+  .klipp {
+    position: absolute; left: 120px; top: 260px; width: 360px; height: 200px; z-index: 3;
+    background: var(--cw-accent); color: #FFFFFF; border-radius: 16px;
+    display: flex; align-items: center; padding: 0 32px;
+    font-size: var(--cw-min-etikett); white-space: nowrap; overflow: hidden;
+  }
+  /* Trimhandtaget vid klippets högra kant. */
+  .handtag {
+    position: absolute; right: 0; top: 0; width: 16px; height: 100%;
+    background: var(--cw-text-ljus); opacity: 0;
+  }
+
+  /* Snittlinjen genom klipp och ord, i koppar när fokus landar. */
+  .snitt {
+    position: absolute; left: 968px; top: 536px; width: 4px; height: 308px;
+    background: var(--cw-glod); border-radius: 2px; opacity: 0; transform-origin: 50% 0;
+  }
+
+  /* Muspekaren: en enkel pil som visar att någon drar. */
+  .pekare { position: absolute; left: 0; top: 0; z-index: 6; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+  <h1 class="rubrik">Cut the clip on the word</h1>
+
+  <!-- Spårens namn och det tomma bildspåret. -->
+  <div class="spar-namn etikett" style="top:595px">Video</div>
+  <div class="spar-namn etikett" style="top:745px">Voice</div>
+  <div class="spar"></div>
+
+  <!-- Rösten, ord för ord: "Plants need sunlight to grow." -->
+  <div class="ord" style="left:400px; width:170px">Plants</div>
+  <div class="ord" style="left:590px; width:140px">need</div>
+  <div class="ord fokus" style="left:750px; width:220px">sunlight</div>
+  <div class="ord" style="left:990px; width:90px">to</div>
+  <div class="ord" style="left:1100px; width:170px">grow.</div>
+
+  <div class="snitt"></div>
+
+  <!-- Klippet med trimhandtaget. -->
+  <div class="klipp">Leaf clip<div class="handtag"></div></div>
+
+  <!-- Muspekaren. Spetsen sitter i pilens övre vänstra hörn. -->
+  <svg class="pekare" width="44" height="60" viewBox="0 0 44 60">
+    <path d="M3 3 L3 48 L15 37 L23 56 L31 52 L23 34 L39 34 Z" fill="#0C1A2E" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar snittet när Johan säger "sunlight". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var fokusOrd = document.querySelector('.ord.fokus');
+
+  // Muspekarens startplats: mitt i klippet i korgen.
+  gsap.set('.pekare', { x: 330, y: 370 });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, spåret och orden i rösten.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.spar-namn, .spar', { opacity: 0, x: -24, stagger: 0.1 }, 0.3);
+  tl.from('.ord', { opacity: 0, y: 16, stagger: STEG }, 0.6);
+
+  // Klippet dyker upp i korgen och pekaren griper det (tyst).
+  tl.from('.klipp', { opacity: 0, y: 24 }, 1.8);
+  tl.from('.pekare', { opacity: 0, duration: 0.4 }, 2.6);
+
+  // Dra: klippet och pekaren flyttas ned till spåret och klippet får
+  // spårets mått. Klippet blir för långt, det slutar efter "grow.".
+  tl.to('.klipp', { left: 400, top: 560, width: 1000, height: 120, duration: 1.4, ease: 'power2.inOut' }, 3.2);
+  tl.to('.pekare', { x: 610, y: 680, duration: 1.4, ease: 'power2.inOut' }, 3.2);
+
+  // Pekaren går till klippets högra kant och handtaget syns.
+  tl.to('.pekare', { x: 1392, y: 610, duration: 0.8 }, 5.0);
+  tl.to('.handtag', { opacity: 1, duration: 0.3 }, 5.6);
+
+  // Trimma: kanten dras tillbaka tills klippet slutar vid x 970,
+  // precis där ordet "sunlight" slutar.
+  tl.to('.klipp', { width: 570, duration: 1.2, ease: 'power2.inOut' }, 6.0);
+  tl.to('.pekare', { x: 962, duration: 1.2, ease: 'power2.inOut' }, 6.0);
+
+  // Fokus: snittlinjen i koppar, ordet "sunlight" i koppar, de andra orden
+  // tonas ned och pekaren försvinner. Ett klick när snittet landar.
+  var tF = 7.4;
+  tl.to('.pekare, .handtag', { opacity: 0, duration: 0.4 }, tF);
+  tl.fromTo('.snitt', { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.6 }, tF);
+  tl.to(gsap.utils.toArray('.ord').filter(function (o) { return o !== fokusOrd; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokusOrd, { color: '#9C5A24', borderColor: '#C2793A', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.4, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

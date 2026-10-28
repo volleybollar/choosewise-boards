@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S147 · Sign-off</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Avslutningen i ljus scen ----------
+     Ett kort tack och en mening om nästa del, medan Johan fortfarande syns
+     i kamerarutan. (X41 är den mörka slutbilden som kommer efter.)
+     Allt ligger till vänster och ovanför kamerazonen. */
+  .tack {
+    position: absolute; left: 112px; top: 300px; margin: 0;
+    font-size: 160px; font-weight: var(--cw-vikt-tunn);
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  /* Kopparstrecket under tacket ritas fram: det är boardens fokus. */
+  .streck {
+    position: absolute; left: 120px; top: 520px; width: 320px; height: 6px; border-radius: 3px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+  .nasta-etikett {
+    position: absolute; left: 120px; top: 600px;
+    font-size: var(--cw-min-etikett); letter-spacing: .04em;
+  }
+  .nasta {
+    position: absolute; left: 120px; top: 670px; width: 1400px;
+    font-size: 64px; font-weight: var(--cw-vikt-display); line-height: 1.15;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="tack">Thank you</h1>
+  <div class="streck"></div>
+
+  <!-- Meningen om nästa del: byt mot det nästa video faktiskt handlar om. -->
+  <div class="nasta-etikett dampad">Next part</div>
+  <div class="nasta">We try it in a real lesson.</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Tacket först, strecket ritas fram, sedan meningen om nästa
+     del. Tyst: avslutningen ska vara lugn, klicket hör till slutbilden X41. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  tl.from('.tack', { opacity: 0, y: 30 }, 0);
+  tl.to('.streck', { scaleX: 1, duration: 0.8 }, 0.9);
+
+  // Nästa del: etiketten och meningen.
+  tl.from('.nasta-etikett, .nasta', { opacity: 0, y: 20, stagger: 0.3 }, 2.4);
+
+  tl.to({}, { duration: 5 });  // vila medan Johan säger hej då
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

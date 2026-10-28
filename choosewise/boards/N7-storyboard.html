@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N7 · Storyboard</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Rutorna ----------
+     Fyra rutor i rad, 390 × 260 px, med 40 px mellanrum: från x 120 till
+     x 1800. Rutor och bildtexter slutar ovanför y 720, så de får gå ut
+     till höger utan att krocka med kamerazonen. */
+  .scen { position: absolute; top: 320px; width: 390px; }
+  .ruta {
+    width: 390px; height: 260px; background: #FFFFFF;
+    border: 3px solid var(--cw-kant-ljus); border-radius: var(--cw-radie-media);
+  }
+  /* Skissen i rutan: enkla streck i djupblått, som ritas fram. */
+  .ruta svg { display: block; width: 100%; height: 100%; }
+  .ruta path, .ruta rect, .ruta circle {
+    fill: none; stroke: var(--cw-accent); stroke-width: 5;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  /* Bildtexten under rutan: högst två rader. */
+  .bildtext { margin: 22px 0 0; font-size: var(--cw-min-etikett); line-height: 1.2; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">The lesson, scene by scene</h1>
+
+  <!-- Scen 1: läraren vid tavlan med ett frågetecken. -->
+  <div class="scen" style="left:120px">
+    <div class="ruta"><svg viewBox="0 0 390 260">
+      <rect x="40" y="40" width="180" height="120" rx="8"/>
+      <path d="M112 78 Q112 60 130 60 Q148 60 148 78 Q148 92 130 96 L130 112"/>
+      <circle cx="130" cy="132" r="3"/>
+      <circle cx="295" cy="88" r="24"/>
+      <path d="M295 112 L295 190 M295 135 L245 110 M295 190 L275 235 M295 190 L315 235"/>
+    </svg></div>
+    <p class="bildtext">Teacher asks a question</p>
+  </div>
+
+  <!-- Scen 2: två elever som pratar, med pratbubblor. -->
+  <div class="scen" style="left:550px">
+    <div class="ruta"><svg viewBox="0 0 390 260">
+      <circle cx="120" cy="120" r="22"/>
+      <path d="M120 142 L120 210 M120 210 L104 245 M120 210 L136 245"/>
+      <circle cx="270" cy="120" r="22"/>
+      <path d="M270 142 L270 210 M270 210 L254 245 M270 210 L286 245"/>
+      <rect x="60" y="28" width="90" height="50" rx="20"/>
+      <rect x="240" y="28" width="90" height="50" rx="20"/>
+    </svg></div>
+    <p class="bildtext">Pairs talk it through</p>
+  </div>
+
+  <!-- Scen 3: en dator där ett utkast skrivs fram. -->
+  <div class="scen" style="left:980px">
+    <div class="ruta"><svg viewBox="0 0 390 260">
+      <rect x="95" y="45" width="200" height="135" rx="10"/>
+      <path d="M65 192 L325 192 L305 212 L85 212 Z"/>
+      <path d="M125 85 L265 85 M125 115 L245 115 M125 145 L215 145"/>
+    </svg></div>
+    <p class="bildtext">AI drafts an answer</p>
+  </div>
+
+  <!-- Scen 4: ett papper med rader och en bock. -->
+  <div class="scen" style="left:1410px">
+    <div class="ruta"><svg viewBox="0 0 390 260">
+      <rect x="115" y="30" width="160" height="205" rx="10"/>
+      <path d="M150 75 L240 75 M150 110 L240 110 M150 145 L210 145"/>
+      <path d="M165 190 L185 210 L225 170"/>
+    </svg></div>
+    <p class="bildtext">Class checks the draft</p>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk fylls varje ruta när Johan beskriver scenen. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var scener = gsap.utils.toArray('.scen');
+
+  // Varje streck i skisserna gömms med streckmönstret, så att det kan
+  // ritas fram. Glappet är längre än strecket och mönstret startar en bit
+  // in i glappet, annars syns runda prickar där strecken börjar.
+  gsap.utils.toArray('.ruta path, .ruta rect, .ruta circle').forEach(function (el) {
+    var l = el.getTotalLength();
+    gsap.set(el, { strokeDasharray: l + ' ' + (l + 20), strokeDashoffset: l + 10 });
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och de fyra tomma rutorna.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.ruta', { opacity: 0, y: 30, stagger: STEG }, 0.3);
+
+  // Rutorna fylls en i taget: rutan i arbete får kopparkant (fokus),
+  // skissen ritas, bildtexten kommer. Förra rutan går tillbaka till
+  // vanlig kant. Tyst: det är en följd, inget enskilt ögonblick.
+  scener.forEach(function (s, i) {
+    var t = 1.6 + i * 2.2;
+    if (i > 0) tl.to(scener[i - 1].querySelector('.ruta'), { borderColor: '#DDE3EA', boxShadow: '0 0 0 0px rgba(194,121,58,0)', duration: 0.5 }, t);
+    tl.to(s.querySelector('.ruta'), { borderColor: '#C2793A', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.5 }, t);
+    tl.to(s.querySelectorAll('path, rect, circle'), { strokeDashoffset: 0, duration: 1.0, stagger: 0.15, ease: 'power1.inOut' }, t + 0.2);
+    tl.from(s.querySelector('.bildtext'), { opacity: 0, y: 16 }, t + 1.0);
+  });
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

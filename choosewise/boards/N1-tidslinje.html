@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N1 · Historical timeline</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Spåret: tidslinjen är bredare än bilden ----------
+     Hela linjen är 3400 px bred. Kameran "åker" genom att spåret flyttas
+     åt vänster, så att händelsen i fokus hamnar mitt i bilden. */
+  .spar { position: absolute; left: 0; top: 0; width: 3400px; height: 1080px; }
+
+  /* Själva linjen. Den ritas fram från vänster när boarden öppnar. */
+  .axel {
+    position: absolute; left: 120px; top: 600px; width: 3160px; height: 3px;
+    background: var(--cw-text-ljus-dampad); transform-origin: 0 50%;
+  }
+
+  /* En händelse: en punkt på linjen, ett årtal och en kort text.
+     Texten står omväxlande ovanför (.upp) och under (.ner) linjen, så att
+     händelser som ligger nära varandra inte krockar. */
+  .handelse { position: absolute; top: 600px; width: 0; height: 0; }
+  .punkt {
+    position: absolute; left: -14px; top: -13px; width: 28px; height: 28px;
+    border-radius: 50%; background: var(--cw-text-ljus);
+  }
+  .text { position: absolute; left: -14px; width: 460px; }
+  .upp .text { bottom: 48px; }
+  .ner .text { top: 48px; }
+  .ar {
+    display: block; font-size: var(--cw-min-siffra); font-weight: var(--cw-vikt-tunn);
+    line-height: 1; margin-bottom: 12px;
+  }
+  .ner .ar { margin: 0 0 12px; }
+
+  /* Fokus (punkten och årtalet blir koppar) sätts av rörelsen nedan,
+     så att det blir rätt även när exporten hoppar till en viss bildruta. */
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">From Turing to ChatGPT</h1>
+
+  <!-- Spåret med linjen och händelserna. data-ar styr var på linjen
+       händelsen hamnar: 40 px per år, så avstånden stämmer med tiden. -->
+  <div class="spar">
+    <div class="axel"></div>
+
+    <div class="handelse upp" data-ar="1950">
+      <div class="punkt"></div>
+      <div class="text"><span class="ar">1950</span><span class="etikett">Turing asks: can machines think?</span></div>
+    </div>
+    <div class="handelse ner" data-ar="1956">
+      <div class="punkt"></div>
+      <div class="text"><span class="ar">1956</span><span class="etikett">The term “artificial intelligence” is coined</span></div>
+    </div>
+    <div class="handelse upp" data-ar="1966">
+      <div class="punkt"></div>
+      <div class="text"><span class="ar">1966</span><span class="etikett">ELIZA, an early chatbot</span></div>
+    </div>
+    <div class="handelse ner" data-ar="1997">
+      <div class="punkt"></div>
+      <div class="text"><span class="ar">1997</span><span class="etikett">Deep Blue beats the world chess champion</span></div>
+    </div>
+    <div class="handelse upp" data-ar="2022">
+      <div class="punkt"></div>
+      <div class="text"><span class="ar">2022</span><span class="etikett">ChatGPT is released</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Tiderna här är provtider. När boarden synkas till Johans röst flyttas
+     varje händelse till sekunden då han säger årtalet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var handelser = gsap.utils.toArray('.handelse');
+  var spar = document.querySelector('.spar');
+
+  // Placera varje händelse på linjen efter sitt årtal.
+  handelser.forEach(function (h) {
+    h.style.left = (200 + (h.dataset.ar - 1950) * 40) + 'px';
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken växer fram och linjen ritas (tyst: en framväxt har inget ljud).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.axel', { scaleX: 0, duration: 1.4, ease: 'power2.inOut' }, 0.3);
+
+  var tid = 1.6, spararX = 0;
+  handelser.forEach(function (h, i) {
+    var x = parseFloat(h.style.left);
+    // Kameran åker så att händelsen hamnar vid x 700, men aldrig före början.
+    var nyttX = Math.min(0, 700 - x);
+    var stracka = spararX - nyttX;
+    if (stracka > 0) {
+      tl.to(spar, { x: nyttX, duration: 1.6, ease: 'power2.inOut' }, tid);
+      // Händelser som skulle hamna utanför vänsterkanten tonas bort helt,
+      // så att ingen avklippt text står kvar i bilden.
+      handelser.slice(0, i).forEach(function (f) {
+        if (parseFloat(f.style.left) + nyttX - 14 < 120) tl.to(f, { opacity: 0, duration: 0.6 }, tid);
+      });
+      tid += 1.4;
+      spararX = nyttX;
+    }
+    // Förra händelsen tappar fokus och tonas ned.
+    if (i > 0) {
+      var forra = handelser[i - 1];
+      // Står den kvar i bilden tonas den ned, annars är den redan bortonad.
+      var synlig = parseFloat(forra.style.left) + spararX - 14 >= 120;
+      tl.to(forra, { opacity: synlig ? 0.38 : 0, duration: 0.5 }, tid);
+      tl.to(forra.querySelector('.punkt'), { backgroundColor: '#0C1A2E', boxShadow: '0 0 0 0px rgba(194,121,58,0)', duration: 0.5 }, tid);
+      tl.to(forra.querySelector('.ar'), { color: '#0C1A2E', duration: 0.5 }, tid);
+    }
+    // Den nya händelsen kommer in och får fokus i koppar.
+    tl.from(h.querySelector('.punkt'), { scale: 0, duration: 0.5, ease: 'back.out(2)' }, tid);
+    tl.from(h.querySelectorAll('.ar, .etikett'), { opacity: 0, y: 24, stagger: STEG }, tid + 0.1);
+    tl.to(h.querySelector('.punkt'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 16px rgba(194,121,58,.34)', duration: 0.6 }, tid + 0.3);
+    tl.to(h.querySelector('.ar'), { color: '#9C5A24', duration: 0.6 }, tid + 0.3);
+    tid += 2.6;
+  });
+
+  tl.to({}, { duration: 2 }, tid);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

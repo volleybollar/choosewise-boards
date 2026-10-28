@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S18 · Swipe reveal</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Bildramen ----------
+     Två bilder ligger exakt på varandra i samma ram. Den översta ("utan kod")
+     sveps bort åt vänster och visar den undre ("med kod").
+     Ramen slutar vid x 1440 och y 950, långt från kamerazonen. */
+  .ram {
+    position: absolute; left: 140px; top: 250px; width: 1300px; height: 700px;
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    border: 2px solid var(--cw-kant-ljus);
+  }
+  .lager { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .lager svg { display: block; width: 100%; height: 100%; }
+  /* Den översta bilden får en mjuk skugga i kanten, så att svepet syns. */
+  .lager.utan { box-shadow: 24px 0 48px rgba(11, 58, 111, .18); }
+
+  /* Etiketten i bildens hörn: "Without code" eller "With code". */
+  .lapp {
+    position: absolute; left: 32px; top: 32px; padding: 8px 30px;
+    border-radius: 999px; background: var(--cw-ljus);
+    font-size: var(--cw-min-etikett); line-height: 1.2;
+  }
+
+  /* ---------- Bildens färger ----------
+     Samma motiv (en skola på en kulle) ritas två gånger. Klassen på lagret
+     bestämmer färgerna: .utan är blek och suddig, .med är skarp och tydlig. */
+  .utan svg { filter: blur(2px); }
+  .utan .himmel { fill: var(--cw-ljus-alt); }
+  .utan .sol    { fill: var(--cw-ljus); }
+  .utan .kulle-bak  { fill: var(--cw-kant-ljus); }
+  .utan .kulle-fram { fill: var(--cw-text-mork-dampad); opacity: .55; }
+  .utan .hus    { fill: var(--cw-ljus); }
+  .utan .tak, .utan .dorr { fill: var(--cw-kant-ljus); }
+  .utan .fonster { fill: var(--cw-ljus-alt); }
+  .utan .stam   { fill: var(--cw-text-ljus-dampad); opacity: .4; }
+  .utan .krona  { fill: var(--cw-text-mork-dampad); opacity: .5; }
+
+  .med .himmel { fill: var(--cw-serie-3); }
+  .med .sol    { fill: var(--cw-ljus); }
+  .med .kulle-bak  { fill: var(--cw-serie-2); }
+  .med .kulle-fram { fill: var(--cw-serie-1); }
+  .med .hus    { fill: var(--cw-ljus); }
+  .med .tak, .med .dorr { fill: var(--cw-accent); }
+  .med .fonster { fill: var(--cw-serie-3); }
+  .med .stam   { fill: var(--cw-text-ljus); }
+  .med .krona  { fill: var(--cw-serie-2); }
+  /* Med kod: tydliga konturer, som en tecknad illustration. */
+  .med svg * { stroke: var(--cw-text-ljus); stroke-width: 6; stroke-linejoin: round; }
+  .med .himmel { stroke: none; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Same prompt, one code added</h1>
+
+  <div class="ram">
+    <!-- Undre lagret: bilden MED kod. Syns när det översta sveps bort. -->
+    <div class="lager med"><span class="lapp">With code</span></div>
+    <!-- Översta lagret: bilden UTAN kod. -->
+    <div class="lager utan"><span class="lapp">Without code</span></div>
+  </div>
+
+  <!-- Motivet ritas en gång här och kopieras till båda lagren av skriptet.
+       Byt gärna motiv: behåll klassnamnen, så följer färgerna med. -->
+  <template id="motiv">
+    <svg viewBox="0 0 1300 700" preserveAspectRatio="xMidYMid slice">
+      <rect class="himmel" width="1300" height="700"/>
+      <circle class="sol" cx="1060" cy="170" r="78"/>
+      <path class="kulle-bak" d="M0 470 Q 320 360 650 450 T 1300 420 V700 H0 Z"/>
+      <rect class="hus" x="430" y="300" width="400" height="250" rx="6"/>
+      <polygon class="tak" points="400,310 630,175 860,310"/>
+      <rect class="fonster" x="470" y="350" width="90" height="70" rx="6"/>
+      <rect class="fonster" x="700" y="350" width="90" height="70" rx="6"/>
+      <rect class="dorr" x="590" y="440" width="80" height="110" rx="6"/>
+      <path class="kulle-fram" d="M0 560 Q 400 490 800 560 T 1300 545 V700 H0 Z"/>
+      <rect class="stam" x="1000" y="440" width="24" height="110" rx="6"/>
+      <circle class="krona" cx="1012" cy="410" r="78"/>
+      <rect class="stam" x="200" y="460" width="22" height="100" rx="6"/>
+      <circle class="krona" cx="211" cy="430" r="66"/>
+    </svg>
+  </template>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  // Lägg in motivet i båda lagren, före etiketten.
+  var motiv = document.getElementById('motiv');
+  document.querySelectorAll('.lager').forEach(function (l) {
+    l.insertBefore(motiv.content.cloneNode(true), l.firstChild);
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk sveper bilden bort när Johan säger "with the code". */
+  var IN = 0.8, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och ramen med bilden utan kod.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.ram', { opacity: 0, y: 40 }, 0.3);
+  tl.from('.utan .lapp', { opacity: 0, y: 16 }, 1.2);
+
+  // Svepet: det översta lagret glider ut åt vänster (tyst).
+  tl.to('.lager.utan', { xPercent: -104, duration: 1.6, ease: 'power2.inOut' }, 3.4);
+  tl.from('.med .lapp', { opacity: 0, y: 16 }, 4.6);
+
+  // Fokus: etiketten "With code" blir koppar. Ett klick när den landar.
+  var tF = 5.8;
+  tl.to('.med .lapp', { color: '#9C5A24', boxShadow: '0 0 0 6px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>
