@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A139 · Error to fix</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tre rutor uppifrån och ned ----------
+     Problemet, lösningen och resultatet. Alla rutor slutar vid x 1500,
+     så kamerazonen nere till höger är tom. */
+  .ruta {
+    position: absolute; left: 140px; width: 1360px;
+    display: flex; align-items: center; gap: 36px; padding: 0 48px;
+    border-radius: var(--cw-radie-media); font-size: var(--cw-min-etikett); line-height: 1.3;
+  }
+  .ruta p { margin: 0; }
+  .ruta .dampad { color: var(--cw-text-ljus-dampad); }
+
+  /* Symbolen till vänster i rutan: ett kryss eller en bock i en ring. */
+  .symbol {
+    flex: 0 0 72px; height: 72px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px; font-weight: var(--cw-vikt-stark);
+  }
+
+  /* Problemet: grå yta, krysset i dämpad färg. */
+  .fel { top: 240px; height: 190px; background: var(--cw-ljus-alt); }
+  .fel .symbol { border: 3px solid var(--cw-text-ljus-dampad); color: var(--cw-text-ljus-dampad); }
+
+  /* Lösningen: en rad med blå kant. Den blir koppar när fokus landar. */
+  .fix {
+    top: 470px; height: 120px; background: #FFFFFF;
+    border: 3px solid var(--cw-accent); font-weight: var(--cw-vikt-stark);
+  }
+
+  /* Resultatet: vit yta med skugga, bocken i blått. */
+  .ok {
+    top: 630px; height: 190px; background: #FFFFFF;
+    border: 2px solid var(--cw-kant-ljus); box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  .ok .symbol { background: var(--cw-accent); color: #FFFFFF; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">It went wrong. Here’s the fix.</h1>
+
+  <!-- 1. Problemet: vad som gick fel med AI-svaret. -->
+  <div class="ruta fel">
+    <div class="symbol">✕</div>
+    <div><p>The answer is too hard.</p><p class="dampad">My Year 4 pupils can’t read it.</p></div>
+  </div>
+
+  <!-- 2. Lösningen: den enda sak som ändrades i prompten. -->
+  <div class="ruta fix">Fix: add “for a 9-year-old” to the prompt.</div>
+
+  <!-- 3. Resultatet efter ändringen. -->
+  <div class="ruta ok">
+    <div class="symbol">✓</div>
+    <div><p>Short sentences, everyday words.</p><p class="dampad">The whole class can read it.</p></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer problemet när Johan beskriver det, och
+     lösningen landar när han säger vad han ändrade. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken och problemet (tyst: en framväxt har inget ljud).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.fel', { opacity: 0, y: 30 }, 0.6);
+
+  // Lösningen landar och får fokus i koppar. Problemet tonas ned. Ett klick.
+  var tF = 2.8;
+  tl.from('.fix', { opacity: 0, y: 30 }, tF);
+  tl.to('.fel', { opacity: 0.38, duration: 0.6 }, tF + 0.4);
+  tl.to('.fix', { borderColor: '#C2793A', color: '#9C5A24', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.6 }, tF + 0.4);
+  Tavla.ljud(tl, tF + 0.5, 'landa');
+
+  // Resultatet kommer in under lösningen.
+  tl.from('.ok', { opacity: 0, y: 30 }, tF + 2.0);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

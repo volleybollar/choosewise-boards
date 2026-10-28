@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P230 · Rotating word</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- En fast fras och ett ord som rullar ----------
+     Första raden står still. På andra raden rullar sista ordet uppåt som
+     i en spelautomat: ett nytt ord i taget, och det sista blir fokus.
+     Allt ligger till vänster om x 1400, långt från kamerazonen. */
+  .fast {
+    position: absolute; left: 120px; top: 330px; white-space: nowrap;
+    font-size: 150px; font-weight: var(--cw-vikt-display); line-height: 1; letter-spacing: -0.02em;
+  }
+
+  /* Fönstret som orden rullar i. overflow: hidden döljer orden ovanför
+     och under, så att bara ett ord syns åt gången. */
+  .rulle {
+    position: absolute; left: 120px; top: 540px; width: 1300px; height: 190px; overflow: hidden;
+  }
+  /* Bandet med alla ord under varandra; det är bandet som flyttas uppåt. */
+  .band { position: absolute; left: 0; top: 0; }
+  .ord {
+    height: 190px; white-space: nowrap;
+    font-size: 150px; font-weight: var(--cw-vikt-stark); line-height: 190px; letter-spacing: -0.02em;
+  }
+  /* Varje ord har sin egen blå ton. Kopparn sätts på det sista vid fokus. */
+  .ord:nth-child(1) { color: var(--cw-serie-1); }
+  .ord:nth-child(2) { color: var(--cw-serie-2); }
+  .ord:nth-child(3) { color: var(--cw-serie-1); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">What AI can do for you</h1>
+
+  <div class="fast">AI helps teachers</div>
+
+  <!-- Orden som rullar, i den ordning de visas. Byt gärna ord här. -->
+  <div class="rulle">
+    <div class="band">
+      <div class="ord">plan lessons.</div>
+      <div class="ord">adapt tasks.</div>
+      <div class="ord">give feedback.</div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk rullar varje ord fram när Johan säger det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var HOJD = 190;                                     // ett ords höjd i rullen
+  var ord = gsap.utils.toArray('.ord');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och den fasta frasen.
+  tl.from('.rubrik, .fast', { opacity: 0, y: 24, stagger: STEG }, 0);
+  // Första ordet glider upp i rullen.
+  tl.from('.band', { y: HOJD, duration: 0.8 }, 1.2);
+
+  // Sedan rullar bandet ett ord i taget (tyst). Ordet som lämnar tonas ned.
+  var tid = 3.4;
+  for (var i = 1; i < ord.length; i++) {
+    tl.to('.band', { y: -HOJD * i, duration: 0.8, ease: 'power3.inOut' }, tid);
+    tl.to(ord[i - 1], { opacity: 0.38, duration: 0.5 }, tid);
+    tid += 2.2;
+  }
+
+  // Fokus: sista ordet blir koppar när det har landat. Ett klick.
+  var tF = tid - 2.2 + 0.9;
+  tl.to(ord[ord.length - 1], { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

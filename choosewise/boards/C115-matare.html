@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C115 · Gauge and checklist</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Mätaren (vänster) ----------
+     En halvcirkel från 0 till 100 med tre zoner i blått, ljust till
+     mörkt. Mitten ligger på x 520, y 720. Nålen svänger in och talet
+     räknar upp till samma värde. */
+  svg.matare { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  .zon { fill: none; stroke-width: 64; }
+  .nal { stroke: var(--cw-text-ljus); stroke-width: 12; stroke-linecap: round; }
+  .nav { fill: var(--cw-text-ljus); }
+  .skal { position: absolute; top: 740px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .varde {
+    position: absolute; left: 270px; top: 770px; width: 500px; text-align: center;
+    font-size: 140px; font-weight: var(--cw-vikt-tunn); line-height: 1; color: var(--cw-text-ljus);
+  }
+  .vardenamn {
+    position: absolute; left: 270px; top: 920px; width: 500px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* ---------- Checklistan (höger) ----------
+     Det som är gjort och det som är kvar. Slutar ovanför y 720 så att
+     kamerazonen är tom. */
+  .lista { position: absolute; left: 1020px; top: 320px; }
+  .punkt { display: flex; align-items: center; gap: 24px; height: 64px; margin-bottom: 40px; font-size: var(--cw-min-etikett); }
+  .punkt i {
+    flex: 0 0 48px; height: 48px; border-radius: 50%; display: block;
+  }
+  /* Bocken är en liten ritad linje, inte ett tecken. */
+  .punkt svg { width: 48px; height: 48px; display: block; }
+  .punkt polyline { fill: none; stroke: var(--cw-ljus); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+  /* Ifylld blå cirkel med bock = klart. Tom ring = kvar. */
+  .klar i { background: var(--cw-accent); }
+  .kvar i { border: 4px solid var(--cw-text-ljus-dampad); }
+  .kvar { color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">How ready is our school for AI?</h1>
+  <!-- Byts mot en riktig bedömning med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Mätarens båge (tre zoner), nålen och navet. Bågarna ritas i skriptet. -->
+  <svg class="matare" viewBox="0 0 1920 1080">
+    <g class="zoner"></g>
+    <line class="nal" x1="520" y1="720" x2="520" y2="460"></line>
+    <circle class="nav" cx="520" cy="720" r="26"></circle>
+  </svg>
+  <div class="skal" style="left:160px">0</div>
+  <div class="skal" style="left:840px">100</div>
+  <div class="varde">0%</div>
+  <div class="vardenamn">AI readiness</div>
+
+  <!-- Checklistan. -->
+  <div class="lista">
+    <div class="punkt klar"><i><svg viewBox="0 0 48 48"><polyline points="14,25 21,32 34,17"/></svg></i>AI policy agreed</div>
+    <div class="punkt klar"><i><svg viewBox="0 0 48 48"><polyline points="14,25 21,32 34,17"/></svg></i>Staff trained</div>
+    <div class="punkt kvar"><i></i>Parents informed</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== DATA ===== Värdet (0–100) och zonernas gränser. */
+  var VARDE = 70;
+  var ZONER = [[0, 40, '#A9BBD0'], [40, 75, '#4A7FB5'], [75, 100, '#0B3A6F']];   // serie-3, -2, -1
+  var CX = 520, CY = 720, R = 320;
+
+  // Räkna ut en punkt på bågen för ett värde (0 = vänster, 100 = höger).
+  function punkt(v) {
+    var a = Math.PI * (1 - v / 100);
+    return (CX + R * Math.cos(a)) + ' ' + (CY - R * Math.sin(a));
+  }
+  var NS = 'http://www.w3.org/2000/svg';
+  var zonGrupp = document.querySelector('.zoner');
+  ZONER.forEach(function (z) {
+    var p = document.createElementNS(NS, 'path');
+    p.setAttribute('class', 'zon');
+    p.setAttribute('d', 'M' + punkt(z[0]) + ' A' + R + ' ' + R + ' 0 0 1 ' + punkt(z[1]));
+    p.setAttribute('stroke', z[2]);
+    zonGrupp.appendChild(p);
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk svänger nålen in när Johan säger talet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Nålen startar på 0 (rakt åt vänster): −90 grader runt navet.
+  gsap.set('.nal', { rotation: -90, svgOrigin: CX + ' ' + CY });
+
+  // Struktur först: rubrik, märket, bågen, skalan och den tomma listan.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.zon', { opacity: 0, stagger: STEG }, 0.3);
+  tl.from('.skal, .vardenamn', { opacity: 0, y: 16, stagger: 0.08 }, 0.6);
+
+  // Checklistan fylls i en punkt i taget (tyst).
+  tl.from('.punkt', { opacity: 0, x: -24, stagger: 1.0 }, 1.6);
+
+  // Nålen svänger in med en liten översväng medan talet räknar upp.
+  var tN = 5.0, svang = 2.0;
+  var r = { v: 0 };
+  tl.to('.nal', { rotation: -90 + 180 * VARDE / 100, duration: svang, ease: 'back.out(1.4)' }, tN);
+  tl.to(r, { v: VARDE, duration: svang, ease: 'power2.out',
+    onUpdate: function () { document.querySelector('.varde').textContent = Math.round(r.v) + '%'; } }, tN);
+
+  // Fokus: talet blir koppar när nålen har landat. Ett klick.
+  var tF = tN + svang;
+  tl.to('.varde', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.nal', { stroke: '#C2793A', duration: 0.6 }, tF);
+  tl.to('.nav', { fill: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

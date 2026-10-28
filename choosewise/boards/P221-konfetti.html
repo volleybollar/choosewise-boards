@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P221 · Approved</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Kortet ----------
+     Ett platt kort med vad det gäller och omdömet. Konfettin skjuts ut från
+     mitten av kortets överkant (860, 400). Kortet ligger lite till vänster,
+     så att konfettin aldrig når kamerazonen. */
+  .kort {
+    position: absolute; left: 480px; top: 400px; width: 760px; height: 380px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .12);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  }
+  .kort .etikett { color: var(--cw-text-ljus-dampad); }
+  /* Omdömet: stort och tunt. Det blir koppar när det landar. */
+  .omdome { font-size: 150px; font-weight: var(--cw-vikt-tunn); letter-spacing: -0.03em; line-height: 1; }
+
+  /* En konfettibit: en liten rundad remsa. Färg, plats och vridning sätts
+     i skriptet. Bitarna startar vid kortets överkant och faller sedan
+     framför kortet medan de tonas bort. */
+  .bit {
+    position: absolute; left: 853px; top: 387px; width: 14px; height: 26px;
+    border-radius: 4px; opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Our AI guidelines</h1>
+
+  <div class="kort">
+    <div class="etikett">Reviewed by staff and students</div>
+    <div class="omdome">Approved</div>
+  </div>
+
+  <!-- Konfettibitarna skapas här av skriptet, efter kortet, så att de
+       faller framför det. -->
+  <div class="konfetti"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar "Approved" och konfettin på ordet som
+     berättar att det är klart. Bara en gång per film. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+
+  // Slumptal med fast frö: konfettin blir exakt likadan varje gång,
+  // också när exporten ritar bildruta för bildruta.
+  var fro = 221;
+  function slump() {
+    fro = (fro + 0x6D2B79F5) | 0;
+    var t = Math.imul(fro ^ (fro >>> 15), 1 | fro);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  // Lugn konfetti i Choosewise-färgerna: de tre blå serierna, inga regnbågsfärger.
+  var FARGER = ['#0B3A6F', '#4A7FB5', '#A9BBD0'];
+  var ANTAL = 32;
+  var behallare = document.querySelector('.konfetti');
+  for (var i = 0; i < ANTAL; i++) {
+    var b = document.createElement('div');
+    b.className = 'bit';
+    b.style.background = FARGER[i % FARGER.length];
+    behallare.appendChild(b);
+  }
+  var bitar = gsap.utils.toArray('.bit');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och kortet med etiketten. Omdömet är dolt.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.kort', { opacity: 0, y: 40 }, 0.4);
+  tl.from('.kort .etikett', { opacity: 0, y: 16 }, 0.9);
+
+  // Omdömet landar i koppar. Ett klick, och konfettin skjuts ut samtidigt.
+  var tF = 2.6;
+  tl.from('.omdome', { opacity: 0, scale: 0.85, duration: 0.6, ease: 'back.out(1.6)' }, tF);
+  tl.to('.omdome', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.kort', { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  // Varje bit flyger snett uppåt ut från kortets överkant, bromsar, och
+  // faller sedan lugnt nedåt medan den vrider sig och tonas bort. Bitarna
+  // håller sig mellan x 330 och x 1400, under rubriken och utanför kamerazonen.
+  bitar.forEach(function (b) {
+    var vinkel = (-170 + slump() * 160) * Math.PI / 180;   // uppåt, åt båda hållen
+    var kraft = 330 + slump() * 130;
+    var dx = Math.cos(vinkel) * kraft, dy = Math.sin(vinkel) * kraft * 0.45;
+    var vrid = (slump() - 0.5) * 540;
+    var start = tF + slump() * 0.15;
+    tl.set(b, { opacity: 1, x: 0, y: 0, rotation: slump() * 180 }, start);
+    tl.to(b, { x: dx, y: dy, rotation: '+=' + vrid / 2, duration: 0.8, ease: 'power2.out' }, start);
+    tl.to(b, { x: dx * 1.15, y: dy + 360 + slump() * 160, rotation: '+=' + vrid,
+               duration: 2.2, ease: 'power1.in' }, start + 0.8);
+    tl.to(b, { opacity: 0, duration: 0.8, ease: 'none' }, start + 2.2);
+  });
+
+  tl.to({}, { duration: 2.5 }, tF + 3.2);  // vila på slutbilden, konfettin är borta
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

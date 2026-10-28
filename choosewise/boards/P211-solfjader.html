@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P211 · One task, four versions</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Korten ----------
+     Fyra kort ligger först i en prydlig hög mitt på boarden. Sedan fälls de
+     ut som en hand med spelkort. Vridpunkten ligger en bit under korten
+     (transform-origin), därför bildar de en båge.
+     Utfällda slutar korten vid x 1500, till vänster om kamerazonen. */
+  .kort {
+    position: absolute; left: 660px; top: 330px; width: 320px; height: 420px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    box-shadow: 0 18px 40px rgba(11, 58, 111, .10);
+    transform-origin: 50% 170%;
+    padding: 44px 36px;
+  }
+  /* Kortets namn överst. */
+  .kort .namn { font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); }
+  /* Gråa streck som "text" på uppgiftsbladet. Fler streck = mer text.
+     De är bara bild, inget man ska läsa. */
+  .kort .rad { height: 14px; border-radius: 7px; background: var(--cw-ljus-alt); margin-top: 26px; }
+  .kort .rad:first-of-type { margin-top: 48px; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One task, four versions</h1>
+
+  <!-- Korten, i den ordning de fälls ut från vänster till höger.
+       Det sista kortet i koden ligger överst i högen. -->
+  <div class="kort"><div class="namn">Support</div><div class="rad"></div><div class="rad" style="width:70%"></div><div class="rad" style="width:85%"></div></div>
+  <div class="kort"><div class="namn">Core</div><div class="rad"></div><div class="rad"></div><div class="rad" style="width:80%"></div><div class="rad" style="width:60%"></div></div>
+  <div class="kort"><div class="namn">Stretch</div><div class="rad"></div><div class="rad"></div><div class="rad"></div><div class="rad" style="width:90%"></div><div class="rad" style="width:70%"></div></div>
+  <div class="kort"><div class="namn">Bilingual</div><div class="rad"></div><div class="rad" style="width:75%"></div><div class="rad"></div><div class="rad" style="width:65%"></div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk fälls korten ut när Johan säger "four versions",
+     och fokus landar när han nämner det kort som är poängen. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var kort = gsap.utils.toArray('.kort');
+  var mitt = (kort.length - 1) / 2;
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, sedan högen glider upp. Korten ligger lite
+  // förskjutna i högen så att man ser att det är flera.
+  kort.forEach(function (k, i) { gsap.set(k, { x: (i - mitt) * 6, y: (mitt - i) * 6 }); });
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(kort, { opacity: 0, y: '+=40', stagger: 0.08 }, 0.4);
+
+  // Utfällningen: varje kort flyttas i sidled och vrids lite, med en kort
+  // förskjutning mellan korten. Mjukt in, ingen studs.
+  var tUt = 2.4;
+  tl.to(kort, {
+    x: function (i) { return (i - mitt) * 330; },
+    // Korten längst ut hamnar lite lägre, så att handen bildar en båge.
+    y: function (i) { return (i - mitt) * (i - mitt) * 24; },
+    rotation: function (i) { return (i - mitt) * 5; },
+    duration: 1.2, ease: 'power2.inOut', stagger: STEG
+  }, tUt);
+
+  // Fokus: "Stretch" blir koppar, de andra tonas ned. Ett klick.
+  var fokus = kort[2];
+  var tF = tUt + 1.2 + STEG * 3 + 1.4;
+  tl.to(kort.filter(function (k) { return k !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.namn'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2.5 }, tF + 0.6);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C111 · Slope chart</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Två stolpar: före och efter ----------
+     Vänster stolpe vid x 640, höger vid x 1180. Varje ämne är en linje
+     från sitt värde före till sitt värde efter. 100 px per timme. */
+  .stolpe {
+    position: absolute; top: 300px; width: 3px; height: 560px;
+    background: var(--cw-text-ljus); transform-origin: 50% 0;
+  }
+  .stolprubrik {
+    position: absolute; top: 220px; width: 300px; margin-left: -150px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* Linjerna ritas i en SVG som täcker hela boarden. */
+  svg.linjer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  .linje { stroke: var(--cw-accent); stroke-width: 8; stroke-linecap: round; fill: none; }
+  .prick { fill: var(--cw-accent); }
+
+  /* Etiketterna: ämne och värde till vänster, nytt värde till höger.
+     Mitten av texten ligger i höjd med linjens ände. */
+  .etikett-v, .etikett-h {
+    position: absolute; font-size: var(--cw-min-etikett); line-height: 50px; margin-top: -25px;
+    white-space: nowrap;
+  }
+  .etikett-v { right: calc(1920px - 640px + 40px); text-align: right; }   /* slutar 40 px före stolpen */
+  .etikett-h { left: 1220px; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Hours of marking, before and after</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:1000px">Example data · replace with real numbers and source</div>
+
+  <div class="stolpe" style="left:639px"></div>
+  <div class="stolpe" style="left:1179px"></div>
+  <div class="stolprubrik" style="left:640px">Before</div>
+  <div class="stolprubrik" style="left:1180px">With AI</div>
+
+  <!-- Linjerna och etiketterna byggs i skriptet från listan AMNEN. -->
+  <svg class="linjer" viewBox="0 0 1920 1080"></svg>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== DATA =====
+     Timmar rättning per vecka, före och efter. Ändra här. */
+  var AMNEN = [
+    { namn: 'English', fore: 7,   efter: 3 },
+    { namn: 'Science', fore: 5.5, efter: 2 },
+    { namn: 'Maths',   fore: 4,   efter: 5 },
+    { namn: 'History', fore: 2.5, efter: 4 }
+  ];
+  var FOKUS = 0;                       // English: störst förändring
+  function y(h) { return 1000 - h * 100; }   // timmar → y-läge
+
+  // Bygg en linje, två prickar och två etiketter per ämne.
+  var svg = document.querySelector('svg.linjer'), cw = document.querySelector('.cw');
+  var NS = 'http://www.w3.org/2000/svg';
+  var rader = AMNEN.map(function (a) {
+    var g = document.createElementNS(NS, 'g');
+    var l = document.createElementNS(NS, 'line');
+    l.setAttribute('class', 'linje');
+    l.setAttribute('x1', 640); l.setAttribute('y1', y(a.fore));
+    l.setAttribute('x2', 1180); l.setAttribute('y2', y(a.efter));
+    var p1 = document.createElementNS(NS, 'circle'), p2 = document.createElementNS(NS, 'circle');
+    [[p1, 640, a.fore], [p2, 1180, a.efter]].forEach(function (q) {
+      q[0].setAttribute('class', 'prick'); q[0].setAttribute('cx', q[1]); q[0].setAttribute('cy', y(q[2])); q[0].setAttribute('r', 14);
+    });
+    g.appendChild(l); g.appendChild(p1); g.appendChild(p2); svg.appendChild(g);
+    var v = document.createElement('div');
+    v.className = 'etikett-v'; v.style.top = y(a.fore) + 'px'; v.textContent = a.namn + '  ' + a.fore + ' h';
+    var h = document.createElement('div');
+    h.className = 'etikett-h'; h.style.top = y(a.efter) + 'px'; h.textContent = a.efter + ' h';
+    cw.appendChild(v); cw.appendChild(h);
+    var langd = Math.hypot(540, y(a.efter) - y(a.fore));
+    l.style.strokeDasharray = langd; l.style.strokeDashoffset = langd;   // linjen är "oritad" från början
+    return { g: g, linje: l, p1: p1, p2: p2, v: v, h: h };
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk ritas varje linje när Johan säger ämnet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, stolparna och deras rubriker.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.stolpe', { scaleY: 0, duration: 1.0, ease: 'power2.inOut', stagger: STEG }, 0.2);
+  tl.from('.stolprubrik', { opacity: 0, y: 16, stagger: 0.08 }, 0.6);
+
+  // En linje i taget: prick och etikett till vänster, linjen ritas, prick och värde till höger.
+  rader.forEach(function (r, i) {
+    var t = 1.8 + i * 1.6;
+    tl.from(r.p1, { scale: 0, transformOrigin: '50% 50%', duration: 0.4 }, t);
+    tl.from(r.v, { opacity: 0, x: -16, duration: 0.5 }, t);
+    tl.to(r.linje, { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut' }, t + 0.2);
+    tl.from(r.p2, { scale: 0, transformOrigin: '50% 50%', duration: 0.4 }, t + 0.9);
+    tl.from(r.h, { opacity: 0, x: 16, duration: 0.5 }, t + 0.9);
+  });
+
+  // Fokus: English (störst skillnad) blir koppar, de andra tonas ned. Ett klick.
+  var f = rader[FOKUS];
+  var tF = 1.8 + rader.length * 1.6 + 0.6;
+  rader.forEach(function (r) {
+    if (r !== f) tl.to([r.g, r.v, r.h], { opacity: 0.38, duration: 0.6 }, tF);
+  });
+  tl.to(f.linje, { stroke: '#C2793A', duration: 0.6 }, tF);
+  tl.to([f.p1, f.p2], { fill: '#C2793A', duration: 0.6 }, tF);
+  tl.to([f.v, f.h], { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

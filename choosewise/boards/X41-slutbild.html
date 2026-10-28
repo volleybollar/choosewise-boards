@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>X41 · End screen</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Slutbilden ----------
+     Sista bilden i Johans Skool-videor. Mörk scen, eftersom kamerarutan
+     inte visas här. Bara ett tack och adressen: inget annat ska konkurrera
+     med den. Allt håller sig ändå till vänster om x 1400. */
+  .inledning {
+    position: absolute; left: 120px; top: 440px;
+    font-size: 48px; font-weight: var(--cw-vikt-display);
+  }
+  .adress {
+    position: absolute; left: 112px; top: 510px; white-space: nowrap;
+    font-size: 128px; font-weight: var(--cw-vikt-tunn); letter-spacing: -0.02em; line-height: 1.1;
+  }
+  /* Strecket under adressen ritas fram i koppar: det är boardens fokus. */
+  .streck {
+    position: absolute; left: 120px; top: 680px; width: 1180px; height: 6px; border-radius: 3px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (mörk scen: ingen kameraruta på slutbilden) ===== -->
+<div class="cw mork">
+
+  <h1 class="rubrik">Thanks for watching</h1>
+
+  <div class="inledning dampad">More for educators at</div>
+  <div class="adress">choosewise.education</div>
+  <div class="streck"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Slutbilden börjar på Johans avslutningsrad. Allt är på plats
+     inom två sekunder, sedan står bilden still så länge videon behöver. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Tacket, inledningen och adressen (tyst: framväxt).
+  tl.from('.rubrik, .inledning, .adress', { opacity: 0, y: 24, stagger: 0.3 }, 0);
+
+  // Fokus: strecket under adressen ritas fram i koppar. Ett klick när det landar.
+  var tF = 1.2;
+  tl.to('.streck', { scaleX: 1, duration: 0.8 }, tF);
+  Tavla.ljud(tl, tF + 0.6, 'landa');
+
+  // Lång vila: slutbilden står kvar medan Johan tackar för sig.
+  tl.to({}, { duration: 8 });
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

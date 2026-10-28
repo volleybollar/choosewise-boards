@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A136 · File anatomy</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Filen ----------
+     En skill-fil i en mörk kodruta till vänster. Raderna kommer en i taget
+     uppifrån. Till höger pekar två kort på filens två delar och säger vad
+     de gör. Kodrutan slutar vid x 1120; korten slutar ovanför y 720. */
+  .fil {
+    position: absolute; left: 120px; top: 260px; width: 1000px; height: 640px;
+    background: var(--cw-yta-mork); border-radius: var(--cw-radie-media); overflow: hidden;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .18);
+  }
+  /* Filens list med filnamnet. */
+  .fil .list {
+    height: 80px; padding: 0 32px; display: flex; align-items: center;
+    background: rgba(239, 242, 246, .06); color: var(--cw-text-mork-dampad);
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+  }
+  /* Kodraderna: fast teckenbredd, 60 px per rad. */
+  .kod { padding: 28px 32px 0; }
+  .kod div {
+    height: 60px; line-height: 60px; white-space: nowrap;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett); color: var(--cw-text-mork);
+  }
+  .kod .tecken { color: var(--cw-text-mork-dampad); }   /* strecken runt frontmatter */
+
+  /* Klammern utanför kodrutan och kortet som förklarar delen. */
+  .klammer { position: absolute; left: 1140px; width: 8px; border-radius: 4px; background: var(--cw-text-ljus-dampad); }
+  .pinne { position: absolute; left: 1148px; width: 52px; height: 6px; background: var(--cw-text-ljus-dampad); }
+  .kort {
+    position: absolute; left: 1200px; width: 560px; padding: 24px 32px;
+    background: #FFFFFF; border: 4px solid var(--cw-kant-ljus); border-radius: var(--cw-radie-kort);
+    font-size: var(--cw-min-etikett); line-height: 1.2;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">What is inside a skill file</h1>
+
+  <!-- Filen. Raderna med klassen "fram" hör till frontmatter, "instr" till instruktionerna. -->
+  <div class="fil">
+    <div class="list">essay-feedback.md</div>
+    <div class="kod">
+      <div class="fram tecken">---</div>
+      <div class="fram">name: essay-feedback</div>
+      <div class="fram">description: use for Year 8 essays</div>
+      <div class="fram tecken">---</div>
+      <div class="instr"># Give feedback like me</div>
+      <div class="instr">1. Quote the student</div>
+      <div class="instr">2. Name one strength</div>
+      <div class="instr">3. Suggest one next step</div>
+    </div>
+  </div>
+
+  <!-- Del 1: frontmatter (raderna y 368–608). -->
+  <div class="klammer k1" style="top:372px; height:232px"></div>
+  <div class="pinne p1" style="top:445px"></div>
+  <div class="kort c1" style="top:368px">Name, and when to use it</div>
+
+  <!-- Del 2: instruktionerna (raderna y 608–848). Kortet slutar vid y 700. -->
+  <div class="klammer k2" style="top:612px; height:232px"></div>
+  <div class="pinne p2" style="top:625px"></div>
+  <div class="kort c2" style="top:560px">The steps the AI follows</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk tänds varje del när Johan pratar om den. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och den tomma filen.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.fil', { opacity: 0, y: 40 }, 0.3);
+
+  // Raderna kommer en i taget uppifrån (tyst).
+  tl.from('.kod div', { opacity: 0, x: -16, duration: 0.5, stagger: 0.25 }, 1.2);
+
+  // Del 1 i fokus: klammer, pinne och kort kommer fram, raderna och klammern blir koppar.
+  var t1 = 3.8;
+  tl.from('.k1, .p1, .c1', { opacity: 0, x: -16, stagger: STEG }, t1);
+  tl.to('.k1, .p1', { backgroundColor: '#C2793A', duration: 0.6 }, t1 + 0.4);
+  tl.to('.c1', { borderColor: '#C2793A', color: '#9C5A24', duration: 0.6 }, t1 + 0.4);
+  tl.to('.kod .fram', { color: '#C2793A', duration: 0.6 }, t1 + 0.4);
+  tl.to('.kod .instr', { opacity: 0.38, duration: 0.6 }, t1 + 0.4);
+
+  // Del 2 i fokus: del 1 tonas ned och går tillbaka till sina vanliga färger.
+  var t2 = 7.0;
+  tl.to('.kod .fram:not(.tecken)', { color: '#EFF2F6', opacity: 0.38, duration: 0.6 }, t2);
+  tl.to('.kod .tecken', { color: '#8FA3BA', opacity: 0.38, duration: 0.6 }, t2);
+  tl.to('.kod .instr', { opacity: 1, duration: 0.6 }, t2);
+  tl.to('.k1, .p1', { backgroundColor: '#4E5A68', opacity: 0.38, duration: 0.6 }, t2);
+  tl.to('.c1', { borderColor: '#DDE3EA', color: '#0C1A2E', opacity: 0.38, duration: 0.6 }, t2);
+  tl.from('.k2, .p2, .c2', { opacity: 0, x: -16, stagger: STEG }, t2 + 0.2);
+  tl.to('.k2, .p2', { backgroundColor: '#C2793A', duration: 0.6 }, t2 + 0.6);
+  tl.to('.c2', { borderColor: '#C2793A', color: '#9C5A24', duration: 0.6 }, t2 + 0.6);
+  tl.to('.kod .instr', { color: '#C2793A', duration: 0.6 }, t2 + 0.6);
+  // Det här är boardens viktigaste ögonblick: instruktionerna. Ett klick.
+  Tavla.ljud(tl, t2 + 0.7, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

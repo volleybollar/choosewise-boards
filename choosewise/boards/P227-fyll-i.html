@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P227 · Scribble fill</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Diagrammet ----------
+     Samma mått som D43: baslinjen på y 860, staplarna växer uppåt.
+     Allt håller sig till vänster om x 1440, långt från kamerazonen.
+     Staplarna ritas först som tomma konturer och "färgas sedan i" med
+     en tjock tuschpenna som går fram och tillbaka (sicksack). */
+  .baslinje {
+    position: absolute; left: 140px; top: 860px; width: 1300px; height: 3px;
+    background: var(--cw-text-ljus); transform-origin: 0 50%;
+  }
+  /* SVG-lagret med konturer och penndrag ligger över hela boarden. */
+  .rityta { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  .kontur { fill: none; stroke: var(--cw-text-ljus); stroke-width: 4; }
+  /* Penndraget. Färgen sätts här och byts med en tween vid fokus. */
+  .krita { fill: none; stroke: #0B3A6F; stroke-width: 58; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Stapelns etiketter: värdet ovanför och dagen under baslinjen. */
+  .stapel { position: absolute; width: 180px; bottom: 220px; }   /* 1080 − 860 = 220 */
+  .stapel .varde {
+    position: absolute; left: -30px; width: 240px; text-align: center;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+  }
+  .stapel .namn {
+    position: absolute; left: -30px; width: 240px; bottom: -74px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Reading minutes this week</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <div class="baslinje"></div>
+  <!-- Här ritar skriptet konturerna och penndragen. -->
+  <svg class="rityta" viewBox="0 0 1920 1080"><defs></defs></svg>
+
+  <!-- Staplarna. data-minuter är värdet; höjden räknas fram nedan. -->
+  <div class="stapel" data-minuter="20" style="left:160px"><div class="varde">20 min</div><div class="namn">Mon</div></div>
+  <div class="stapel" data-minuter="35" style="left:420px"><div class="varde">35 min</div><div class="namn">Tue</div></div>
+  <div class="stapel" data-minuter="25" style="left:680px"><div class="varde">25 min</div><div class="namn">Wed</div></div>
+  <div class="stapel" data-minuter="40" style="left:940px"><div class="varde">40 min</div><div class="namn">Thu</div></div>
+  <div class="stapel" data-minuter="15" style="left:1200px"><div class="varde">15 min</div><div class="namn">Fri</div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== FÖRBEREDELSER: rita konturer och penndrag ===== */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.querySelector('.rityta');
+  var defs = svg.querySelector('defs');
+  var staplar = gsap.utils.toArray('.stapel');
+  var max = Math.max.apply(null, staplar.map(function (s) { return +s.dataset.minuter; }));
+
+  function nytt(typ, attr) {
+    var e = document.createElementNS(NS, typ);
+    for (var k in attr) e.setAttribute(k, attr[k]);
+    return e;
+  }
+
+  staplar.forEach(function (s, i) {
+    // Höjd: den högsta stapeln blir 480 px, de andra i proportion.
+    var h = 480 * s.dataset.minuter / max;
+    var x = parseFloat(s.style.left), y = 860 - h, b = 180;
+    s.style.height = h + 'px';
+    s.querySelector('.varde').style.bottom = (h + 16) + 'px';
+
+    // Klippytan: penndraget syns bara innanför stapelns form.
+    var klipp = nytt('clipPath', { id: 'klipp' + i });
+    klipp.appendChild(nytt('rect', { x: x, y: y, width: b, height: h, rx: 14 }));
+    defs.appendChild(klipp);
+
+    // Sicksack nerifrån och upp, lite utanför kanterna så att inget hål blir kvar.
+    var d = 'M' + (x - 30) + ',' + 880, upp = false, yy = 880;
+    while (yy > y - 30) { yy -= 24; d += ' L' + (upp ? x - 30 : x + b + 30) + ',' + yy; upp = !upp; }
+    var krita = nytt('path', { d: d, class: 'krita', 'clip-path': 'url(#klipp' + i + ')' });
+    svg.appendChild(krita);
+    svg.appendChild(nytt('rect', { x: x, y: y, width: b, height: h, rx: 14, class: 'kontur' }));
+
+    // Penndraget göms genom att streckmönstret skjuts ut helt; det ritas fram nedan.
+    var langd = krita.getTotalLength();
+    krita.style.strokeDasharray = langd;
+    krita.style.strokeDashoffset = langd;
+    s.krita = krita;
+    s.kontur = svg.lastChild;
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk färgas varje stapel i på ordet som namnger dagen. */
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, baslinjen, konturerna och dagarna.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.baslinje', { scaleX: 0, duration: 1.0, ease: 'power2.inOut' }, 0.2);
+  tl.from(staplar.map(function (s) { return s.kontur; }), { opacity: 0, stagger: STEG }, 0.6);
+  tl.from('.namn', { opacity: 0, y: 16, stagger: 0.08 }, 0.6);
+
+  // Penndraget färgar i en stapel i taget, värdet kommer strax efter (tyst).
+  staplar.forEach(function (s, i) {
+    var t = 1.8 + i * 1.2;
+    tl.to(s.krita, { strokeDashoffset: 0, duration: 1.0, ease: 'power2.inOut' }, t);
+    tl.from(s.querySelector('.varde'), { opacity: 0, y: 16, duration: 0.5 }, t + 0.8);
+  });
+
+  // Fokus: torsdagen (mest läsning) blir koppar, de andra tonas ned. Ett klick.
+  var fokus = staplar[3];
+  var tF = 1.8 + staplar.length * 1.2 + 0.6;
+  staplar.forEach(function (s) {
+    if (s === fokus) return;
+    tl.to([s, s.krita, s.kontur], { opacity: 0.38, duration: 0.6 }, tF);
+  });
+  tl.to(fokus.krita, { stroke: '#C2793A', duration: 0.6 }, tF);
+  tl.to(fokus.kontur, { stroke: '#9C5A24', duration: 0.6 }, tF);
+  tl.to(fokus.querySelectorAll('.varde, .namn'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

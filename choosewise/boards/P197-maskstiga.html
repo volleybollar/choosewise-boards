@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P197 · Mask line reveal</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Påståendet ----------
+     Tre rader, var och en i en egen låda med overflow: hidden. Raden
+     ligger först under lådans nederkant och stiger upp i den, så att den
+     verkar komma ur ingenting. Allt slutar ovanför y 780. */
+  .lada { position: absolute; left: 120px; height: 150px; overflow: hidden; }
+  .lada .rad {
+    font-size: 120px; font-weight: var(--cw-vikt-display); line-height: 150px;
+    letter-spacing: -0.02em; white-space: nowrap;
+  }
+  /* Strecket under nyckelraden. Det ligger i samma låda som raden, så att
+     det blir exakt lika brett som texten, och ritas fram från vänster. */
+  .lada.med-streck { height: 176px; }
+  .streck {
+    position: absolute; left: 0; right: 0; bottom: 6px; height: 8px; border-radius: 4px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One rule for AI homework</h1>
+
+  <!-- Raderna i påståendet. Den sista är nyckelraden. -->
+  <div class="lada" style="top:280px"><div class="rad">Let AI help.</div></div>
+  <div class="lada" style="top:440px"><div class="rad">Let students</div></div>
+  <div class="lada med-streck" style="top:600px"><div class="rad nyckel">do the thinking.</div><div class="streck"></div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk stiger varje rad på sitt första ord. */
+  var EASE = 'power2.out';
+  var nyckel = document.querySelector('.nyckel');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+
+  // Raderna stiger upp ur sina lådor, en i taget.
+  tl.from('.lada .rad', { yPercent: 110, duration: 0.9, ease: 'power2.inOut', stagger: 1.0 }, 1.2);
+
+  // Fokus: strecket ritas fram under nyckelraden och raden blir koppar.
+  // De andra raderna tonas ned. Ett klick när omdömet landar.
+  var tF = 5.2;
+  tl.to('.streck', { scaleX: 1, duration: 0.9, ease: 'power2.inOut' }, tF);
+  tl.to(nyckel, { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.lada .rad:not(.nyckel)', { opacity: 0.38, duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

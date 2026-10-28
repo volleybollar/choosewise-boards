@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A141 · Decision flowchart</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Beslutsträdet ----------
+     Två frågor (vita kort med blå kant) och tre svar (grå kort).
+     Pilarna går nedåt för "no" och åt höger för "yes". Allt slutar vid
+     x 1540, så kamerazonen nere till höger är tom. */
+  .kort {
+    position: absolute; display: flex; align-items: center; padding: 0 44px;
+    border-radius: var(--cw-radie-media); font-size: var(--cw-min-etikett); line-height: 1.2;
+  }
+  .fraga {
+    width: 720px; height: 150px; background: #FFFFFF;
+    border: 3px solid var(--cw-accent); font-weight: var(--cw-vikt-stark);
+  }
+  .svar { background: var(--cw-ljus-alt); }
+  .svar.hoger { width: 540px; height: 150px; }
+  .svar.under { width: 720px; height: 130px; }
+
+  /* Pilarna ritas i en SVG över hela boarden. pathLength="1" gör att
+     strecket kan ritas fram från 0 till 1, oavsett hur långt det är. */
+  svg.pilar { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  .pil { fill: none; stroke: var(--cw-text-ljus-dampad); stroke-width: 4; stroke-linecap: round;
+         stroke-dasharray: 1; stroke-dashoffset: 1; }
+
+  /* "yes" och "no" vid pilarna. */
+  .val { position: absolute; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Should pupils use AI for this?</h1>
+
+  <!-- Pilarna. Varje pil har en spets (de två korta strecken i slutet).
+       Siffran i data-gren säger vilken gren pilen hör till. -->
+  <svg class="pilar">
+    <path class="pil g1" d="M 840 315 L 990 315 M 974 303 L 990 315 L 974 327" pathLength="1"/>
+    <path class="pil g2" d="M 480 390 L 480 510 M 468 494 L 480 510 L 492 494" pathLength="1"/>
+    <path class="pil g3" d="M 840 595 L 990 595 M 974 583 L 990 595 L 974 607" pathLength="1"/>
+    <path class="pil g4" d="M 480 670 L 480 790 M 468 774 L 480 790 L 492 774" pathLength="1"/>
+  </svg>
+
+  <!-- Fråga 1 och dess "yes"-svar till höger. -->
+  <div class="kort fraga" id="f1" style="left:120px; top:240px">Is the skill itself the goal?</div>
+  <div class="val g1" style="left:885px; top:248px">yes</div>
+  <div class="kort svar hoger g1" style="left:1000px; top:240px">No AI for this task</div>
+
+  <!-- "no" leder ned till fråga 2. -->
+  <div class="val g2" style="left:508px; top:422px">no</div>
+  <div class="kort fraga" id="f2" style="left:120px; top:520px">Can pupils check the answer?</div>
+
+  <!-- Fråga 2: "yes" till höger, "no" nedåt. -->
+  <div class="val g3" style="left:885px; top:528px">yes</div>
+  <div class="kort svar hoger g3" id="mal" style="left:1000px; top:520px">Use AI, then discuss</div>
+  <div class="val g4" style="left:508px; top:702px">no</div>
+  <div class="kort svar under g4" style="left:120px; top:800px">Teach checking first</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Först byggs hela trädet. Sedan går vi vägen som Johans röst
+     tar: grenar som inte väljs tonas ned, och svaret längst bort får fokus. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Bygget, steg för steg (tyst: en framväxt har inget ljud).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('#f1', { opacity: 0, y: 24 }, 0.4);
+  var bygg = [
+    ['.pil.g1', '.val.g1, .svar.g1'],
+    ['.pil.g2', '.val.g2, #f2'],
+    ['.pil.g3', '.val.g3, .svar.g3'],
+    ['.pil.g4', '.val.g4, .svar.g4']
+  ];
+  bygg.forEach(function (b, i) {
+    var t = 1.2 + i * 0.8;
+    tl.to(b[0], { strokeDashoffset: 0, duration: 0.6 }, t);
+    tl.from(b[1], { opacity: 0, y: 16, stagger: STEG, duration: 0.6 }, t + 0.3);
+  });
+
+  // Vägen, steg 1: svaret på fråga 1 är "no", så grenen "yes" tonas ned.
+  var tV = 5.0;
+  tl.to('.g1', { opacity: 0.38, duration: 0.6 }, tV);
+  tl.to('.pil.g2', { stroke: '#0C1A2E', duration: 0.6 }, tV);
+
+  // Steg 2: svaret på fråga 2 är "yes". Grenen "no" tonas ned och målet
+  // blir koppar. Ett klick när fokus landar.
+  var tF = 6.4;
+  tl.to('.g4', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.pil.g3', { stroke: '#0C1A2E', duration: 0.6 }, tF);
+  tl.to('#mal', { backgroundColor: '#FFFFFF', color: '#9C5A24', boxShadow: '0 0 0 3px #C2793A, 0 0 0 13px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

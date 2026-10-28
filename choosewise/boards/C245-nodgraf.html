@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C245 · Node graph with one node in focus</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Grafen ----------
+     Fem noder i fyra kolumner: elevens text går både till AI:n och till en
+     kontroll mot bedömningsmatrisen, båda vägarna möts hos läraren, och sist
+     går det tillbaka till eleven. Allt ligger mellan y 320 och y 750, så
+     kamerazonen nere till höger förblir tom. */
+  .kanter { position: absolute; left: 0; top: 0; }
+  .kanter path { stroke: var(--cw-text-ljus-dampad); stroke-width: 5; fill: none; }
+  /* Prickarna som färdas längs kanterna: "datan flödar". */
+  .kanter circle { fill: var(--cw-accent); opacity: 0; }
+
+  .nod {
+    position: absolute; width: 310px; height: 110px; border-radius: 55px;
+    background: #FFFFFF; border: 4px solid var(--cw-text-ljus);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">The teacher stays in the loop</h1>
+
+  <!-- Kanterna mellan noderna, och en prick per kant. Koordinaterna går
+       från högerkanten på en nod till vänsterkanten på nästa. -->
+  <svg class="kanter" width="1920" height="1080">
+    <path d="M430 535 C485 535 485 375 540 375"/>
+    <path d="M430 535 C485 535 485 695 540 695"/>
+    <path d="M850 375 C905 375 905 535 960 535"/>
+    <path d="M850 695 C905 695 905 535 960 535"/>
+    <path d="M1270 535 L1380 535"/>
+    <circle r="12"/><circle r="12"/><circle r="12"/><circle r="12"/><circle r="12"/>
+  </svg>
+
+  <!-- Noderna, från vänster till höger. -->
+  <div class="nod" style="left:120px; top:480px">Essay</div>
+  <div class="nod" style="left:540px; top:320px">AI feedback</div>
+  <div class="nod" style="left:540px; top:640px">Rubric check</div>
+  <div class="nod fokus" style="left:960px; top:480px">Teacher</div>
+  <div class="nod" style="left:1380px; top:480px">Student</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk får läraren fokus på ordet "teacher". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var noder = gsap.utils.toArray('.nod');
+  var kanter = gsap.utils.toArray('.kanter path');
+  var prickar = gsap.utils.toArray('.kanter circle');
+  var fokus = document.querySelector('.nod.fokus');
+
+  // Kanterna ritas med streckmönstret: hela längden "gömd" till att börja med.
+  kanter.forEach(function (k) {
+    var l = k.getTotalLength();
+    gsap.set(k, { strokeDasharray: l, strokeDashoffset: l });
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+
+  // Noderna poppar fram från vänster till höger, sedan ritas kanterna (tyst).
+  tl.from(noder, { opacity: 0, scale: 0.6, duration: 0.6, ease: 'back.out(2)', stagger: 0.3 }, 0.6);
+  tl.to(kanter, { strokeDashoffset: 0, duration: 0.7, stagger: 0.3 }, 2.2);
+
+  // Datan flödar: en prick färdas längs varje kant, en gång, och försvinner.
+  // Pricken placeras med punkter längs kanten, så att exporten kan hoppa
+  // till vilken bildruta som helst och ändå få rätt läge.
+  var tP = 4.4;
+  prickar.forEach(function (p, i) {
+    var k = kanter[i], l = k.getTotalLength(), stod = { v: 0 };
+    var t = tP + (i < 2 ? 0 : i < 4 ? 0.9 : 1.8);   // kolumn för kolumn
+    function placera() {
+      var pt = k.getPointAtLength(stod.v * l);
+      p.setAttribute('cx', pt.x); p.setAttribute('cy', pt.y);
+    }
+    placera();
+    tl.to(p, { opacity: 1, duration: 0.15 }, t);
+    tl.to(stod, { v: 1, duration: 0.9, ease: 'none', onUpdate: placera }, t);
+    tl.to(p, { opacity: 0, duration: 0.15 }, t + 0.9);
+  });
+
+  // Fokus: läraren får en kopparring, resten tonas ned. Fokus är tyst.
+  var tF = tP + 3.2;
+  tl.to(noder.filter(function (n) { return n !== fokus; }).concat(kanter), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { borderColor: '#C2793A', color: '#9C5A24', boxShadow: '0 0 0 16px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

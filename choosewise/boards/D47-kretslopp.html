@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D47 · Cycle</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Kretsen ----------
+     En cirkel med mitten i x 800, y 620 och radien 320. Fyra steg sitter
+     på cirkeln, klockan 12, 3, 6 och 9. Allt slutar före x 1290, långt
+     från kamerazonen. */
+  .spar { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+
+  /* Kopparpricken som åker runt cirkeln och visar var vi är i kretsen.
+     Den ligger under korten, så den "går in" i steget den når. */
+  .polett {
+    position: absolute; left: -20px; top: -20px; width: 40px; height: 40px;
+    border-radius: 50%; background: var(--cw-glod);
+    box-shadow: 0 0 0 14px var(--cw-glod-sken);
+  }
+
+  /* Ett steg: ett platt kort med rundade hörn. Skriptet placerar det. */
+  .kort {
+    position: absolute; width: 320px; height: 96px; border-radius: 48px;
+    background: var(--cw-ljus-alt); color: var(--cw-text-ljus);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett);
+  }
+
+  /* Mitten: vad kretsen heter och hur länge den går. */
+  .mitt {
+    position: absolute; left: 600px; top: 540px; width: 400px; text-align: center;
+    font-size: 66px; font-weight: var(--cw-vikt-display); line-height: 1;
+  }
+  .not {
+    position: absolute; left: 550px; top: 625px; width: 500px; text-align: center;
+    font-family: var(--cw-font-serif); font-style: italic; font-size: 52px;
+    color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">The feedback loop</h1>
+
+  <!-- Cirkeln som stegen sitter på. -->
+  <svg class="spar" viewBox="0 0 1920 1080" aria-hidden="true">
+    <circle class="ring" cx="800" cy="620" r="320" fill="none" stroke="#DDE3EA" stroke-width="6"></circle>
+  </svg>
+  <div class="polett"></div>
+
+  <!-- Stegen i ordning medurs, med början klockan 12. -->
+  <div class="kort">Draft</div>
+  <div class="kort">AI feedback</div>
+  <div class="kort">Teacher check</div>
+  <div class="kort">Revise</div>
+
+  <div class="mitt">Repeat</div>
+  <div class="not">until it’s good</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== PLACERINGEN =====
+     Vinkel 0 är klockan 12, och vinkeln växer medurs. */
+  var MX = 800, MY = 620, R = 320;
+  function punkt(grader) {
+    var v = (grader - 90) * Math.PI / 180;
+    return { x: MX + R * Math.cos(v), y: MY + R * Math.sin(v) };
+  }
+  var kort = gsap.utils.toArray('.kort');
+  kort.forEach(function (k, i) {
+    var p = punkt(i * 360 / kort.length);
+    k.style.left = (p.x - 160) + 'px';
+    k.style.top = (p.y - 48) + 'px';
+  });
+
+  // Poletten flyttas efter en vinkel som GSAP tweenar. Då hamnar den
+  // rätt även när exporten hoppar direkt till en viss bildruta.
+  var polett = document.querySelector('.polett');
+  var varv = { grader: 0 };
+  function flytta() {
+    var p = punkt(varv.grader);
+    polett.style.transform = 'translate(' + p.x + 'px,' + p.y + 'px)';
+  }
+  flytta();
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk når poletten varje steg när Johan säger det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, cirkel, stegen och mitten.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.ring', { opacity: 0, duration: 0.8 }, 0.3);
+  tl.from(kort, { opacity: 0, scale: 0.9, stagger: STEG }, 0.6);
+  tl.from('.mitt, .not', { opacity: 0, y: 16, stagger: STEG }, 1.2);
+
+  // Tänder ett steg (koppar) och tonar ned de andra. Nedtoningen görs med
+  // färger i stället för genomskinlighet: #A0A5AB och #F6F7F7 är samma sak
+  // som 0,38, men korten förblir täta så att cirkeln inte syns igenom.
+  function tand(i, t) {
+    kort.forEach(function (k, j) {
+      if (j === i) {
+        tl.to(k, { backgroundColor: '#C2793A', color: '#FFFFFF',
+                   boxShadow: '0 0 0 14px rgba(194,121,58,.34)', duration: 0.5 }, t);
+      } else {
+        tl.to(k, { backgroundColor: '#F6F7F7', color: '#A0A5AB',
+                   boxShadow: '0 0 0 0px rgba(194,121,58,0)', duration: 0.5 }, t);
+      }
+    });
+  }
+
+  // Ett varv runt kretsen med jämn fart: 2 s per steg. Poletten börjar
+  // vid "Draft" och kommer tillbaka dit, så att man ser att det börjar om.
+  var tVarv = 2.6, PER_STEG = 2.0;
+  tl.from(polett, { opacity: 0, scale: 0, duration: 0.5 }, tVarv - 0.5);
+  tl.to(varv, { grader: 360, duration: PER_STEG * kort.length, ease: 'none', onUpdate: flytta }, tVarv);
+  for (var i = 0; i <= kort.length; i++) {
+    tand(i % kort.length, tVarv + i * PER_STEG - 0.25);
+  }
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

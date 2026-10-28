@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C110 · Grouped bars</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Teckenförklaringen ----------
+     En rad överst: en färgruta och ett namn per verktyg. Samma färger
+     som staplarna (serierna i tema.css). */
+  .forklaring { position: absolute; left: 120px; top: 270px; display: flex; gap: 64px; }
+  .forklaring div { display: flex; align-items: center; gap: 18px; font-size: var(--cw-min-etikett); }
+  .forklaring i { width: 36px; height: 36px; border-radius: 10px; display: block; }
+
+  /* ---------- Diagrammet ----------
+     Baslinjen ligger på y 880. Skalan går från 0 till 10, och 10 är
+     45 px per poäng (450 px högt). Allt slutar före x 1500, så att
+     kamerazonen nere till höger är tom. */
+  .baslinje {
+    position: absolute; left: 200px; top: 880px; width: 1300px; height: 3px;
+    background: var(--cw-text-ljus); transform-origin: 0 50%;
+  }
+  /* Hjälplinjerna för 5 och 10, med talet till vänster. */
+  .hjalplinje { position: absolute; left: 200px; width: 1300px; height: 0; border-top: 2px dashed var(--cw-kant-ljus); }
+  .skaltal {
+    position: absolute; left: 60px; width: 110px; text-align: right;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* En grupp per kriterium. Tre staplar i varje grupp, en per verktyg. */
+  .grupp { position: absolute; bottom: 200px; width: 276px; height: 0; }   /* 1080 − 880 = 200 */
+  .stapel {
+    position: absolute; bottom: 0; width: 80px;
+    border-radius: 14px 14px 0 0; transform-origin: 50% 100%;
+  }
+  .stapel.s1 { left: 0;     background: var(--cw-serie-1); }
+  .stapel.s2 { left: 98px;  background: var(--cw-serie-2); }
+  .stapel.s3 { left: 196px; background: var(--cw-serie-3); }
+  /* Kriteriets namn under baslinjen. */
+  .grupp .namn {
+    position: absolute; left: -30px; width: 336px; top: 22px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  /* Poängen ovanför stapeln i fokus. Den syns först när fokus landar. */
+  .poang {
+    position: absolute; width: 140px; margin-left: -30px; text-align: center;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); color: var(--cw-glod-text);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Three AI tools, four things schools need</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Teckenförklaringen: vilket verktyg som har vilken färg. -->
+  <div class="forklaring">
+    <div><i style="background:var(--cw-serie-1)"></i>Tool A</div>
+    <div><i style="background:var(--cw-serie-2)"></i>Tool B</div>
+    <div><i style="background:var(--cw-serie-3)"></i>Tool C</div>
+  </div>
+
+  <!-- Skalan: hjälplinjer för 5 och 10 poäng, och baslinjen (0). -->
+  <div class="hjalplinje" style="top:655px"></div><div class="skaltal" style="top:630px">5</div>
+  <div class="hjalplinje" style="top:430px"></div><div class="skaltal" style="top:405px">10</div>
+  <div class="skaltal" style="top:855px">0</div>
+  <div class="baslinje"></div>
+
+  <!-- Grupperna. data-poang är poängen för Tool A, B och C (0–10);
+       höjderna räknas fram i skriptet nedan. -->
+  <div class="grupp" data-poang="8,6,7" style="left:240px">
+    <div class="stapel s1"></div><div class="stapel s2"></div><div class="stapel s3"></div>
+    <div class="namn">Accuracy</div>
+  </div>
+  <div class="grupp" data-poang="7,9,5" style="left:560px">
+    <div class="stapel s1"></div><div class="stapel s2"></div><div class="stapel s3"></div>
+    <div class="namn">Speed</div>
+  </div>
+  <div class="grupp" data-poang="4,5,9" style="left:880px">
+    <div class="stapel s1"></div><div class="stapel s2"></div><div class="stapel s3"></div>
+    <div class="namn">Privacy</div>
+  </div>
+  <div class="grupp" data-poang="6,7,6" style="left:1200px">
+    <div class="stapel s1"></div><div class="stapel s2"></div><div class="stapel s3"></div>
+    <div class="namn">Ease of use</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk växer varje grupp på ordet som namnger kriteriet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var PX = 45;   // pixlar per poäng
+  var grupper = gsap.utils.toArray('.grupp');
+
+  // Sätt höjden på varje stapel efter poängen.
+  grupper.forEach(function (g) {
+    var p = g.dataset.poang.split(',');
+    g.querySelectorAll('.stapel').forEach(function (s, i) { s.style.height = (p[i] * PX) + 'px'; });
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, teckenförklaringen, skalan och namnen.
+  tl.from('.rubrik, .exempel, .forklaring', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.baslinje', { scaleX: 0, duration: 1.0, ease: 'power2.inOut' }, 0.2);
+  tl.from('.hjalplinje, .skaltal', { opacity: 0, duration: 0.6 }, 0.6);
+  tl.from('.namn', { opacity: 0, y: 16, stagger: 0.08 }, 0.6);
+
+  // Grupperna växer från vänster till höger, staplarna i gruppen en i taget.
+  grupper.forEach(function (g, i) {
+    tl.from(g.querySelectorAll('.stapel'), { scaleY: 0, duration: 0.9, stagger: STEG }, 1.8 + i * 1.3);
+  });
+
+  // Fokus: Tool C vinner på "Privacy". Stapeln blir koppar, poängen kommer
+  // fram ovanför den och allt annat tonas ned. Ett klick när fokus landar.
+  var fokusGrupp = grupper[2];
+  var fokus = fokusGrupp.querySelector('.s3');
+  var poang = document.createElement('div');
+  poang.className = 'poang';
+  poang.textContent = '9 / 10';
+  poang.style.left = fokus.offsetLeft + 'px';
+  poang.style.bottom = (fokus.offsetHeight + 16) + 'px';
+  fokusGrupp.appendChild(poang);
+
+  var tF = 1.8 + grupper.length * 1.3 + 0.8;
+  var ovriga = gsap.utils.toArray('.stapel').filter(function (s) { return s !== fokus; });
+  tl.to(ovriga, { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(grupper.filter(function (g) { return g !== fokusGrupp; }).map(function (g) { return g.querySelector('.namn'); }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { backgroundColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokusGrupp.querySelector('.namn'), { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.from(poang, { opacity: 0, y: 16, duration: 0.5 }, tF + 0.2);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

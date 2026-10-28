@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D44 · Line chart</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Diagrammets ram ----------
+     Ytan för linjen går från x 260 till x 1440 och från y 320 (100 %)
+     ner till y 860 (0 %). Allt håller sig långt från kamerazonen. */
+
+  /* Stödlinjerna för 0, 50 och 100 %: streckade och ljusa, så att de
+     inte tävlar med själva linjen. */
+  .stod {
+    position: absolute; left: 260px; width: 1180px; height: 0;
+    border-top: 2px dashed var(--cw-kant-ljus);
+  }
+  .stod.bas { border-top: 3px solid var(--cw-text-ljus); }   /* 0 %-linjen är heldragen */
+
+  /* Procenttalen till vänster och veckorna under baslinjen. */
+  .skala {
+    position: absolute; width: 140px; text-align: right;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  .vecka {
+    position: absolute; top: 884px; width: 180px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* Linjen och ytan under den ritas i en SVG som täcker hela boarden. */
+  .graf { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+
+  /* Pricken som åker med linjens spets medan den ritas. */
+  .spets {
+    position: absolute; left: -16px; top: -16px; width: 32px; height: 32px;
+    border-radius: 50%; background: var(--cw-accent); border: 5px solid var(--cw-ljus);
+  }
+
+  /* Vändpunkten: en prick på vecka 5 och en kort förklaring bredvid.
+     Båda blir koppar när fokus landar. */
+  .vand {
+    position: absolute; width: 36px; height: 36px; border-radius: 50%;
+    background: var(--cw-glod); border: 5px solid var(--cw-ljus);
+  }
+  .vandtext {
+    position: absolute; width: 680px; text-align: right; white-space: nowrap;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); color: var(--cw-glod-text);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">When students started revising</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Stödlinjer och procenttal. -->
+  <div class="stod" style="top:320px"></div><div class="skala" style="left:90px; top:294px">100%</div>
+  <div class="stod" style="top:590px"></div><div class="skala" style="left:90px; top:564px">50%</div>
+  <div class="stod bas" style="top:860px"></div><div class="skala" style="left:90px; top:834px">0%</div>
+
+  <!-- Veckorna under baslinjen. Skriptet nedan placerar dem. -->
+  <div class="veckor"></div>
+
+  <!-- Ytan och linjen. Formen räknas fram ur siffrorna i skriptet. -->
+  <svg class="graf" viewBox="0 0 1920 1080" aria-hidden="true">
+    <path class="yta" fill="#0B3A6F" fill-opacity="0.10" stroke="none"></path>
+    <path class="linje" fill="none" stroke="#0B3A6F" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+  <div class="spets"></div>
+
+  <!-- Vändpunkten: vad som hände när kurvan tog fart. -->
+  <div class="vand"></div>
+  <div class="vandtext">Feedback moved into class</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== SIFFRORNA =====
+     Andel elever (procent) som skriver om sitt utkast, vecka 1–7.
+     Exempeldata: byt mot riktiga siffror. VAND är veckan då det vände. */
+  var VARDEN = [8, 12, 15, 22, 48, 70, 78];
+  var VAND = 5;
+
+  // Omvandlar vecka och procent till en punkt på boarden.
+  var X0 = 260, X1 = 1440, Y0 = 860, Y100 = 320;
+  function px(i) { return X0 + i * (X1 - X0) / (VARDEN.length - 1); }
+  function py(v) { return Y0 - v / 100 * (Y0 - Y100); }
+
+  // Rita linjens och ytans form, och lägg ut veckorna.
+  var punkter = VARDEN.map(function (v, i) { return px(i) + ' ' + py(v); });
+  var linje = document.querySelector('.linje');
+  linje.setAttribute('d', 'M' + punkter.join(' L'));
+  document.querySelector('.yta').setAttribute('d',
+    'M' + punkter.join(' L') + ' L' + X1 + ' ' + Y0 + ' L' + X0 + ' ' + Y0 + ' Z');
+  var veckor = document.querySelector('.veckor');
+  VARDEN.forEach(function (v, i) {
+    var d = document.createElement('div');
+    d.className = 'vecka';
+    d.style.left = (px(i) - 90) + 'px';
+    d.textContent = 'Week ' + (i + 1);
+    veckor.appendChild(d);
+  });
+
+  // Vändpunktens prick och text.
+  var vx = px(VAND - 1), vy = py(VARDEN[VAND - 1]);
+  gsap.set('.vand', { left: vx - 18, top: vy - 18 });
+  gsap.set('.vandtext', { left: vx - 720, top: vy - 116 });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk ritas linjen medan Johan berättar, och fokus
+     landar på ordet som förklarar vändningen. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var langd = linje.getTotalLength();
+  var spets = document.querySelector('.spets');
+
+  // Linjen ritas genom att ett streck lika långt som linjen förskjuts.
+  // Samma värde flyttar pricken, så att den alltid sitter på spetsen.
+  var ritad = { p: 0 };
+  function rita() {
+    linje.style.strokeDasharray = langd;
+    linje.style.strokeDashoffset = langd * (1 - ritad.p);
+    var pt = linje.getPointAtLength(langd * ritad.p);
+    spets.style.transform = 'translate(' + pt.x + 'px,' + pt.y + 'px)';
+  }
+  rita();
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, stödlinjer, procenttal och veckor.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.stod', { scaleX: 0, transformOrigin: '0 50%', duration: 1.0, stagger: 0.1, ease: 'power2.inOut' }, 0.2);
+  tl.from('.skala, .vecka', { opacity: 0, y: 16, stagger: 0.05 }, 0.6);
+
+  // Linjen ritas från vänster till höger på 3,4 s (tyst: en framväxt).
+  var tLinje = 2.2;
+  tl.from(spets, { opacity: 0, duration: 0.3 }, tLinje);
+  tl.to(ritad, { p: 1, duration: 3.4, ease: 'power2.inOut', onUpdate: rita }, tLinje);
+  // Ytan under linjen tonas in när linjen är klar.
+  tl.from('.yta', { opacity: 0, duration: 1.0 }, tLinje + 3.2);
+
+  // Fokus: vändpunkten blir koppar och texten kommer in. Ett klick.
+  var tF = tLinje + 4.6;
+  tl.to(['.linje', '.yta', spets], { opacity: 0.38, duration: 0.6 }, tF);
+  tl.from('.vand', { scale: 0, duration: 0.5, ease: 'back.out(2)' }, tF);
+  tl.to('.vand', { boxShadow: '0 0 0 16px rgba(194,121,58,.34)', duration: 0.6 }, tF + 0.2);
+  tl.from('.vandtext', { opacity: 0, x: -24 }, tF + 0.1);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

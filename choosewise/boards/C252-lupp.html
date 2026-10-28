@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C252 · Magnifier lens</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tabellen ----------
+     Provresultat i ett rutnät: 7 kolumner × 5 rader, varje ruta 180 × 110 px.
+     Tabellen slutar vid x 1400 och y 850, långt från kamerazonen.
+     Rutorna byggs av skriptet nedan från listan med värden. */
+  .tabell, .inne { position: absolute; width: 1260px; height: 550px; }
+  .tabell { left: 140px; top: 300px; }
+  .ruta {
+    position: absolute; width: 180px; height: 110px;
+    border-bottom: 2px solid var(--cw-kant-ljus);
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+    line-height: 110px; text-align: center;
+  }
+
+  /* ---------- Luppen ----------
+     .lager täcker tabellen och klipps till en cirkel (clip-path).
+     Inuti ligger en kopia av tabellen (.inne), förstorad 1,6 gånger runt
+     luppens mittpunkt. Ringen (.ring) är luppens kant. */
+  .lager { position: absolute; left: 140px; top: 300px; width: 1260px; height: 550px; }
+  .inne { left: 0; top: 0; background: #FFFFFF; }
+  .ring {
+    position: absolute; left: 140px; top: 300px; width: 300px; height: 300px;
+    margin: -150px 0 0 -150px; border-radius: 50%;
+    border: 4px solid var(--cw-text-ljus);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Find the score that stands out</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Tabellen och luppen. Innehållet fylls i av skriptet. -->
+  <div class="tabell"></div>
+  <div class="lager"><div class="inne"></div></div>
+  <div class="ring"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== TABELLEN =====
+     Exempelvärden, rad för rad. Värdet som luppen ska hitta är 38. */
+  var VARDEN = [
+    [82, 76, 91, 68, 85, 79, 88],
+    [74, 89, 71, 93, 77, 84, 69],
+    [90, 67, 86, 80, 72, 95, 78],
+    [79, 83, 75, 88, 38, 81, 73],
+    [86, 70, 92, 76, 84, 66, 90]
+  ];
+  var MAL = { rad: 3, kol: 4 };
+  var BRED = 180, HOJD = 110, FORSTORING = 1.6, RADIE = 150;
+
+  // Bygg samma rutnät två gånger: i tabellen och i luppens kopia.
+  ['.tabell', '.inne'].forEach(function (sel) {
+    var mal = document.querySelector(sel);
+    VARDEN.forEach(function (rad, r) {
+      rad.forEach(function (v, k) {
+        var d = document.createElement('div');
+        d.className = 'ruta' + (r === MAL.rad && k === MAL.kol ? ' mal' : '');
+        d.style.left = k * BRED + 'px';
+        d.style.top = r * HOJD + 'px';
+        d.textContent = v;
+        mal.appendChild(d);
+      });
+    });
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar luppen på ordet då Johan säger värdet. */
+  var EASE = 'power2.out';
+  var lager = document.querySelector('.lager');
+  var inne = document.querySelector('.inne');
+  var ring = document.querySelector('.ring');
+
+  // Luppens mittpunkt i tabellens koordinater. Varje gång den ändras
+  // flyttas ringen, cirkeln klipps om och kopian förstoras runt punkten.
+  var lins = { x: 270, y: 165 };
+  function placera() {
+    ring.style.transform = 'translate(' + lins.x + 'px,' + lins.y + 'px)';
+    lager.style.clipPath = 'circle(' + RADIE + 'px at ' + lins.x + 'px ' + lins.y + 'px)';
+    inne.style.transformOrigin = lins.x + 'px ' + lins.y + 'px';
+    inne.style.transform = 'scale(' + FORSTORING + ')';
+    // Rutor i kopian som hamnar helt utanför cirkeln döljs. De syns ändå
+    // inte, men annars sticker de förstorade rutorna ut mot kamerazonen.
+    inneRutor.forEach(function (d) {
+      var x = lins.x + FORSTORING * (parseFloat(d.style.left) + BRED / 2 - lins.x);
+      var y = lins.y + FORSTORING * (parseFloat(d.style.top) + HOJD / 2 - lins.y);
+      var langt = Math.hypot(x - lins.x, y - lins.y) > RADIE + FORSTORING * 110;
+      d.style.visibility = langt ? 'hidden' : 'visible';
+    });
+  }
+  var inneRutor = Array.prototype.slice.call(inne.children);
+  placera();
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Struktur först: rubriken, märket och tabellen finns från start.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: 0.18 }, 0);
+  tl.from('.tabell .ruta', { opacity: 0, duration: 0.6, stagger: { each: 0.02, from: 'start' } }, 0.3);
+
+  // Luppen tonar in över tabellen och söker: två stopp, sedan målet.
+  tl.from('.lager, .ring', { opacity: 0, duration: 0.6 }, 1.6);
+  var mitt = function (r, k) { return { x: k * BRED + BRED / 2, y: r * HOJD + HOJD / 2 }; };
+  var stopp = [mitt(2, 5), mitt(0, 2), mitt(MAL.rad, MAL.kol)];
+  var t = 2.4;
+  stopp.forEach(function (p) {
+    tl.to(lins, { x: p.x, y: p.y, duration: 1.4, ease: 'power2.inOut', onUpdate: placera }, t);
+    t += 2.0;
+  });
+
+  // Fokus: ringen och 38 blir koppar, alla andra värden tonas ned.
+  // Ett klick när luppen har landat på målet.
+  var tF = t - 0.4;
+  tl.to('.ruta:not(.mal)', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.ruta.mal', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to(ring, { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

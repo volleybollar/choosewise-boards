@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A138 · Diff view</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Prompten som ändras ----------
+     En vit panel med prompten rad för rad i typsnitt med fast teckenbredd.
+     Panelen slutar vid x 1500, så kamerazonen nere till höger är tom. */
+  .panel {
+    position: absolute; left: 140px; top: 250px; width: 1360px;
+    padding: 36px 0; background: #FFFFFF;
+    border: 2px solid var(--cw-kant-ljus); border-radius: var(--cw-radie-media);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  .rad {
+    position: relative; display: flex; align-items: center; height: 80px;
+    padding: 0 40px; overflow: hidden; white-space: nowrap;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+  }
+  /* Märket i vänsterkanten: "−" för en borttagen rad, "+" för en ny. */
+  .marke { flex: 0 0 56px; color: var(--cw-text-ljus-dampad); }
+
+  /* Den borttagna raden får en grå bakgrund och ett streck genom texten.
+     Båda tonas eller ritas fram av rörelsen nedan. */
+  .bort .text { position: relative; }
+  .bort .streck {
+    position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px;
+    background: var(--cw-text-ljus-dampad); transform-origin: 0 50%; transform: scaleX(0);
+  }
+
+  /* Den nya raden börjar med höjden 0 och växer fram, så att raden under
+     den flyttar sig ned och lämnar plats. */
+  .ny { height: 0; }
+
+  /* Texten under panelen som säger ändringen med ord. */
+  .budskap {
+    position: absolute; left: 140px; top: 740px;
+    font-size: 56px; font-weight: var(--cw-vikt-display); color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Change one line, not the prompt</h1>
+
+  <!-- Prompten. Raden "bort" stryks, raden "ny" läggs till under den. -->
+  <div class="panel">
+    <div class="rad"><span class="marke"></span><span class="text">Plan a 45-minute lesson on fractions.</span></div>
+    <div class="rad bort"><span class="marke">−</span><span class="text">For a Year 5 class.<b class="streck"></b></span></div>
+    <div class="rad ny"><span class="marke">+</span><span class="text">For Year 5, at two reading levels.</span></div>
+    <div class="rad"><span class="marke"></span><span class="text">End with an exit ticket.</span></div>
+  </div>
+
+  <div class="budskap">Same prompt, one sharper instruction.</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk stryks raden när Johan säger vad som ska bort, och
+     den nya raden kommer när han säger vad som ska in. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var bort = document.querySelector('.bort');
+  var ny = document.querySelector('.ny');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och hela den gamla prompten.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.panel', { opacity: 0, y: 40 }, 0.2);
+
+  // Den gamla raden stryks: grå bakgrund, minustecken, streck genom texten.
+  var tB = 2.0;
+  tl.to(bort, { backgroundColor: '#EFF2F6', color: '#4E5A68', duration: 0.6 }, tB);
+  tl.from(bort.querySelector('.marke'), { opacity: 0, duration: 0.4 }, tB);
+  tl.to(bort.querySelector('.streck'), { scaleX: 1, duration: 0.7 }, tB + 0.2);
+
+  // Den nya raden växer fram under den strukna (tyst: en framväxt har inget ljud).
+  var tN = 3.4;
+  tl.to(ny, { height: 80, duration: 0.7, ease: 'power2.inOut' }, tN);
+  tl.from(ny.querySelectorAll('.marke, .text'), { opacity: 0, x: -16, stagger: STEG }, tN + 0.4);
+
+  // Fokus: den nya raden blir koppar. Den strukna raden tonas ned. Ett klick.
+  var tF = 4.8;
+  tl.to(bort, { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(ny, { backgroundColor: 'rgba(194,121,58,.16)', color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to(ny.querySelector('.marke'), { color: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.from('.budskap', { opacity: 0, y: 24 }, tF + 0.8);
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

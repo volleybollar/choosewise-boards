@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C247 · Chips: from many to three</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Etiketterna (chips) ----------
+     Varje etikett har fast plats och bredd (style på varje chip), så att
+     rörelsen kan räkna ut vart de valda ska åka utan att mäta något.
+     Molnet ligger ovanför y 720 och får därför gå ut till x 1800.
+     Raden längst ned slutar vid x 1380, långt från kamerazonen. */
+  .chip {
+    position: absolute; height: 88px; border-radius: 44px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    font-size: var(--cw-min-etikett); line-height: 82px; text-align: center; white-space: nowrap;
+  }
+
+  /* Rubriken över raden med de valda. */
+  .valda { position: absolute; left: 140px; top: 770px; color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Many AI tools. Start with three.</h1>
+
+  <!-- Molnet: alla verktyg en skola kan välja bland (generiska namn, inga
+       varumärken). De tre med data-mal är de som väljs; data-mal säger
+       vart i raden de åker (x-läge). -->
+  <div class="chip" style="left:140px;  top:290px; width:300px">Quiz maker</div>
+  <div class="chip" style="left:480px;  top:290px; width:340px">Essay grader</div>
+  <div class="chip" style="left:860px;  top:290px; width:380px" data-mal="140">Lesson planner</div>
+  <div class="chip" style="left:1280px; top:290px; width:300px">Translator</div>
+
+  <div class="chip" style="left:220px;  top:420px; width:320px">Image maker</div>
+  <div class="chip" style="left:580px;  top:420px; width:300px">Chat tutor</div>
+  <div class="chip" style="left:920px;  top:420px; width:380px" data-mal="560">Reading levels</div>
+  <div class="chip" style="left:1340px; top:420px; width:320px">Slide maker</div>
+
+  <div class="chip" style="left:160px;  top:550px; width:420px">Plagiarism check</div>
+  <div class="chip" style="left:620px;  top:550px; width:400px" data-mal="980">Feedback drafts</div>
+  <div class="chip" style="left:1060px; top:550px; width:320px">Voice notes</div>
+
+  <div class="valda etikett">Where our school starts</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk sker urvalet på ordet "three" eller "start with". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var chips = gsap.utils.toArray('.chip');
+  var valda = chips.filter(function (c) { return c.dataset.mal; });
+  var andra = chips.filter(function (c) { return !c.dataset.mal; });
+  var RAD_Y = 850;   // radens övre kant
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+
+  // Molnet poppar fram, en etikett i taget (tyst).
+  tl.from(chips, { opacity: 0, scale: 0.6, duration: 0.6, ease: 'back.out(1.6)', stagger: 0.12 }, 0.6);
+
+  // Urvalet: de som inte väljs krymper och försvinner, rubriken över raden
+  // kommer fram och de tre valda åker ned i en ren rad och fylls i djupblått.
+  var tV = 3.8;
+  tl.to(andra, { opacity: 0, scale: 0.6, duration: 0.6, stagger: 0.04 }, tV);
+  tl.from('.valda', { opacity: 0, y: 24 }, tV + 0.4);
+  valda.forEach(function (c, i) {
+    var dx = c.dataset.mal - parseFloat(c.style.left);
+    var dy = RAD_Y - parseFloat(c.style.top);
+    tl.to(c, { x: dx, y: dy, duration: 0.9, ease: 'power3.inOut' }, tV + 0.5 + i * STEG);
+    tl.to(c, { backgroundColor: '#0B3A6F', borderColor: '#0B3A6F', color: '#FFFFFF', duration: 0.6 }, tV + 0.8 + i * STEG);
+  });
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

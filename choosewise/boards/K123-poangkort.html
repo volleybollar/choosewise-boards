@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K123 · Scorecard</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Poängkortet ----------
+     Rader = verktyg, kolumner = det som spelar roll för en skola.
+     Cellerna är en bock (blå), ett kryss (dämpat) eller ett kort värde.
+     Tabellen slutar vid x 1560 och ligger ovanför y 720, så kamerazonen
+     nere till höger är tom. */
+  .huvud, .rad { position: absolute; left: 120px; width: 1440px; display: flex; align-items: center; }
+  .huvud { top: 280px; height: 70px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .rad { height: 110px; border-radius: 24px; font-size: var(--cw-min-etikett); }
+  /* Första kolumnen är verktygets namn, de andra är lika breda. */
+  .namn { width: 400px; padding-left: 24px; font-weight: var(--cw-vikt-stark); }
+  .cell { width: 260px; }
+  .ja { color: var(--cw-accent); font-size: 52px; font-weight: var(--cw-vikt-stark); }
+  .nej { color: var(--cw-text-ljus-dampad); font-size: 52px; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Which AI tool fits your school?</h1>
+  <!-- Byts mot riktiga omdömen med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real checks and source</div>
+
+  <!-- Kolumnernas namn. -->
+  <div class="huvud"><span class="namn"></span><span class="cell">Data deal</span><span class="cell">Fits age</span><span class="cell">Controls</span><span class="cell">Cost</span></div>
+
+  <!-- En rad per verktyg. Klassen "val" är det verktyg som rekommenderas. -->
+  <div class="rad" style="top:370px"><span class="namn">Tool A</span><span class="cell ja">✓</span><span class="cell ja">✓</span><span class="cell nej">✕</span><span class="cell">High</span></div>
+  <div class="rad val" style="top:490px"><span class="namn">Tool B</span><span class="cell ja">✓</span><span class="cell ja">✓</span><span class="cell ja">✓</span><span class="cell">Mid</span></div>
+  <div class="rad" style="top:610px"><span class="namn">Tool C</span><span class="cell nej">✕</span><span class="cell ja">✓</span><span class="cell ja">✓</span><span class="cell">Low</span></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje rad när Johan nämner verktyget, och
+     fokus landar när han säger vilket han väljer. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.rad');
+  var val = document.querySelector('.rad.val');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, märket och kolumnernas namn.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.huvud', { opacity: 0, y: 16 }, 0.4);
+
+  // En rad per verktyg. Cellerna fylls från vänster till höger (tyst).
+  rader.forEach(function (r, i) {
+    var t = 1.4 + i * 1.4;
+    tl.from(r.querySelector('.namn'), { opacity: 0, x: -20 }, t);
+    tl.from(r.querySelectorAll('.cell'), { opacity: 0, y: 12, stagger: STEG, duration: 0.5 }, t + 0.3);
+  });
+
+  // Fokus: det valda verktyget får en kopparton, de andra tonas ned. Ett klick.
+  var tF = 1.4 + rader.length * 1.4 + 0.8;
+  tl.to(rader.filter(function (r) { return r !== val; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(val, { backgroundColor: 'rgba(194,121,58,.16)', boxShadow: '0 0 0 3px #C2793A', duration: 0.6 }, tF);
+  tl.to(val.querySelector('.namn'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

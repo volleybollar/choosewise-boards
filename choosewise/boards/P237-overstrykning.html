@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P237 · Highlighter sweep</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Citatet med två överstrykningar ----------
+     Ett kort citat på fyra rader. En överstrykningspenna drar fram bakom
+     de två fraser som bär poängen: först "före" i gråblått, sedan "efter"
+     i koppar (det är fokus). Allt ligger till vänster om x 1300. */
+  .citat {
+    position: absolute; left: 120px; top: 310px; margin: 0;
+    font-size: 96px; font-weight: var(--cw-vikt-display); line-height: 1.4; letter-spacing: -0.02em;
+  }
+  .rad { display: block; white-space: nowrap; }
+
+  /* En fras med överstrykning. Pennan (.penna) ligger bakom texten:
+     z-index: 0 på frasen och -1 på pennan håller pennan inom frasen. */
+  .fras { position: relative; z-index: 0; }
+  .penna {
+    position: absolute; left: -16px; right: -16px; top: 18%; bottom: 8%; z-index: -1;
+    border-radius: 10px 22px 12px 26px;   /* ojämna hörn, som en riktig penna */
+    transform-origin: 0 50%;   /* lutningen och startbredden sätts i skriptet */
+  }
+  .fore .penna { background: var(--cw-serie-3); }
+  .efter .penna { background: var(--cw-glod-sken); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One teacher, one term later</h1>
+  <!-- Citatet är ett påhittat exempel. Byt mot ett riktigt citat med källa. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <p class="citat">
+    <span class="rad">Marking used to take</span>
+    <span class="rad"><span class="fras fore"><b class="penna"></b>a whole weekend.</span></span>
+    <span class="rad">Now it takes</span>
+    <span class="rad"><span class="fras efter"><b class="penna"></b>one evening.</span></span>
+  </p>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk drar pennan fram på frasen när Johan säger den. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.rad');
+
+  // Pennan lutar en grad och börjar med bredden noll.
+  gsap.set('.penna', { rotation: -1, scaleX: 0 });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken och märket först, sedan citatet rad för rad (tyst).
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from(rader, { opacity: 0, y: 24, stagger: 0.5 }, 0.8);
+
+  // Första överstrykningen: "före" i gråblått.
+  tl.to('.fore .penna', { scaleX: 1, duration: 0.8, ease: 'power3.inOut' }, 3.6);
+
+  // Fokus: andra överstrykningen i koppar, texten blir koppar och de
+  // första tre raderna tonas ned. Ett klick när den har landat.
+  var tF = 6.2;
+  tl.to('.efter .penna', { scaleX: 1, duration: 0.8, ease: 'power3.inOut' }, tF);
+  tl.to('.efter', { color: '#9C5A24', duration: 0.6 }, tF + 0.4);
+  tl.to(rader.slice(0, 3), { opacity: 0.38, duration: 0.6 }, tF + 0.4);
+  Tavla.ljud(tl, tF + 0.8, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

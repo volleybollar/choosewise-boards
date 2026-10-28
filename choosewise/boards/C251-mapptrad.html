@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C251 · Folder tree: grow and open</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Trädet ----------
+     Roten står överst till vänster. Stammen går rakt ned från den, och
+     varje gren är ett kort streck ut till en mapp. Allt ligger till
+     vänster om x 640, så att förhandsvisningen får plats till höger. */
+  .rot, .mapp {
+    position: absolute; padding: 14px 28px; border-radius: 18px;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+    white-space: nowrap; line-height: 1.2;
+  }
+  .rot { left: 120px; top: 240px; background: var(--cw-ljus-alt); transform-origin: 0 50%; }
+  .mapp { left: 240px; background: #FFFFFF; border: 2px solid var(--cw-kant-ljus); }
+  .stam {
+    position: absolute; left: 168px; top: 322px; width: 4px; height: 452px;
+    background: var(--cw-text-ljus-dampad); transform-origin: 50% 0;
+  }
+  .gren {
+    position: absolute; left: 168px; width: 64px; height: 4px;
+    background: var(--cw-text-ljus-dampad); transform-origin: 0 50%;
+  }
+
+  /* ---------- Förhandsvisningen ----------
+     Det som ligger i mappen. Kortet öppnas som en ridå från vänster
+     (clip-path i rörelsen nedan) och slutar vid x 1520, före kamerazonen. */
+  .forhand {
+    position: absolute; left: 820px; top: 380px; width: 700px; height: 420px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media); padding: 50px 56px;
+  }
+  .fil {
+    display: flex; align-items: center; gap: 28px; height: 106px;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+  }
+  /* En enkel filikon: en liten ljusgrå rektangel. */
+  .fil i { flex: 0 0 40px; height: 52px; border-radius: 8px; background: var(--cw-ljus-alt); border: 2px solid var(--cw-kant-ljus); }
+
+  /* Strecket som binder ihop mappen med förhandsvisningen. */
+  .koppling { position: absolute; left: 0; top: 0; overflow: visible; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Open the rubrics folder</h1>
+
+  <!-- Roten, stammen och fyra grenar med varsin mapp.
+       Grenarnas höjd (top) ligger 120 px isär. -->
+  <div class="rot">year-8-science/</div>
+  <div class="stam"></div>
+
+  <div class="gren" style="top:408px"></div>
+  <div class="mapp" style="top:372px">lesson-plans/</div>
+  <div class="gren" style="top:528px"></div>
+  <div class="mapp" style="top:492px">prompts/</div>
+  <div class="gren" style="top:648px"></div>
+  <div class="mapp fokus" style="top:612px">rubrics/</div>
+  <div class="gren" style="top:768px"></div>
+  <div class="mapp" style="top:732px">student-work/</div>
+
+  <!-- Kopplingen från mappen i fokus till förhandsvisningen. -->
+  <svg class="koppling" width="1920" height="1080">
+    <path d="M 520 650 C 670 650 670 590 816 590" fill="none"
+          stroke="#4E5A68" stroke-width="4"/>
+  </svg>
+
+  <!-- Innehållet i mappen. -->
+  <div class="forhand">
+    <div class="fil"><i></i>essay.md</div>
+    <div class="fil"><i></i>lab-report.md</div>
+    <div class="fil"><i></i>presentation.md</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk växer varje gren på ordet som namnger mappen,
+     och fokus landar när Johan säger "rubrics". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var grenar = gsap.utils.toArray('.gren');
+  var mappar = gsap.utils.toArray('.mapp');
+  var fokus = document.querySelector('.mapp.fokus');
+  var bana = document.querySelector('.koppling path');
+  var langd = bana.getTotalLength();
+  bana.style.strokeDasharray = langd;
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken kommer, roten "poppar" fram och stammen växer nedåt.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.rot', { opacity: 0, scale: 0.6, duration: 0.6, ease: 'back.out(2)' }, 0.4);
+  tl.from('.stam', { scaleY: 0, duration: 1.0, ease: 'power2.inOut' }, 1.0);
+
+  // Grenarna ritas ut en i taget, och mappen glider in i änden av grenen.
+  grenar.forEach(function (g, i) {
+    var t = 1.6 + i * 0.6;
+    tl.from(g, { scaleX: 0, duration: 0.5 }, t);
+    tl.from(mappar[i], { opacity: 0, x: -20, duration: 0.6 }, t + 0.15);
+  });
+
+  // Förhandsvisningen och kopplingen är dolda tills mappen öppnas.
+  // (Linjen är också osynlig, annars syns en liten prick där den börjar.)
+  tl.set(bana, { strokeDashoffset: langd, opacity: 0 }, 0);
+  tl.set('.forhand', { clipPath: 'inset(0% 100% 0% 0%)' }, 0);
+
+  // Fokus: "rubrics/" får en kopparring, resten av trädet tonas ned.
+  // Ett klick när fokus landar.
+  var tF = 4.8;
+  tl.to(['.rot', '.stam'].concat(grenar, mappar.filter(function (m) { return m !== fokus; })),
+    { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { color: '#9C5A24', borderColor: '#C2793A',
+    boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  // Kopplingen ritas fram och innehållet öppnas som en ridå åt höger.
+  tl.set(bana, { opacity: 1 }, tF + 0.8);
+  tl.to(bana, { strokeDashoffset: 0, duration: 0.6 }, tF + 0.8);
+  tl.to('.forhand', { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.9, ease: 'power2.inOut' }, tF + 1.2);
+  tl.from('.fil', { opacity: 0, x: -16, stagger: STEG, duration: 0.6 }, tF + 1.6);
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

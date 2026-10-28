@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C242 · App window with one area in focus</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Fönstrets kontur ----------
+     En tunn ram som ritas fram först, innan appen fylls i. Den ligger i en
+     SVG över hela boarden. Fönstret slutar vid x 1500 och y 880, så att
+     kamerazonen nere till höger alltid är tom. */
+  .kontur { position: absolute; left: 0; top: 0; }
+
+  /* ---------- Appen ----------
+     En generisk app utan varumärke: en list med tre prickar, en sidomeny,
+     en elevtext i mitten och en panel med AI-feedback till höger.
+     Grå streck står för text som inte behöver läsas. */
+  .app {
+    position: absolute; left: 140px; top: 260px; width: 1360px; height: 620px;
+    background: #FFFFFF; border-radius: var(--cw-radie-media); overflow: hidden;
+  }
+  .list { position: absolute; left: 0; top: 0; width: 100%; height: 76px; background: var(--cw-ljus-alt);
+    display: flex; align-items: center; gap: 14px; padding: 0 28px; }
+  .list i { width: 18px; height: 18px; border-radius: 50%; background: var(--cw-kant-ljus); }
+
+  .sido { position: absolute; left: 0; top: 76px; width: 300px; bottom: 0; background: var(--cw-ljus-alt); padding: 40px 36px; }
+  .dok { position: absolute; left: 350px; top: 116px; width: 560px; }
+  .dok h2 { margin: 0 0 36px; font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); }
+
+  /* Ett grått streck = en rad text. Bredden sätts på varje streck. */
+  .streck { height: 18px; border-radius: 9px; background: var(--cw-kant-ljus); margin-bottom: 28px; }
+
+  .panel {
+    position: absolute; left: 950px; top: 116px; width: 370px; height: 464px;
+    border: 2px solid var(--cw-kant-ljus); border-radius: 24px; padding: 32px;
+  }
+  .panel h2 { margin: 0 0 36px; font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); }
+
+  /* ---------- Fokus ----------
+     Kopparramen som snäpper fast runt panelen, och etiketten under fönstret.
+     Båda är osynliga tills fokusögonblicket. */
+  .ram {
+    position: absolute; left: 1076px; top: 362px; width: 398px; height: 492px;
+    border: 5px solid var(--cw-glod); border-radius: 32px;
+    box-shadow: 0 0 0 12px var(--cw-glod-sken); opacity: 0;
+  }
+  .pekare { position: absolute; right: 440px; top: 912px; text-align: right; color: var(--cw-glod-text); opacity: 0; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Where the AI feedback appears</h1>
+
+  <!-- Konturen som ritas fram först. Samma mått som appen nedan. -->
+  <svg class="kontur" width="1920" height="1080">
+    <rect x="140" y="260" width="1360" height="620" rx="24" stroke="#DDE3EA" stroke-width="4" fill="none"/>
+  </svg>
+
+  <!-- Appen. Den "torkas fram" uppifrån och ned inuti konturen. -->
+  <div class="app">
+    <div class="list"><i></i><i></i><i></i></div>
+
+    <!-- Sidomenyn: bara grå streck, den är inte poängen. -->
+    <div class="sido">
+      <div class="streck" style="width:180px"></div>
+      <div class="streck" style="width:140px"></div>
+      <div class="streck" style="width:200px"></div>
+      <div class="streck" style="width:120px"></div>
+    </div>
+
+    <!-- Elevens text. -->
+    <div class="dok">
+      <h2>Essay · Year 8</h2>
+      <div class="streck" style="width:540px"></div>
+      <div class="streck" style="width:500px"></div>
+      <div class="streck" style="width:530px"></div>
+      <div class="streck" style="width:420px"></div>
+      <div class="streck" style="width:540px"></div>
+      <div class="streck" style="width:470px"></div>
+      <div class="streck" style="width:300px"></div>
+    </div>
+
+    <!-- Panelen som fokus pekar ut. -->
+    <div class="panel">
+      <h2>Feedback</h2>
+      <div class="streck" style="width:290px"></div>
+      <div class="streck" style="width:240px"></div>
+      <div class="streck" style="width:270px"></div>
+      <div class="streck" style="width:200px"></div>
+      <div class="streck" style="width:250px"></div>
+    </div>
+  </div>
+
+  <!-- Fokus: ramen runt panelen och etiketten under fönstret. -->
+  <div class="ram"></div>
+  <div class="pekare etikett">Read this before you grade</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar ramen på ordet som pekar ut panelen. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  // Konturen ritas med streckmönstret: hela längden "gömd" till att börja med.
+  var kontur = document.querySelector('.kontur rect');
+  var langd = kontur.getTotalLength();
+  gsap.set(kontur, { strokeDasharray: langd, strokeDashoffset: langd });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, sedan ritas fönstrets kontur.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.to(kontur, { strokeDashoffset: 0, duration: 1.2, ease: 'power2.inOut' }, 0.3);
+
+  // Appen torkas fram uppifrån och ned inuti konturen (tyst: framväxt).
+  tl.fromTo('.app', { clipPath: 'inset(0% 0% 100% 0%)' },
+                    { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.2, ease: 'power4.inOut' }, 1.5);
+
+  // Fokus: resten av appen tonas ned, kopparramen snäpper fast runt panelen
+  // och etiketten stiger upp under fönstret. Fokuskonturen är tyst.
+  var tF = 4.4;
+  tl.to('.list, .sido, .dok', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.fromTo('.ram', { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(2)' }, tF);
+  tl.to('.panel h2', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.fromTo('.pekare', { opacity: 0, y: 24 }, { opacity: 1, y: 0 }, tF + 0.4);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

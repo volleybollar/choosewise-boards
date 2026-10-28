@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P209 · Before and after on one card</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Kortet ----------
+     Ett kort med två sidor: framsidan visar "före", baksidan "efter".
+     .scen ger djupet (perspective) så att vändningen ser ut som i 3D.
+     Kortet slutar vid x 1280 och y 880, långt från kamerazonen. */
+  .scen { position: absolute; left: 640px; top: 280px; width: 640px; height: 600px; perspective: 2400px; }
+  .kort { position: absolute; inset: 0; transform-style: preserve-3d; }
+
+  /* Båda sidorna ligger på samma plats. Baksidan är redan vänd ett halvt
+     varv, så den syns först när hela kortet har vänt. */
+  .sida {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  }
+  .baksida { transform: rotateY(180deg); }
+
+  /* Texten på sidorna: etikett, nyckeltal (stort och tunt) och en förklaring. */
+  .sida .etikett { color: var(--cw-text-ljus-dampad); text-transform: uppercase; letter-spacing: .08em; }
+  .tal { font-size: 220px; font-weight: var(--cw-vikt-tunn); line-height: 1; letter-spacing: -0.03em; }
+  .forklaring { font-size: var(--cw-min-etikett); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Feedback for one class</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <div class="scen">
+    <div class="kort">
+      <!-- Framsidan: före. -->
+      <div class="sida framsida">
+        <div class="etikett">Before</div>
+        <div class="tal">5 h</div>
+        <div class="forklaring">Every comment by hand</div>
+      </div>
+      <!-- Baksidan: efter. Talet här får fokus i koppar när kortet har vänt. -->
+      <div class="sida baksida">
+        <div class="etikett">After</div>
+        <div class="tal">2 h</div>
+        <div class="forklaring">AI drafts, you decide</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk vänder kortet på ordet "after" eller motsvarande. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket och kortet med framsidan.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.scen', { opacity: 0, y: 40 }, 0.4);
+  tl.from('.framsida > *', { opacity: 0, y: 20, stagger: STEG }, 1.0);
+
+  // Vändningen: ett halvt varv runt den lodräta axeln, lugnt in och ut.
+  var tVand = 4.0;
+  tl.to('.kort', { rotationY: 180, duration: 1.2, ease: 'power2.inOut' }, tVand);
+
+  // Fokus: talet på baksidan blir koppar när kortet ligger still. Ett klick.
+  var tF = tVand + 1.4;
+  tl.to('.baksida .tal', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.baksida', { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2.5 }, tF + 0.6);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

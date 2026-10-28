@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Y164 · Versus ledger</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Jämförelsen ----------
+     Två sätt att göra samma jobb, jämförda på fyra punkter. Vänster kolumn
+     är punkten, sedan "By hand" och "With AI draft". Tabellen slutar vid
+     x 1530, så kamerazonen nere till höger är tom. */
+  .huvud {
+    position: absolute; top: 276px; width: 360px;
+    font-size: 48px; font-weight: var(--cw-vikt-stark);
+  }
+  .huvud.gammal { left: 780px; color: var(--cw-text-ljus-dampad); }
+  .huvud.ny { left: 1170px; color: var(--cw-accent); }
+
+  /* En rad: punkten till vänster och ett värde i varje kolumn.
+     En tunn linje ovanför varje rad håller isär dem. */
+  .rad {
+    position: absolute; left: 120px; width: 1410px; height: 110px;
+    display: flex; align-items: center; border-top: 2px solid var(--cw-kant-ljus);
+  }
+  .punkt { width: 660px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .varde { width: 390px; font-size: 52px; font-weight: var(--cw-vikt-display); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Same feedback, two ways</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Kolumnernas namn. -->
+  <div class="huvud gammal">By hand</div>
+  <div class="huvud ny">With AI draft</div>
+
+  <!-- Raderna. En rad per punkt; de visas en i taget när punkten nämns. -->
+  <div class="rad fokus" style="top:370px"><span class="punkt">Time for 30 essays</span><span class="varde">6 h</span><span class="varde nyvarde">2 h</span></div>
+  <div class="rad" style="top:480px"><span class="punkt">Teacher reads every essay</span><span class="varde">Yes</span><span class="varde">Yes</span></div>
+  <div class="rad" style="top:590px"><span class="punkt">Pupils get feedback</span><span class="varde">In a week</span><span class="varde">In two days</span></div>
+  <div class="rad" style="top:700px"><span class="punkt">Final grade set by</span><span class="varde">Teacher</span><span class="varde">Teacher</span></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje rad på ordet som namnger punkten. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.rad');
+  var fokus = document.querySelector('.rad.fokus');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, märket och kolumnernas namn.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.huvud', { opacity: 0, y: 16, stagger: STEG }, 0.4);
+
+  // En rad i taget (tyst: framväxt).
+  rader.forEach(function (r, i) {
+    tl.from(r, { opacity: 0, y: 20 }, 1.4 + i * 1.2);
+  });
+
+  // Fokus: tiden med AI-utkast blir koppar, de andra raderna tonas ned. Ett klick.
+  var tF = 1.4 + rader.length * 1.2 + 0.8;
+  tl.to(rader.filter(function (r) { return r !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.nyvarde'), { color: '#9C5A24', fontWeight: 400, duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.punkt'), { color: '#0C1A2E', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

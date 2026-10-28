@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D45 · Share and big number</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Vänster: ringen som visar en andel ----------
+     Ringen har mitten i x 560, y 590. Den fylls medurs från klockan 12
+     medan talet i mitten räknas upp. */
+  .ring { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+  .ringtal {
+    position: absolute; left: 310px; top: 520px; width: 500px; text-align: center;
+    font-size: 140px; font-weight: var(--cw-vikt-tunn); line-height: 1; letter-spacing: -0.03em;
+  }
+  .ringtext {
+    position: absolute; left: 260px; top: 880px; width: 600px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* ---------- Höger: det stora talet ----------
+     Står i en egen spalt från x 1020, långt från kamerazonen. Det blir
+     koppar när fokus landar, för det är boardens poäng. */
+  .stort {
+    position: absolute; left: 1020px; top: 380px;
+    font-size: 220px; font-weight: var(--cw-vikt-tunn); line-height: 1; letter-spacing: -0.04em;
+  }
+  .stortext {
+    position: absolute; left: 1030px; top: 630px; width: 520px;
+    font-size: var(--cw-min-etikett); line-height: 1.2; color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Most use AI. Few talk about it.</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Ringen: ett ljust spår och en blå båge ovanpå. Bågen är vriden
+       −90° så att den börjar klockan 12. -->
+  <svg class="ring" viewBox="0 0 1920 1080" aria-hidden="true">
+    <g class="ringdel">
+      <circle cx="560" cy="590" r="230" fill="none" stroke="#EFF2F6" stroke-width="64"></circle>
+      <circle class="bage" cx="560" cy="590" r="230" fill="none" stroke="#0B3A6F" stroke-width="64"
+              transform="rotate(-90 560 590)"></circle>
+    </g>
+  </svg>
+  <!-- data-varde är talet som räknas upp; skriptet skriver ut det. -->
+  <div class="ringtal" data-varde="68">0%</div>
+  <div class="ringtext">use AI for homework</div>
+
+  <div class="stort" data-varde="14">0%</div>
+  <div class="stortext">have talked about it<br>with a teacher</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk fylls ringen på första talet och det stora talet
+     räknas upp när Johan säger det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  // Ringens omkrets: bågen ritas genom att strecket förskjuts.
+  var bage = document.querySelector('.bage');
+  var omkrets = 2 * Math.PI * 230;
+  bage.style.strokeDasharray = omkrets;
+
+  // Ett tal som räknas upp: värdet ligger i ett objekt som GSAP tweenar,
+  // och texten skrivs om vid varje steg. Då blir det rätt även när
+  // exporten hoppar direkt till en viss bildruta.
+  function raknare(el, ritaBage) {
+    var mal = +el.dataset.varde, v = { n: 0 };
+    function skriv() {
+      el.textContent = Math.round(v.n) + '%';
+      if (ritaBage) bage.style.strokeDashoffset = omkrets * (1 - v.n / 100);
+    }
+    skriv();
+    return { v: v, mal: mal, skriv: skriv };
+  }
+  var ring = raknare(document.querySelector('.ringtal'), true);
+  var stort = raknare(document.querySelector('.stort'), false);
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket och ringens tomma spår.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.ringdel', { opacity: 0, duration: 0.8 }, 0.4);
+
+  // Ringen fylls och talet i mitten räknas upp samtidigt (tyst: framväxt).
+  var tRing = 1.6;
+  tl.from('.ringtal', { opacity: 0, duration: 0.4 }, tRing);
+  tl.to(ring.v, { n: ring.mal, duration: 1.8, onUpdate: ring.skriv }, tRing);
+  tl.from('.ringtext', { opacity: 0, y: 16 }, tRing + 1.2);
+
+  // Det stora talet kommer in och räknas upp.
+  var tStort = tRing + 3.4;
+  tl.from('.stort', { opacity: 0, y: 24, duration: 0.6 }, tStort);
+  tl.to(stort.v, { n: stort.mal, duration: 1.4, onUpdate: stort.skriv }, tStort);
+  tl.from('.stortext', { opacity: 0, y: 16 }, tStort + 0.8);
+
+  // Fokus: ringen tonas ned och det stora talet blir koppar. Ett klick.
+  var tF = tStort + 2.6;
+  tl.to('.ringdel, .ringtal, .ringtext', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.stort', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>
