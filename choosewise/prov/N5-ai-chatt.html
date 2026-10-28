@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N5 · AI chat in a browser</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Webbläsarfönstret ----------
+     Ett generiskt fönster utan varumärke. Det slutar vid x 1500, så att
+     kamerazonen nere till höger alltid är tom. */
+  .fonster {
+    position: absolute; left: 140px; top: 90px; width: 1360px; height: 900px;
+    background: var(--cw-vit, #FFFFFF); color: var(--cw-text-ljus);
+    border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  /* Fönstrets list: tre prickar och ett tomt adressfält. */
+  .list { height: 76px; background: var(--cw-ljus-alt); display: flex; align-items: center; gap: 14px; padding: 0 28px; }
+  .list i { width: 18px; height: 18px; border-radius: 50%; background: var(--cw-kant-ljus); }
+  .adress { margin-left: 24px; flex: 1; height: 40px; border-radius: 999px; background: var(--cw-ljus); }
+
+  /* Chatten: prompten till höger i en ljusgrå bubbla, svaret till vänster.
+     Bubblan har fast storlek (plats för två rader), så den står still medan
+     bara texten skrivs fram inuti den. */
+  .prompt {
+    position: absolute; right: 60px; top: 140px; width: 980px; height: 180px;
+    background: var(--cw-ljus-alt); border-radius: 36px; padding: 28px 40px;
+    font-size: var(--cw-min-etikett); line-height: 1.3;
+  }
+  /* Delen av prompten som fokus pekar på. Strecket under ritas fram. */
+  .nyckel { position: relative; }
+  .nyckel .streck {
+    position: absolute; left: 0; right: 0; bottom: -6px; height: 5px; border-radius: 3px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+  .tanker { position: absolute; left: 60px; top: 420px; display: flex; gap: 14px; }
+  .tanker i { width: 20px; height: 20px; border-radius: 50%; background: var(--cw-text-ljus-dampad); }
+  .svar { position: absolute; left: 60px; top: 400px; width: 1150px; display: flex; gap: 32px; }
+  .avatar { flex: 0 0 64px; height: 64px; border-radius: 50%; background: var(--cw-accent); }
+  .svar p { margin: 0 0 18px; font-size: var(--cw-min-etikett); line-height: 1.3; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+  <div class="fonster">
+    <div class="list"><i></i><i></i><i></i><div class="adress"></div></div>
+
+    <!-- Prompten. Den är delad i tre delar så att mittendelen kan markeras. -->
+    <div class="prompt"><span class="del">Explain photosynthesis </span><span class="del nyckel">to a 12-year-old<b class="streck"></b></span><span class="del"> in three sentences.</span></div>
+
+    <!-- "Tänker"-prickarna och svaret. -->
+    <div class="tanker"><i></i><i></i><i></i></div>
+    <div class="svar">
+      <div class="avatar"></div>
+      <div>
+        <p>Plants make their own food using sunlight.</p>
+        <p>They take in water through their roots and carbon dioxide from the air.</p>
+        <p>Sunlight turns these into sugar for energy, and oxygen is released.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN ===== Provtider; vid synk följer skrivandet Johans röst. */
+  var EASE = 'power2.out';
+  var delar = gsap.utils.toArray('.prompt .del');
+  // Spara texten i varje del och töm dem: texten skrivs fram tecken för tecken.
+  var texter = delar.map(function (d) { return d.firstChild.textContent; });
+  var totalt = texter.join('').length;
+  function visa(n) {
+    texter.forEach(function (t, i) {
+      var synligt = Math.max(0, Math.min(t.length, n));
+      delar[i].firstChild.textContent = t.slice(0, synligt);
+      n -= t.length;
+    });
+  }
+  visa(0);
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Fönstret glider upp med den tomma promptbubblan på plats (framväxt, tyst).
+  tl.from('.fonster', { opacity: 0, y: 40 }, 0);
+
+  // Prompten skrivs fram, ungefär 18 tecken i sekunden (tyst, Johans val 2026-10-28).
+  var skrivStart = 1.2, skrivTid = totalt / 18;
+  var raknare = { n: 0 };
+  tl.to(raknare, { n: totalt, duration: skrivTid, ease: 'none',
+    onUpdate: function () { visa(Math.round(raknare.n)); } }, skrivStart);
+
+  // Tänkprickarna pulserar, sedan kommer svaret rad för rad (tyst).
+  var tSvar = skrivStart + skrivTid + 0.6;
+  tl.from('.tanker', { opacity: 0, duration: 0.3 }, tSvar);
+  tl.to('.tanker i', { y: -10, duration: 0.3, stagger: 0.12, yoyo: true, repeat: 3, ease: 'sine.inOut' }, tSvar);
+  tl.to('.tanker', { opacity: 0, duration: 0.3 }, tSvar + 1.5);
+  tl.from('.avatar', { opacity: 0, scale: 0.6, duration: 0.5 }, tSvar + 1.7);
+  tl.from('.svar p', { opacity: 0, y: 20, stagger: 0.6 }, tSvar + 1.8);
+
+  // Fokus: strecket under "to a 12-year-old" ritas fram i koppar och texten
+  // blir kopparfärgad. Fokuskonturen är tyst.
+  var tF = tSvar + 4.6;
+  tl.to('.nyckel .streck', { scaleX: 1, duration: 0.9 }, tF);
+  tl.to('.nyckel', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to({}, { duration: 2.5 });
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>
