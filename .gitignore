@@ -8,3 +8,5 @@ out/
 
 # Ljuden kommer ur Johans köpta YouTubeSFX-paket: får användas i filmer, men inte delas i ett publikt repo.
 choosewise/ljud/
+# Renderade klipp per film: byggs om med synk.py.
+choosewise/film-*/ut/
