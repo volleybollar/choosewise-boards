@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S06 · Title and marker</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Påstående-rubriken ----------
+     Grundrubriken: ett påstående i stället för ett ämnesord. Två rader i
+     132 px, uppe till vänster med mycket luft. Allt slutar före x 1500. */
+  .pastaende {
+    position: absolute; left: 120px; top: 260px; width: 1400px; margin: 0;
+    font-size: 132px; font-weight: var(--cw-vikt-display);
+    line-height: 1.12; letter-spacing: -0.02em;
+  }
+  /* Varje rad är ett eget block så att raderna kan komma en i taget. */
+  .rad { display: block; }
+
+  /* Nyckelordet. Markeringen ligger som en SVG under ordet. */
+  .nyckel { position: relative; display: inline-block; }
+  .markering {
+    position: absolute; left: -12px; bottom: -34px; width: calc(100% + 24px); height: 48px;
+    overflow: visible;
+  }
+  /* Själva penndraget: en mjuk, lite sned linje i koppar. */
+  .markering path {
+    fill: none; stroke: var(--cw-glod); stroke-width: 12; stroke-linecap: round;
+  }
+
+  /* Underraden: en kort mening som säger vad påståendet gäller. */
+  .under {
+    position: absolute; left: 124px; top: 650px;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <!-- Påståendet. "question" är nyckelordet som får markeringen. -->
+  <h1 class="pastaende">
+    <span class="rad">Start with the</span>
+    <span class="rad"><span class="nyckel">question,<svg class="markering" viewBox="0 0 400 48" preserveAspectRatio="none"><path d="M6 30 C 90 18, 200 14, 394 22"/></svg></span> not the tool.</span>
+  </h1>
+
+  <div class="under">A rule for every AI lesson</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer markeringen när Johan säger "question". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Penndraget görs osynligt från början: hela linjen är "streckad bort".
+  var drag = document.querySelector('.markering path');
+  var langd = drag.getTotalLength();
+  // opacity 0 också, annars syns den runda linjeänden som en prick.
+  gsap.set(drag, { strokeDasharray: langd, strokeDashoffset: langd, opacity: 0 });
+
+  // Raderna kommer en i taget, sedan underraden.
+  tl.from('.rad', { opacity: 0, y: 30, stagger: 0.5 }, 0.3);
+  tl.from('.under', { opacity: 0, y: 16 }, 1.6);
+
+  // Fokus: markeringen ritas fram från vänster och ordet blir koppar.
+  // Ett klick när markeringen landar.
+  var tF = 3.2;
+  tl.set(drag, { opacity: 1 }, tF);
+  tl.to(drag, { strokeDashoffset: 0, duration: 0.9, ease: 'power2.inOut' }, tF);
+  tl.to('.nyckel', { color: '#9C5A24', duration: 0.6 }, tF + 0.2);
+  Tavla.ljud(tl, tF + 0.8, 'landa');
+  tl.to({}, { duration: 4 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

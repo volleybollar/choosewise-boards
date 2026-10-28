@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N2 · Effect size on a scale</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Skalan ----------
+     Cohens d från 0 till 1,0 längs en vågrät linje på y 560, från x 160
+     till x 1360 (1200 px, alltså 120 px per tiondel). Allt slutar före
+     x 1570, så kamerazonen nere till höger är tom. */
+  .skala {
+    position: absolute; left: 160px; top: 560px; width: 1200px; height: 3px;
+    background: var(--cw-text-ljus-dampad); transform-origin: 0 50%;
+  }
+  /* Skalstrecken och deras tal under linjen. left sätts i skriptet. */
+  .streck { position: absolute; top: 548px; width: 3px; height: 27px; background: var(--cw-text-ljus-dampad); }
+  .skaltal {
+    position: absolute; top: 590px; width: 120px; margin-left: -60px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  .skalnamn { position: absolute; left: 1400px; top: 530px; font-size: 56px; font-weight: var(--cw-vikt-display); font-style: italic; }
+
+  /* En jämförelsepunkt: en prick på linjen och en etikett med namn och d.
+     Etiketten står ovanför (.upp) eller under (.ner) linjen, så att
+     punkter som ligger nära varandra inte krockar. */
+  .punkt { position: absolute; top: 560px; width: 0; height: 0; z-index: 2; }
+  .prick {
+    position: absolute; left: -16px; top: -15px; width: 32px; height: 32px;
+    border-radius: 50%; background: var(--cw-accent);
+  }
+  .text { position: absolute; width: 400px; left: -200px; text-align: center; }
+  .upp .text { bottom: 44px; }
+  .ner .text { top: 104px; }   /* under skaltalen */
+  .namn { display: block; font-size: var(--cw-min-etikett); line-height: 1.2; }
+  .d { display: block; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+
+  /* Den relativa meningen som kommer sist. */
+  .slutsats { position: absolute; left: 160px; top: 900px; margin: 0; font-size: 56px; font-weight: var(--cw-vikt-display); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">How big is the effect?</h1>
+  <!-- Byts mot riktiga värden med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <div class="skala"></div>
+  <span class="skalnamn">d</span>
+  <!-- Skalstrecken och talen läggs ut av skriptet: 0, 0.2, 0.4 … 1.0. -->
+
+  <!-- Jämförelsepunkterna. data-d är effektstorleken; den styr var
+       punkten hamnar. Den med klassen fokus är den vi pratar om. -->
+  <div class="punkt upp" data-d="0.25"><div class="prick"></div><div class="text"><span class="namn">Approach A</span><span class="d">d = 0.25</span></div></div>
+  <div class="punkt upp" data-d="0.70"><div class="prick"></div><div class="text"><span class="namn">Approach B</span><span class="d">d = 0.70</span></div></div>
+  <div class="punkt ner" data-d="0.90"><div class="prick"></div><div class="text"><span class="namn">Approach C</span><span class="d">d = 0.90</span></div></div>
+  <div class="punkt ner fokus" data-d="0.44"><div class="prick"></div><div class="text"><span class="namn">Our approach</span><span class="d">d = 0.44</span></div></div>
+
+  <!-- Omdömet uttrycks relativt, aldrig som "låg" eller "fungerar inte". -->
+  <p class="slutsats">Larger than A. Smaller than B.</p>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar varje punkt när Johan nämner den. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var cw = document.querySelector('.cw');
+  function xFor(d) { return 160 + d * 1200; }
+
+  // Skalstreck och tal var 0,2.
+  for (var i = 0; i <= 5; i++) {
+    var d = i * 0.2, x = xFor(d);
+    var s = document.createElement('div'); s.className = 'streck'; s.style.left = (x - 1.5) + 'px'; cw.appendChild(s);
+    var t = document.createElement('div'); t.className = 'skaltal'; t.style.left = x + 'px';
+    t.textContent = d === 0 ? '0' : d.toFixed(1); cw.appendChild(t);
+  }
+
+  // Placera punkterna efter sitt d-värde.
+  var punkter = gsap.utils.toArray('.punkt');
+  punkter.forEach(function (p) { p.style.left = xFor(+p.dataset.d) + 'px'; });
+  var fokus = document.querySelector('.punkt.fokus');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märke, skalan med streck och tal.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.skala', { scaleX: 0, duration: 1.2, ease: 'power2.inOut' }, 0.3);
+  tl.from('.streck, .skaltal, .skalnamn', { opacity: 0, stagger: 0.06, duration: 0.5 }, 0.9);
+
+  // Jämförelsepunkterna landar en i taget (tyst: framväxt).
+  punkter.forEach(function (p, i) {
+    var t = 2.2 + i * 1.2;
+    tl.from(p.querySelector('.prick'), { scale: 0, duration: 0.5, ease: 'back.out(2)' }, t);
+    tl.from(p.querySelector('.text'), { opacity: 0, y: p.classList.contains('upp') ? 16 : -16 }, t + 0.1);
+  });
+
+  // Fokus: vår metod blir koppar, de andra tonas ned. Ett klick när
+  // fokus landar. Sedan kommer den relativa meningen.
+  var tF = 2.2 + punkter.length * 1.2 + 0.4;
+  tl.to(punkter.filter(function (p) { return p !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.prick'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 14px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.querySelectorAll('.namn, .d'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.from('.slutsats', { opacity: 0, y: 24 }, tF + 1.0);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

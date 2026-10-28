@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N4 · Study card</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Kortet ----------
+     Ett vitt kort mellan x 120 och x 1500, y 280 och y 980. Det slutar
+     före x 1570, så kamerazonen nere till höger är tom. */
+  .kort {
+    position: absolute; left: 120px; top: 280px; width: 1380px; height: 700px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 40px 64px;
+  }
+
+  /* En rad på kortet: fältets namn till vänster (dämpat), innehållet till
+     höger. Ett tunt streck skiljer raderna åt. */
+  .falt {
+    display: flex; align-items: baseline; height: 124px; padding-top: 34px;
+    border-bottom: 2px solid var(--cw-ljus-alt);
+  }
+  .falt:last-child { border-bottom: 0; }
+  .falt .namn { flex: 0 0 300px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .falt .varde { font-size: var(--cw-min-etikett); line-height: 1.2; white-space: nowrap; }
+  /* Länken skrivs med fast teckenbredd, som en adress. */
+  .falt .lank { font-family: var(--cw-font-mono); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One study, on one card</h1>
+  <!-- Alla fält är platshållare. Byt mot den riktiga studien. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with the real study</div>
+
+  <div class="kort">
+    <div class="falt"><span class="namn">Source</span><span class="varde">Replace with the real study</span></div>
+    <div class="falt"><span class="namn">Sample</span><span class="varde">1,200 students, ages 10–12</span></div>
+    <div class="falt"><span class="namn">Design</span><span class="varde">Randomised controlled trial</span></div>
+    <div class="falt fokus"><span class="namn">Result</span><span class="varde">d = 0.30 on reading</span></div>
+    <div class="falt"><span class="namn">Link</span><span class="varde lank">doi.org/10.xxxx/xxxxx</span></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje fält när Johan nämner det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var falt = gsap.utils.toArray('.falt');
+  var fokus = document.querySelector('.falt.fokus');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märke, kortet och fältens namn.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.kort', { opacity: 0, y: 40, duration: 1.0 }, 0.3);
+  tl.from('.falt .namn', { opacity: 0, x: -16, stagger: 0.08 }, 0.9);
+
+  // Innehållet fylls i fält för fält (tyst: framväxt).
+  falt.forEach(function (f, i) {
+    tl.from(f.querySelector('.varde'), { opacity: 0, x: 24 }, 2.0 + i * 0.9);
+  });
+
+  // Fokus: resultatet blir koppar, de andra fälten tonas ned.
+  // Ett klick när fokus landar.
+  var tF = 2.0 + falt.length * 0.9 + 0.6;
+  tl.to(falt.filter(function (f) { return f !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus.querySelectorAll('.namn, .varde'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

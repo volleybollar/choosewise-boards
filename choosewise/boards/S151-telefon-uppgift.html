@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S151 · A task on the student’s phone</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* Rubriken får brytas på två rader, så att den håller sig till vänster
+     om telefonen. */
+  .rubrik { width: 740px; }
+
+  /* ---------- Telefonen ----------
+     En generisk telefon utan märke: en mörk ram och en ljus skärm.
+     Den står mellan x 940 och x 1520 och slutar vid y 1000, så att
+     kamerazonen nere till höger (x 1570 och åt höger) alltid är tom. */
+  .telefon {
+    position: absolute; left: 940px; top: 100px; width: 580px; height: 900px;
+    background: var(--cw-text-ljus); border-radius: 76px; padding: 18px;
+  }
+  /* Skärmen klipper innehållet: det som scrollar förbi syns inte utanför. */
+  .skarm {
+    position: relative; width: 100%; height: 100%; border-radius: 60px;
+    background: var(--cw-ljus-alt); overflow: hidden;
+  }
+
+  /* ---------- Uppgiften i skärmen ----------
+     Allt ligger i .flode, som flyttas uppåt när eleven "scrollar". */
+  .flode { position: absolute; left: 28px; right: 28px; top: 56px; }
+  .amne { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); margin-bottom: 10px; }
+  .titel { font-size: 56px; font-weight: var(--cw-vikt-stark); line-height: 1.1; margin-bottom: 28px; }
+  /* Platshållare för en bild i uppgiften (inga riktiga bilder). */
+  .bild {
+    height: 220px; border-radius: 28px; background: var(--cw-kant-ljus); margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  /* Ett steg i uppgiften: ett vitt kort med nummer och kort text. */
+  .steg {
+    display: flex; gap: 22px; background: #FFFFFF; border: 3px solid #FFFFFF;
+    border-radius: 28px; padding: 24px 28px; margin-bottom: 20px;
+    font-size: var(--cw-min-etikett); line-height: 1.2;
+  }
+  .steg b { font-weight: var(--cw-vikt-stark); color: var(--cw-accent); }
+  /* Knappen längst ned i uppgiften. */
+  .knapp {
+    margin-top: 8px; height: 104px; border-radius: 999px; background: var(--cw-accent); color: #FFFFFF;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">A task, through the student’s eyes</h1>
+
+  <div class="telefon">
+    <div class="skarm">
+      <!-- Uppgiften som eleven scrollar igenom. Steg 3 är det som får fokus. -->
+      <div class="flode">
+        <div class="amne">Science · Year 7</div>
+        <div class="titel">Leaves in autumn</div>
+        <div class="bild">Image</div>
+        <div class="steg"><b>1</b><span>Read the text</span></div>
+        <div class="steg"><b>2</b><span>Watch the clip</span></div>
+        <div class="steg fokus"><b>3</b><span>Explain why, in your own words</span></div>
+        <div class="steg"><b>4</b><span>Hand in by Friday</span></div>
+        <div class="knapp">Hand in</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar fokus på orden "in your own words". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var fokus = document.querySelector('.steg.fokus');
+  var ovriga = gsap.utils.toArray('.flode > *').filter(function (e) { return e !== fokus; });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och telefonen finns när boarden öppnar.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.telefon', { opacity: 0, y: 60, duration: 1.0 }, 0.2);
+
+  // Uppgiften byggs upp i skärmen, en del i taget (tyst: framväxt).
+  tl.from('.flode > *', { opacity: 0, y: 24, stagger: STEG }, 1.2);
+
+  // Eleven scrollar en gång nedåt, så att steg 3 hamnar mitt på skärmen.
+  tl.to('.flode', { y: -420, duration: 2.4, ease: 'power2.inOut' }, 3.4);
+
+  // Fokus: steg 3 får kopparkant och koppartext, resten tonas ned.
+  // Ett klick när fokus landar.
+  var tF = 6.2;
+  tl.to(ovriga, { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { borderColor: '#C2793A', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.querySelectorAll('b, span'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

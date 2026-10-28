@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>F3 · The WISE Framework</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Undertiteln ----------
+     Står direkt under rubriken, i dämpad färg. */
+  .undertitel { position: absolute; left: 120px; top: 200px; }
+
+  /* ---------- De fyra raderna ----------
+     Varje rad är en stor bokstav till vänster och ramverkets ord till
+     höger. Raderna står mellan y 310 och y 960 och slutar långt till
+     vänster om kamerazonen. */
+  .rad { position: absolute; left: 120px; height: 150px; display: flex; align-items: center; }
+  .bokstav {
+    width: 150px; font-size: 140px; font-weight: var(--cw-vikt-display);
+    line-height: 1; color: var(--cw-accent);
+  }
+  /* Orden "vecklas ut" från bokstaven: rörelsen nedan öppnar en klippmask
+     från vänster till höger. */
+  .ord { font-size: 64px; font-weight: var(--cw-vikt-display); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">The WISE Framework</h1>
+  <div class="undertitel etikett dampad">The right tool at the right time</div>
+
+  <!-- Ramverkets fyra steg. Orden är Johans och ändras inte. -->
+  <div class="rad" style="top:310px"><div class="bokstav">W</div><div class="ord">Weigh the learning goal</div></div>
+  <div class="rad" style="top:470px"><div class="bokstav">I</div><div class="ord">Inspect what the subject requires</div></div>
+  <div class="rad" style="top:630px"><div class="bokstav">S</div><div class="ord">Select the right tool</div></div>
+  <div class="rad" style="top:790px"><div class="bokstav">E</div><div class="ord">Evaluate the outcome</div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar varje bokstav när Johan säger steget. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.rad');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och undertiteln.
+  tl.from('.rubrik, .undertitel', { opacity: 0, y: 24, stagger: STEG }, 0);
+
+  var tid = 1.4;
+  rader.forEach(function (r, i) {
+    var bokstav = r.querySelector('.bokstav'), ord = r.querySelector('.ord');
+    // Förra raden tappar fokus: bokstaven blir blå igen och raden tonas ned.
+    if (i > 0) {
+      var forra = rader[i - 1];
+      tl.to(forra.querySelector('.bokstav'), { color: '#0B3A6F', duration: 0.5 }, tid);
+      tl.to(forra, { opacity: 0.38, duration: 0.5 }, tid);
+    }
+    // Bokstaven landar uppifrån och blir koppar (fokus).
+    tl.from(bokstav, { opacity: 0, y: -40, duration: 0.6 }, tid);
+    tl.to(bokstav, { color: '#C2793A', duration: 0.5 }, tid + 0.2);
+    // Ordet vecklas ut från bokstaven åt höger.
+    tl.fromTo(ord, { clipPath: 'inset(0% 100% 0% 0%)', x: -30 },
+      { clipPath: 'inset(0% 0% 0% 0%)', x: 0, duration: 1.0 }, tid + 0.5);
+    tid += 2.2;
+  });
+
+  // Slutbilden: hela ramverket syns, utan fokus på något enskilt steg.
+  tl.to(rader[rader.length - 1].querySelector('.bokstav'), { color: '#0B3A6F', duration: 0.6 }, tid);
+  tl.to(rader, { opacity: 1, duration: 0.6 }, tid);
+  tl.to({}, { duration: 2 }, tid + 0.6);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

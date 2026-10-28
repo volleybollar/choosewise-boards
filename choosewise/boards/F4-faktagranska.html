@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>F4 · Fact-check an AI answer</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Chattfönstret ----------
+     Ett generiskt fönster utan varumärke, från x 120 till x 1180.
+     Till höger om det finns en marginal (x 1220–1540) där rättelsen
+     skrivs för hand. Allt slutar ovanför y 920 och till vänster om x 1570,
+     så att kamerazonen alltid är tom. */
+  .fonster {
+    position: absolute; left: 120px; top: 230px; width: 1060px; height: 690px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  /* Fönstrets list: tre prickar och ett tomt adressfält. */
+  .list { height: 70px; background: var(--cw-ljus-alt); display: flex; align-items: center; gap: 14px; padding: 0 28px; }
+  .list i { width: 18px; height: 18px; border-radius: 50%; background: var(--cw-kant-ljus); }
+  .adress { margin-left: 24px; flex: 1; height: 38px; border-radius: 999px; background: var(--cw-ljus); }
+
+  /* Frågan till höger i en grå bubbla, svaret till vänster. */
+  .prompt {
+    position: absolute; right: 50px; top: 110px; padding: 22px 36px;
+    background: var(--cw-ljus-alt); border-radius: 36px; font-size: var(--cw-min-etikett);
+  }
+  .svar { position: absolute; left: 50px; top: 240px; width: 960px; display: flex; gap: 28px; }
+  .avatar { flex: 0 0 60px; height: 60px; border-radius: 50%; background: var(--cw-accent); }
+  .svar p { margin: 0 0 34px; font-size: var(--cw-min-etikett); line-height: 1.3; }
+
+  /* Ett påstående som granskas. Strecket under ritas fram av rörelsen. */
+  .pastaende { position: relative; }
+  .pastaende .streck {
+    position: absolute; left: 0; right: 0; bottom: -6px; height: 5px; border-radius: 3px;
+    background: var(--cw-accent); transform-origin: 0 50%; transform: scaleX(0);
+  }
+
+  /* Felet: ringas in med en handritad kopparoval (SVG) som ritas fram. */
+  .fel { position: relative; margin-left: 30px; }
+  .ring { position: absolute; left: -38px; top: -22px; width: 170px; height: 100px; overflow: visible; }
+  .ring path { fill: none; stroke: var(--cw-glod); stroke-width: 5; stroke-linecap: round; }
+
+  /* ---------- Marginalen ----------
+     Rättelsen står i marginalen i handstil (Instrument Serif kursiv).
+     En tunn kopparlinje går från ringen till rättelsen. */
+  .pil { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; pointer-events: none; }
+  .pil path { fill: none; stroke: var(--cw-glod); stroke-width: 4; stroke-linecap: round; }
+  .rattelse {
+    position: absolute; left: 1230px; top: 640px; width: 320px;
+    font-family: var(--cw-font-serif); font-style: italic; font-size: 72px; line-height: 1.05;
+    color: var(--cw-glod-text); transform: rotate(-4deg); transform-origin: 0 50%;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Check it before you trust it</h1>
+
+  <div class="fonster">
+    <div class="list"><i></i><i></i><i></i><div class="adress"></div></div>
+    <div class="prompt">Tell me about the Moon.</div>
+
+    <!-- Svaret. Tre påståenden stämmer, det fjärde har fel årtal. -->
+    <div class="svar">
+      <div class="avatar"></div>
+      <div>
+        <p><span class="pastaende">The Moon orbits Earth about once a month.<b class="streck"></b></span></p>
+        <p><span class="pastaende">It reflects light from the Sun.<b class="streck"></b></span></p>
+        <p><span class="pastaende">Its gravity helps cause the tides.<b class="streck"></b></span></p>
+        <p>The first Moon landing was in <span class="fel">1972<svg class="ring" viewBox="0 0 160 100" preserveAspectRatio="none"><path d="M18,54 C14,22 70,8 116,16 C150,22 156,62 128,80 C96,98 34,94 16,66 C8,52 20,34 40,28"/></svg></span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linjen från ringen ut till marginalen, och rättelsen i handstil. -->
+  <svg class="pil" viewBox="0 0 1920 1080"><path d="M990,758 C1070,748 1150,722 1222,700"/></svg>
+  <div class="rattelse">1969, not 1972</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk stryks varje påstående under när Johan kontrollerar det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  // Förbered de handritade linjerna: de ritas fram genom att strecket "dras ut".
+  var linjer = gsap.utils.toArray('.ring path, .pil path');
+  linjer.forEach(function (p) {
+    var l = p.getTotalLength();
+    p.style.strokeDasharray = l;
+    p.style.strokeDashoffset = l;
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och fönstret med fråga och svar.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.fonster', { opacity: 0, y: 40 }, 0.3);
+  tl.from('.svar p', { opacity: 0, y: 16, stagger: STEG }, 0.9);
+
+  // Påståendena stryks under i blått, ett i taget (kontrollerade).
+  gsap.utils.toArray('.pastaende .streck').forEach(function (s, i) {
+    tl.to(s, { scaleX: 1, duration: 0.8 }, 2.4 + i * 1.2);
+  });
+
+  // Fokus: de kontrollerade raderna tonas ned, felet ringas in i koppar.
+  // Ett klick när ringen är sluten.
+  var tF = 2.4 + 3 * 1.2 + 0.4;
+  tl.to('.svar p:not(:last-child)', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.ring path', { strokeDashoffset: 0, duration: 1.0, ease: 'power1.inOut' }, tF);
+  tl.to('.fel', { color: '#9C5A24', duration: 0.6 }, tF + 0.3);
+  Tavla.ljud(tl, tF + 1.0, 'landa');
+
+  // Linjen dras ut till marginalen och rättelsen "skrivs" fram från vänster.
+  tl.to('.pil path', { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut' }, tF + 1.3);
+  tl.fromTo('.rattelse', { clipPath: 'inset(0% 100% 0% 0%)' },
+    { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.2, ease: 'power1.inOut' }, tF + 1.8);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

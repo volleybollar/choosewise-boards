@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S146 · Mid-roll community</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- En lugn puff mitt i filmen ----------
+     Tre enkla figurer (gemenskapen), en stor uppmaning och "Link below"
+     med en pil nedåt mot videobeskrivningen. Ingen webbadress: länken
+     ligger i beskrivningen. Allt håller sig till vänster om x 1500. */
+  .figurer { position: absolute; left: 120px; top: 200px; }
+  .figurer svg { display: block; }
+
+  .uppmaning {
+    position: absolute; left: 120px; top: 410px; width: 1380px; margin: 0;
+    font-size: 110px; font-weight: var(--cw-vikt-tunn);
+    letter-spacing: -0.02em; line-height: 1.05;
+  }
+  .vad {
+    position: absolute; left: 120px; top: 690px;
+    font-size: 48px; font-weight: var(--cw-vikt-display);
+  }
+  /* "Link below" och pilen: boardens fokus, i koppar när de landar. */
+  .lank {
+    position: absolute; left: 120px; top: 820px; display: flex; align-items: center; gap: 24px;
+    font-size: 56px; font-weight: var(--cw-vikt-stark); color: var(--cw-text-ljus);
+  }
+  .lank svg path { stroke: currentColor; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <!-- Tre figurer i rad, egna enkla former (huvud + axlar). Den mittersta
+       är mörkast, de andra ljusare blå. -->
+  <div class="figurer">
+    <svg width="330" height="150" viewBox="0 0 330 150">
+      <g class="figur" fill="#4A7FB5"><circle cx="55" cy="45" r="30"/><path d="M5 150 a50 50 0 0 1 100 0 Z"/></g>
+      <g class="figur" fill="#0B3A6F"><circle cx="165" cy="40" r="34"/><path d="M108 150 a57 57 0 0 1 114 0 Z"/></g>
+      <g class="figur" fill="#A9BBD0"><circle cx="275" cy="45" r="30"/><path d="M225 150 a50 50 0 0 1 100 0 Z"/></g>
+    </svg>
+  </div>
+
+  <h1 class="uppmaning">Join the Choosewise community</h1>
+  <div class="vad dampad">Educators learning AI together</div>
+
+  <!-- Pilen pekar nedåt, mot beskrivningen under videon. -->
+  <div class="lank">
+    <svg width="56" height="64" viewBox="0 0 56 64" fill="none">
+      <path d="M28 4 V56 M8 38 L28 58 L48 38" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Link below</span>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. En lugn puff: allt kommer in mjukt och står sedan still.
+     Ett klick när "Link below" landar i koppar. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Figurerna kommer en i taget, sedan uppmaningen och raden under.
+  tl.from('.figur', { opacity: 0, y: 20, stagger: STEG }, 0);
+  tl.from('.uppmaning', { opacity: 0, y: 24 }, 0.8);
+  tl.from('.vad', { opacity: 0, y: 16 }, 1.6);
+
+  // Fokus: "Link below" och pilen kommer in och blir koppar. Ett klick.
+  var tF = 3.4;
+  tl.from('.lank', { opacity: 0, y: -16 }, tF);
+  tl.to('.lank', { color: '#9C5A24', duration: 0.6 }, tF + 0.3);
+  Tavla.ljud(tl, tF + 0.4, 'landa');
+
+  tl.to({}, { duration: 4.5 });  // vila medan Johan säger några ord om gemenskapen
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S179 · Time back each week</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Två staplar: samma arbete före och med AI ----------
+     Varje stapel är lärarens arbete utanför lektionerna en vecka, delat i
+     tre delar. 1 timme = 62 px. Med AI blir delarna kortare och en tom
+     ruta visar tiden som blir över. Staplarna slutar ovanför y 720. */
+  .rubrik-rad {
+    position: absolute; left: 140px;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  .stapel { position: absolute; left: 140px; height: 110px; display: flex; gap: 6px; }
+  .del {
+    height: 100%; border-radius: 18px; transform-origin: 0 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); color: #FFFFFF; white-space: nowrap;
+  }
+  .d1 { background: var(--cw-serie-1); }
+  .d2 { background: var(--cw-serie-2); }
+  .d3 { background: var(--cw-serie-3); color: var(--cw-text-ljus); }
+  /* Tiden som blir över: en streckad ruta som fylls med koppar vid fokus. */
+  .over {
+    height: 100%; border-radius: 18px; border: 4px dashed var(--cw-text-ljus-dampad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* ---------- Nyckeltalet ---------- under staplarna, till vänster om kamerazonen. */
+  .tal { position: absolute; left: 140px; top: 760px; display: flex; align-items: baseline; gap: 32px; }
+  .tal b { font-size: 180px; font-weight: var(--cw-vikt-tunn); line-height: 1; }
+  .tal span { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Same work, more time left</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Före: 9 + 7 + 5 = 21 timmar. Bredd = timmar × 62 px. -->
+  <div class="rubrik-rad" style="top:262px">Before</div>
+  <div class="stapel s1" style="top:330px">
+    <div class="del d1" style="width:558px">Planning 9 h</div>
+    <div class="del d2" style="width:434px">Marking 7 h</div>
+    <div class="del d3" style="width:310px">Admin 5 h</div>
+  </div>
+
+  <!-- Med AI: 6 + 4,5 + 3,5 = 14 timmar, 7 timmar blir över. -->
+  <div class="rubrik-rad" style="top:492px">With AI</div>
+  <div class="stapel s2" style="top:560px">
+    <div class="del d1" style="width:372px">6 h</div>
+    <div class="del d2" style="width:279px">4.5 h</div>
+    <div class="del d3" style="width:217px">3.5 h</div>
+    <div class="over" style="width:434px">Free</div>
+  </div>
+
+  <div class="tal"><b>7 h</b><span>back every week</span></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN ===== Provtider. */
+  var EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Struktur först: rubrik, märke och radnamnen.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: 0.18 }, 0);
+  tl.from('.rubrik-rad', { opacity: 0, y: 16, stagger: 0.18 }, 0.4);
+
+  // Före: delarna växer fram en i taget från vänster.
+  tl.from('.s1 .del', { scaleX: 0, opacity: 0, stagger: 0.6 }, 1.4);
+  // Med AI: samma arbete, kortare delar. Sedan syns den tomma rutan.
+  tl.from('.s2 .del', { scaleX: 0, opacity: 0, stagger: 0.6 }, 4.0);
+  tl.from('.s2 .over', { opacity: 0, x: -20 }, 6.0);
+
+  // Fokus: tiden som blir över fylls med koppar och nyckeltalet landar.
+  // Det övriga tonas ned. Ett klick när talet landar.
+  var tF = 7.4;
+  tl.to('.s1, .s2 .del, .rubrik-rad', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.s2 .over', { backgroundColor: '#C2793A', borderColor: '#C2793A', color: '#FFFFFF',
+    boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.from('.tal', { opacity: 0, y: 24 }, tF + 0.4);
+  tl.to('.tal b', { color: '#9C5A24', duration: 0.6 }, tF + 0.4);
+  Tavla.ljud(tl, tF + 0.5, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S178 · Three-part anchor</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tre ikonkort ----------
+     Tre breda kort i en rad ovanför y 720. De får använda bredden fram
+     till x 1760, eftersom kamerazonen bara gäller under y 720.
+     Varje kort har en egen enkel ikon som ritas fram streck för streck. */
+  .kort {
+    position: absolute; top: 260px; width: 520px; height: 420px;
+    padding: 48px 52px; background: var(--cw-ljus-alt);
+    border-radius: var(--cw-radie-kort);
+  }
+  .kort svg { display: block; margin-bottom: 36px; }
+  /* Ikonernas streck: blå från början, koppar när kortet är i fokus. */
+  .kort svg * {
+    fill: none; stroke: #0B3A6F; stroke-width: 6;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .skal { font-size: 52px; font-weight: var(--cw-vikt-display); line-height: 1.15; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Three shifts for AI in class</h1>
+
+  <!-- Kort 1: en pratbubbla med frågetecken (från svar till frågor). -->
+  <div class="kort" style="left:120px"><div class="innehall">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <path d="M14 20 h92 a8 8 0 0 1 8 8 v52 a8 8 0 0 1 -8 8 h-52 l-24 22 v-22 h-16 a8 8 0 0 1 -8 -8 v-52 a8 8 0 0 1 8 -8 Z"/>
+      <path d="M48 42 a12 12 0 1 1 18 10 c-5 3 -6 6 -6 10"/>
+      <path d="M60 74 v1"/>
+    </svg>
+    <div class="skal">From answers to questions</div>
+  </div></div>
+
+  <!-- Kort 2: tre steg som går uppåt (från produkt till process). -->
+  <div class="kort" style="left:680px"><div class="innehall">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <path d="M10 104 h30 v-28 h30 v-28 h30 v-30"/>
+      <path d="M86 26 l14 -14 l14 14"/>
+    </svg>
+    <div class="skal">From product to process</div>
+  </div></div>
+
+  <!-- Kort 3: en våg (från förbud till omdöme). -->
+  <div class="kort" style="left:1240px"><div class="innehall">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <path d="M60 14 v92 M36 106 h48"/>
+      <path d="M18 34 h84"/>
+      <path d="M18 34 l-12 32 h24 Z"/>
+      <path d="M102 34 l-12 32 h24 Z"/>
+    </svg>
+    <div class="skal">From banning to judgement</div>
+  </div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar varje kort när Johan säger sin förskjutning.
+     Tyst: de tre är lika viktiga. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var kort = gsap.utils.toArray('.kort');
+
+  // Gör ikonernas streck "osynliga" genom att skjuta undan strecket helt.
+  // Sedan ritas de fram genom att skjutet tas bort (stroke-dashoffset → 0).
+  gsap.utils.toArray('.kort svg *').forEach(function (p) {
+    var l = p.getTotalLength();
+    p.style.strokeDasharray = l;
+    p.style.strokeDashoffset = l;
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och de tre tomma korten.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(kort, { opacity: 0, y: 24, stagger: STEG }, 0.2);
+
+  // Korten fylls ett i taget: ikonen ritas fram, texten kommer in.
+  // Det nya kortet får fokus (ikonen i koppar), det förra tonas ned.
+  kort.forEach(function (k, i) {
+    var t = 1.4 + i * 2.4;
+    var streck = k.querySelectorAll('svg *');
+    if (i > 0) {
+      var forra = kort[i - 1];
+      tl.to(forra, { opacity: 0.38, duration: 0.6 }, t);
+      tl.to(forra.querySelectorAll('svg *'), { stroke: '#0B3A6F', duration: 0.6 }, t);
+    }
+    tl.to(streck, { strokeDashoffset: 0, duration: 1.0, stagger: 0.15, ease: 'power2.inOut' }, t);
+    tl.to(streck, { stroke: '#C2793A', duration: 0.6 }, t + 0.2);
+    tl.from(k.querySelector('.skal'), { opacity: 0, y: 20 }, t + 0.4);
+  });
+
+  // Till sist står alla tre lika starka, utan fokus: det är ankaret.
+  var tS = 1.4 + kort.length * 2.4 + 0.4;
+  tl.to(kort, { opacity: 1, duration: 0.6 }, tS);
+  tl.to(kort[kort.length - 1].querySelectorAll('svg *'), { stroke: '#0B3A6F', duration: 0.6 }, tS);
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

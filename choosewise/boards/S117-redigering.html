@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S117 · Edit timeline, track by track</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tidslinjen ----------
+     Tre spår under varandra: bild (Video), ljud (Audio) och grafik
+     (Graphics). Spåren går från x 400 till x 1500 och slutar vid y 750,
+     så att kamerazonen nere till höger alltid är tom. */
+  .spar-namn { position: absolute; left: 120px; width: 260px; line-height: 110px; }
+  .spar {
+    position: absolute; left: 400px; width: 1100px; height: 110px;
+    background: var(--cw-ljus-alt); border-radius: 16px;
+  }
+
+  /* Linjalen ovanför spåren: en tunn linje med ett streck var 110:e px. */
+  .linjal {
+    position: absolute; left: 400px; top: 296px; width: 1100px; height: 16px;
+    border-bottom: 3px solid var(--cw-kant-ljus); transform-origin: 0 50%;
+    background: repeating-linear-gradient(90deg, var(--cw-kant-ljus) 0 3px, transparent 3px 110px);
+  }
+
+  /* Ett klipp på ett spår. Färgen visar vilket slags klipp det är:
+     djupblått för bild, mellanblått för ljud, gråblått för grafik. */
+  .klipp {
+    position: absolute; height: 110px; border-radius: 16px; padding: 0 24px;
+    font-size: var(--cw-min-etikett); line-height: 110px; white-space: nowrap; overflow: hidden;
+  }
+  .klipp.bild { background: var(--cw-serie-1); color: #FFFFFF; }
+  .klipp.ljud { background: var(--cw-serie-2); color: #FFFFFF; }
+  .klipp.grafik { background: var(--cw-serie-3); color: var(--cw-text-ljus); }
+  /* Ljudvågen i ljudklippet ritas av skriptet nedan. */
+  .klipp.ljud svg { position: absolute; left: 230px; top: 20px; }
+
+  /* Spelhuvudet: en lodrät linje med ett runt handtag överst. */
+  .spelhuvud { position: absolute; left: 400px; top: 280px; width: 0; height: 490px; z-index: 5; }
+  .spelhuvud::before {
+    content: ''; position: absolute; left: -2px; top: 0; width: 4px; height: 100%;
+    background: var(--cw-text-ljus);
+  }
+  .spelhuvud::after {
+    content: ''; position: absolute; left: -14px; top: -14px; width: 28px; height: 28px;
+    border-radius: 50%; background: var(--cw-text-ljus);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+  <h1 class="rubrik">Edit one track at a time</h1>
+
+  <!-- Spårens namn och de tomma spåren. -->
+  <div class="spar-namn etikett" style="top:340px">Video</div>
+  <div class="spar-namn etikett" style="top:490px">Audio</div>
+  <div class="spar-namn etikett" style="top:640px">Graphics</div>
+  <div class="linjal"></div>
+  <div class="spar" style="top:340px"></div>
+  <div class="spar" style="top:490px"></div>
+  <div class="spar" style="top:640px"></div>
+
+  <!-- Bildspåret: tre klipp ur en inspelad lektion. -->
+  <div class="klipp bild" style="left:400px; top:340px; width:240px">Intro</div>
+  <div class="klipp bild" style="left:650px; top:340px; width:500px">Experiment</div>
+  <div class="klipp bild" style="left:1160px; top:340px; width:340px">Recap</div>
+
+  <!-- Ljudspåret: en lång speakerröst. -->
+  <div class="klipp ljud" style="left:400px; top:490px; width:980px">Voice<svg width="720" height="70"></svg></div>
+
+  <!-- Grafikspåret: en titel och en textskylt med ett nyckelord. -->
+  <div class="klipp grafik" style="left:400px; top:640px; width:220px">Title</div>
+  <div class="klipp grafik fokus" style="left:760px; top:640px; width:300px">Key term</div>
+
+  <div class="spelhuvud"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== LJUDVÅGEN =====
+     Smala staplar med olika höjd, så att det ser ut som tal. */
+  var vag = document.querySelector('.klipp.ljud svg'), staplar = '';
+  for (var i = 0; i < 60; i++) {
+    var h = 14 + Math.abs(Math.sin(i * 0.9) * Math.cos(i * 0.37)) * 52;
+    staplar += '<rect x="' + (i * 12) + '" y="' + (35 - h / 2) + '" width="6" height="' + h + '" rx="3" fill="rgba(255,255,255,.55)"/>';
+  }
+  vag.innerHTML = staplar;
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje spår när Johan nämner det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var fokus = document.querySelector('.klipp.fokus');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, spårens namn, de tomma spåren och linjalen.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.spar-namn, .spar', { opacity: 0, x: -24, stagger: 0.1 }, 0.3);
+  tl.from('.linjal', { scaleX: 0, duration: 1.0, ease: 'power2.inOut' }, 0.5);
+
+  // Spår för spår: först bildklippen, sedan ljudet, sist grafiken (tyst).
+  tl.from('.klipp.bild', { opacity: 0, y: 20, stagger: STEG }, 1.8);
+  // Ljudklippet "torkas fram" från vänster, så att texten inte trycks ihop.
+  tl.fromTo('.klipp.ljud', { clipPath: 'inset(0% 100% 0% 0%)' },
+                           { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.0, ease: 'power2.inOut' }, 3.2);
+  tl.from('.klipp.grafik', { opacity: 0, y: 20, stagger: STEG }, 4.6);
+
+  // Spelhuvudet dyker upp och glider fram till experimentet (x 1020),
+  // förbi texten "Key term" så att linjen inte skär genom den.
+  tl.from('.spelhuvud', { opacity: 0, duration: 0.4 }, 5.8);
+  tl.to('.spelhuvud', { x: 620, duration: 2.0, ease: 'power2.inOut' }, 6.0);
+
+  // Fokus: grafikklippet under spelhuvudet blir koppar, de andra klippen
+  // tonas ned. Ett klick när fokus landar.
+  var tF = 8.1;
+  tl.to(gsap.utils.toArray('.klipp').filter(function (k) { return k !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { backgroundColor: '#C2793A', color: '#FFFFFF', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.3, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

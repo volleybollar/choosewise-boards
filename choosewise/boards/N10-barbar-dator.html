@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N10 · Laptop with content building up</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Datorn ----------
+     En generisk bärbar dator i den tunna formen, utan märke eller logotyp.
+     Locket (skärmen) står mellan x 310 och x 1410, foten mellan x 210 och
+     x 1510. Allt slutar vid y 950, så att kamerazonen nere till höger
+     alltid är tom. */
+  .lock {
+    position: absolute; left: 310px; top: 230px; width: 1100px; height: 680px;
+    background: var(--cw-text-ljus); border-radius: 32px 32px 8px 8px; padding: 22px 22px 30px;
+  }
+  .skarm { position: relative; width: 100%; height: 100%; border-radius: 12px; background: #FFFFFF; overflow: hidden; }
+  /* Foten: en ljusgrå list som är lite bredare än locket, med en grop i
+     mitten där man öppnar locket. */
+  .fot {
+    position: absolute; left: 210px; top: 910px; width: 1300px; height: 34px;
+    background: var(--cw-kant-ljus); border-radius: 4px 4px 28px 28px;
+  }
+  .grop { position: absolute; left: 50%; top: 0; width: 180px; height: 12px; margin-left: -90px; border-radius: 0 0 12px 12px; background: var(--cw-text-ljus-dampad); opacity: .35; }
+
+  /* ---------- Innehållet i skärmen ----------
+     Ett generiskt presentationsprogram: en list överst, små sidor till
+     vänster och den sida som byggs upp till höger. */
+  .list { height: 56px; background: var(--cw-ljus-alt); display: flex; align-items: center; gap: 12px; padding: 0 24px; }
+  .list i { width: 16px; height: 16px; border-radius: 50%; background: var(--cw-kant-ljus); }
+  .sidor { position: absolute; left: 24px; top: 84px; width: 170px; }
+  .mini { height: 100px; border-radius: 12px; background: var(--cw-ljus-alt); margin-bottom: 18px; }
+  .yta { position: absolute; left: 230px; top: 84px; right: 28px; bottom: 28px; }
+  .sidrubrik { font-size: 64px; font-weight: var(--cw-vikt-display); margin: 6px 0 34px; }
+  .bild {
+    position: absolute; left: 0; top: 120px; width: 330px; height: 330px; border-radius: 24px;
+    background: var(--cw-ljus-alt); display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  /* Punkterna till höger om bilden. Varje punkt har en blå prick. */
+  .punkter { position: absolute; left: 380px; top: 140px; }
+  .punkt { display: flex; align-items: center; gap: 22px; margin-bottom: 40px; font-size: var(--cw-min-etikett); }
+  .punkt i { width: 18px; height: 18px; border-radius: 50%; background: var(--cw-accent); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">A lesson takes shape</h1>
+
+  <div class="lock">
+    <div class="skarm">
+      <div class="list"><i></i><i></i><i></i></div>
+      <!-- Små sidor till vänster, som i ett presentationsprogram. -->
+      <div class="sidor"><div class="mini"></div><div class="mini"></div><div class="mini"></div></div>
+      <!-- Sidan som byggs upp. Byt rubrik och punkter mot er egen lektion. -->
+      <div class="yta">
+        <div class="sidrubrik">The water cycle</div>
+        <div class="bild">Image</div>
+        <div class="punkter">
+          <div class="punkt"><i></i>Evaporation</div>
+          <div class="punkt"><i></i>Condensation</div>
+          <div class="punkt"><i></i>Precipitation</div>
+          <div class="punkt"><i></i>Collection</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="fot"><div class="grop"></div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje punkt när Johan säger den. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var punkter = gsap.utils.toArray('.punkt');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och datorn med en tom skärm.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.lock, .fot', { opacity: 0, y: 40, stagger: 0.1 }, 0.3);
+
+  // Programmet laddas: listen och de små sidorna.
+  tl.from('.list, .mini', { opacity: 0, stagger: 0.12, duration: 0.5 }, 1.3);
+
+  // Sidan byggs upp: rubriken, bildplatsen och punkterna en i taget.
+  tl.from('.sidrubrik', { opacity: 0, y: 20 }, 2.2);
+  tl.from('.bild', { opacity: 0, scale: 0.92 }, 3.0);
+  punkter.forEach(function (p, i) {
+    tl.from(p, { opacity: 0, x: -24 }, 4.0 + i * 0.9);
+  });
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

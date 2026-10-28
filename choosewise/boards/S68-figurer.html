@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S68 · Three roles, one question</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Figurerna ----------
+     Tre enkla, egna figurer (huvud och kropp) i varsin färg, med namnet
+     under. Mittpunkterna ligger på x 360, 860 och 1360. Den högra slutar
+     vid x 1480, så kamerazonen nere till höger är tom. */
+  .figur { position: absolute; top: 580px; width: 240px; text-align: center; }
+  .figur svg { display: block; width: 240px; height: 320px; }
+  .figur .namn { margin-top: 16px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+
+  /* ---------- Pratbubblorna ----------
+     En vit bubbla ovanför varje figur, med en spets som pekar ned.
+     Bubblornas underkant ligger på y 530 (ovanför kamerazonen). */
+  .bubbla {
+    position: absolute; bottom: 550px; width: 460px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    border-radius: 36px; padding: 30px 36px;
+    font-size: var(--cw-min-etikett); line-height: 1.25;
+  }
+  .bubbla .spets {
+    position: absolute; left: 200px; bottom: -22px; width: 40px; height: 40px;
+    background: #FFFFFF; border-right: 3px solid var(--cw-kant-ljus); border-bottom: 3px solid var(--cw-kant-ljus);
+    transform: rotate(45deg);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One question, three roles</h1>
+
+  <!-- Figurerna: lärare, elev (lite mindre) och rektor. -->
+  <div class="figur f1" style="left:240px">
+    <svg viewBox="0 0 240 320"><circle cx="120" cy="70" r="56" fill="#0B3A6F"/><path d="M20 320 Q20 150 120 150 Q220 150 220 320 Z" fill="#0B3A6F"/></svg>
+    <div class="namn">Teacher</div>
+  </div>
+  <div class="figur f2" style="left:740px">
+    <svg viewBox="0 0 240 320"><circle cx="120" cy="118" r="48" fill="#4A7FB5"/><path d="M36 320 Q36 180 120 180 Q204 180 204 320 Z" fill="#4A7FB5"/></svg>
+    <div class="namn">Pupil</div>
+  </div>
+  <div class="figur f3" style="left:1240px">
+    <svg viewBox="0 0 240 320"><circle cx="120" cy="70" r="56" fill="#A9BBD0"/><path d="M20 320 Q20 150 120 150 Q220 150 220 320 Z" fill="#A9BBD0"/></svg>
+    <div class="namn">Principal</div>
+  </div>
+
+  <!-- Bubblorna, i den ordning de pratar: eleven, läraren, rektorn. -->
+  <div class="bubbla b2" style="left:630px">Can I use AI for my essay?<b class="spets"></b></div>
+  <div class="bubbla b1" style="left:130px">Yes, for ideas. The writing is yours.<b class="spets"></b></div>
+  <div class="bubbla b3" style="left:1130px">Then that’s our school rule.<b class="spets"></b></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN ===== Provtider; vid synk kommer varje bubbla på sin replik. */
+  var EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Struktur först: rubriken och de tre figurerna.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.figur', { opacity: 0, y: 30, stagger: 0.18 }, 0.3);
+
+  // Replikerna: bubblorna växer fram från spetsen, en i taget.
+  ['.b2', '.b1', '.b3'].forEach(function (b, i) {
+    tl.from(b, { opacity: 0, scale: 0.9, y: 20, transformOrigin: '50% 100%' }, 1.8 + i * 2.2);
+  });
+
+  // Fokus: rektorns bubbla (beslutet) får kopparkant, resten tonas ned. Tyst.
+  var tF = 1.8 + 3 * 2.2 + 0.4;
+  tl.to('.b1, .b2, .f1, .f2', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.b3, .b3 .spets', { borderColor: '#C2793A', duration: 0.6 }, tF);
+  tl.to('.b3', { color: '#9C5A24', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

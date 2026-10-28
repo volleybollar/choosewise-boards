@@ -53,3 +53,13 @@ Tyst som standard. Enda tillåtna ljudet är `Tavla.ljud(tl, tid, 'landa')`, ett
 3. `fel` ska vara tom och varje tid `ok` (ingen krock med kamerazonen).
 4. **Titta på varje stillbild** med Read: ingen text avklippt vid kanten, inget överlapp, inget under 42 px, luft runt allt, fokus syns.
 5. Rätta och kör om tills allt är rent.
+
+## Nya boards (utan förlaga i repot)
+
+Boards med id `S<nummer>` bygger på idéer från Sirios bibliotek som bara syns på skärmdumpar (`~/Desktop/Sirio Berati AI Motion Graphics/`). De finns inte i repot och har **ingen licens**: använd bara idén (boardtypen och rörelsen), aldrig hans layout, text eller bilder. Bygg en egen lösning i Choosewise-stil. `N` är Johans egna önskemål och `F` Claudes förslag som Johan godkänt; beskrivningarna står i `docs/urval.md`.
+
+- Figurer och karaktärer ritas som egna, enkla SVG-figurer (aldrig kända figurer eller verkliga personer).
+- Verktyg och chattbotar heter generiskt (Chatbot A, B, C) och har inga riktiga logotyper.
+- Fakta om forskning: hitta aldrig på studier, författare eller årtal. Använd exempeldata-märket och platshållaren "Source: replace with the real study".
+- Effektstorlekar beskrivs relativt ("helps least of the ten", "smaller than"), aldrig som "low" eller "doesn't work" när d är måttlig (Johans regel).
+- Filnamn: `choosewise/boards/<id>-<kort svenskt namn>.html`, t.ex. `S06-rubrik.html`, `N2-effektstorlek.html`.

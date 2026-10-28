@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S142 · Cold-open hook</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Slutprodukten ----------
+     Filmen börjar med resultatet: en färdig lektionsplan som ett vitt kort.
+     Kortet ligger till vänster och slutar vid x 1060 och y 870. */
+  .kort {
+    position: absolute; left: 120px; top: 250px; width: 940px; height: 620px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 56px 64px;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .10);
+  }
+  .kort .amne { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .kort h2 {
+    margin: 12px 0 36px; font-size: 66px; font-weight: var(--cw-vikt-display);
+    letter-spacing: -0.02em; line-height: 1.1;
+  }
+  /* Lektionens tre delar: namn till vänster, minuter till höger. */
+  .steg {
+    display: flex; justify-content: space-between; align-items: center;
+    height: 112px; border-top: 2px solid var(--cw-ljus-alt);
+    font-size: var(--cw-min-etikett);
+  }
+  .steg .min { color: var(--cw-accent); font-weight: var(--cw-vikt-stark); }
+
+  /* ---------- Frågan ----------
+     "How?" står stort och tunt till höger, ovanför y 720 (kamerazonen
+     börjar under den). Den är boardens fokus och blir koppar när den landar. */
+  .fraga {
+    position: absolute; left: 1180px; top: 330px;
+    font-family: var(--cw-font-serif); font-style: italic;
+    font-size: 240px; line-height: 1; color: var(--cw-text-ljus);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) =====
+     Ingen rubrik här: en kall start visar resultatet direkt. -->
+<div class="cw ljus">
+
+  <!-- Resultatet. Byt mot det som faktiskt byggs i videon. -->
+  <div class="kort">
+    <div class="amne">Year 7 · Science</div>
+    <h2>Photosynthesis lesson</h2>
+    <div class="steg"><span>Starter question</span><span class="min">5 min</span></div>
+    <div class="steg"><span>Leaf experiment</span><span class="min">25 min</span></div>
+    <div class="steg"><span>Exit ticket</span><span class="min">10 min</span></div>
+  </div>
+
+  <div class="fraga">How?</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Kortet är där nästan direkt; "How?" landar när Johan ställer
+     frågan. Ett klick när frågan landar: det är boardens viktigaste ögonblick. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Resultatet först: kortet och dess innehåll uppifrån och ned.
+  tl.from('.kort', { opacity: 0, y: 40 }, 0);
+  tl.from('.kort .amne, .kort h2, .kort .steg', { opacity: 0, y: 16, stagger: STEG }, 0.3);
+
+  // Fokus: kortet tonas ned och "How?" landar i koppar. Ett klick.
+  var tF = 4.6;
+  tl.to('.kort', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.from('.fraga', { opacity: 0, y: 30 }, tF);
+  tl.to('.fraga', { color: '#9C5A24', duration: 0.6 }, tF + 0.3);
+  Tavla.ljud(tl, tF + 0.4, 'landa');
+
+  tl.to({}, { duration: 3.5 });  // vila: frågan står kvar medan Johan börjar
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

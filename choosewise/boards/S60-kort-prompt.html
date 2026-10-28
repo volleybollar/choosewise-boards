@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S60 · Short prompt</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Promptrutan ----------
+     En ensam ruta mitt på boarden, som ett generiskt inmatningsfält.
+     Rutan står på plats från början och har fast storlek (plats för två
+     rader), så bara texten skrivs fram inuti den. Den slutar ovanför y 720. */
+  .ruta {
+    position: absolute; left: 160px; top: 380px; width: 1400px; height: 260px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 52px 200px 52px 64px;
+    font-size: 56px; line-height: 1.35;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  /* Skickaknappen: en blå rund knapp med en pil, nere till höger i rutan. */
+  .skicka {
+    position: absolute; right: 44px; bottom: 44px; width: 96px; height: 96px;
+    border-radius: 50%; background: var(--cw-accent);
+  }
+  .skicka svg { position: absolute; left: 24px; top: 24px; }
+  /* Delen av prompten som fokus pekar på. Strecket under ritas fram. */
+  .nyckel { position: relative; }
+  .nyckel .streck {
+    position: absolute; left: 0; right: 0; bottom: -6px; height: 6px; border-radius: 3px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+  .etikett-ovan { position: absolute; left: 160px; top: 300px; color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Short, but specific</h1>
+  <div class="etikett etikett-ovan">Your prompt</div>
+
+  <!-- Prompten, delad i tre delar så att mittendelen kan markeras.
+       Radbrytningen gör att den markerade delen hamnar på en egen rad. -->
+  <div class="ruta">
+    <span class="del">Write three exit questions on fractions</span><br><span class="del nyckel">for Year 5<b class="streck"></b></span><span class="del">.</span>
+    <div class="skicka"><svg width="48" height="48" viewBox="0 0 48 48"><path d="M24 38 V10 M12 22 L24 10 L36 22" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN ===== Provtider; vid synk följer skrivandet Johans röst. */
+  var EASE = 'power2.out';
+  var delar = gsap.utils.toArray('.ruta .del');
+  // Spara texten i varje del och töm dem: texten skrivs fram tecken för tecken.
+  var texter = delar.map(function (d) { return d.firstChild.textContent; });
+  var totalt = texter.join('').length;
+  function visa(n) {
+    texter.forEach(function (t, i) {
+      delar[i].firstChild.textContent = t.slice(0, Math.max(0, Math.min(t.length, n)));
+      n -= t.length;
+    });
+  }
+  visa(0);
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Struktur först: rubriken, etiketten och den tomma rutan.
+  tl.from('.rubrik, .etikett-ovan', { opacity: 0, y: 24, stagger: 0.18 }, 0);
+  tl.from('.ruta', { opacity: 0, y: 40 }, 0.2);
+
+  // Prompten skrivs fram, ungefär 18 tecken i sekunden (tyst).
+  var skrivStart = 1.4, skrivTid = totalt / 18;
+  var raknare = { n: 0 };
+  tl.to(raknare, { n: totalt, duration: skrivTid, ease: 'none',
+    onUpdate: function () { visa(Math.round(raknare.n)); } }, skrivStart);
+
+  // Fokus: strecket under "for Year 5" ritas fram i koppar och texten blir
+  // kopparfärgad. Resten av prompten tonas ned. Tyst, som i N5.
+  var tF = skrivStart + skrivTid + 1.0;
+  tl.to('.nyckel .streck', { scaleX: 1, duration: 0.9 }, tF);
+  tl.to('.nyckel', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.ruta .del:not(.nyckel)', { opacity: 0.38, duration: 0.6 }, tF + 0.3);
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

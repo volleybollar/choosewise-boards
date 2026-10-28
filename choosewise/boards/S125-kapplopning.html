@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S125 · Speed race</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tre banor ----------
+     Samma uppgift görs på tre sätt. Varje sätt har en bana som fylls från
+     vänster; den som blir full först var snabbast. Allt ligger ovanför
+     y 720, så kamerazonen nere till höger är tom. */
+  .bana { position: absolute; left: 120px; width: 1680px; height: 80px; }
+  .bana .namn {
+    position: absolute; left: 0; top: 10px; width: 560px;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus);
+  }
+  /* Spåret (grått) och fyllningen (blå) som växer över spåret. */
+  .bana .spar {
+    position: absolute; left: 580px; top: 0; width: 820px; height: 80px;
+    background: var(--cw-ljus-alt); border-radius: 40px; overflow: hidden;
+  }
+  .bana .fyll {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: var(--cw-accent); border-radius: 40px; transform-origin: 0 50%;
+  }
+  /* Tiden visas till höger om spåret när banan är full. */
+  .bana .tid {
+    position: absolute; left: 1440px; top: 10px;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Feedback on 30 essays</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Banorna. data-timmar styr hur lång tid fyllningen tar. -->
+  <div class="bana b1" data-timmar="5" style="top:330px"><div class="namn">By hand</div><div class="spar"><div class="fyll"></div></div><div class="tid">5 h</div></div>
+  <div class="bana b2" data-timmar="3.5" style="top:470px"><div class="namn">With a rubric</div><div class="spar"><div class="fyll"></div></div><div class="tid">3.5 h</div></div>
+  <div class="bana b3" data-timmar="2" style="top:610px"><div class="namn">AI draft, you edit</div><div class="spar"><div class="fyll"></div></div><div class="tid">2 h</div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN ===== Provtider. */
+  var EASE = 'power2.out';
+  var banor = gsap.utils.toArray('.bana');
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Struktur först: rubrik, märke, namn och tomma spår.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: 0.18 }, 0);
+  tl.from('.namn, .spar', { opacity: 0, y: 16, stagger: 0.08 }, 0.4);
+  tl.set('.fyll', { scaleX: 0 }, 0);
+
+  // Loppet: alla startar samtidigt. 1 timme = 1,2 sekunder på boarden,
+  // så de snabbare sätten blir fulla först. Tiden visas när banan är full.
+  var start = 2.0, slut = 0;
+  banor.forEach(function (b) {
+    var d = b.dataset.timmar * 1.2;
+    tl.to(b.querySelector('.fyll'), { scaleX: 1, duration: d, ease: 'none' }, start);
+    tl.from(b.querySelector('.tid'), { opacity: 0, y: 16, duration: 0.5 }, start + d);
+    slut = Math.max(slut, start + d);
+  });
+
+  // Fokus: den snabbaste banan blir koppar, de andra tonas ned. Ett klick.
+  var tF = slut + 1.0;
+  tl.to('.b1, .b2', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.b3 .fyll', { backgroundColor: '#C2793A', duration: 0.6 }, tF);
+  tl.to('.b3 .namn, .b3 .tid', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

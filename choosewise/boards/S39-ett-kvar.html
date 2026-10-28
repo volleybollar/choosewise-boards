@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S39 · Stagger and collapse</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Rutnätet ----------
+     Tolv kort i fyra kolumner och tre rader, 320 × 140 px med 40 px
+     mellanrum. Rutnätet går från x 140 till 1540 och slutar vid y 792,
+     till vänster om kamerazonen. Skriptet placerar korten. */
+  .kort {
+    position: absolute; width: 320px; height: 140px;
+    border-radius: var(--cw-radie-kort); background: var(--cw-ljus-alt);
+    border: 3px solid transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); line-height: 1.2; white-space: nowrap;
+  }
+
+  /* Raden som kommer under kortet som blir kvar. */
+  .varfor {
+    position: absolute; left: 340px; width: 1000px; top: 680px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Twelve ideas. Keep one.</h1>
+
+  <!-- Korten. Byt texterna här. Kortet med klassen "kvar" blir kvar. -->
+  <div class="kort">Quiz</div>
+  <div class="kort kvar">Exit ticket</div>
+  <div class="kort">Debate</div>
+  <div class="kort">Mind map</div>
+  <div class="kort">Role play</div>
+  <div class="kort">Podcast</div>
+  <div class="kort">Poster</div>
+  <div class="kort">Peer review</div>
+  <div class="kort">Timeline</div>
+  <div class="kort">Lab report</div>
+  <div class="kort">Comic strip</div>
+  <div class="kort">Interview</div>
+
+  <div class="varfor">It fits today’s learning goal</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== PLACERING ===== Fyra kolumner, tre rader. */
+  var B = 320, H = 140, GLIPA_X = 40, GLIPA_Y = 36, V = 140, T = 300;
+  var kort = gsap.utils.toArray('.kort');
+  kort.forEach(function (k, i) {
+    k.style.left = V + (i % 4) * (B + GLIPA_X) + 'px';
+    k.style.top = T + Math.floor(i / 4) * (H + GLIPA_Y) + 'px';
+  });
+  var kvar = document.querySelector('.kort.kvar');
+  var andra = kort.filter(function (k) { return k !== kvar; });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk faller korten ihop när Johan säger "keep one". */
+  var IN = 0.8, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken, sedan korten ett i taget (tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(kort, { opacity: 0, y: 30, scale: 0.92, duration: 0.6, stagger: 0.18 }, 0.6);
+
+  // Alla utom ett faller ihop. De närmast kortet som blir kvar går först,
+  // så att det ser ut som en våg som sprider sig utåt.
+  var tFall = 0.6 + kort.length * 0.18 + 1.6;
+  var mx = kvar.offsetLeft, my = kvar.offsetTop;
+  andra.forEach(function (k) {
+    var avstand = Math.hypot(k.offsetLeft - mx, k.offsetTop - my) / (B + GLIPA_X);
+    tl.to(k, { scale: 0, opacity: 0, duration: 0.6, ease: 'power2.in' }, tFall + avstand * 0.12);
+  });
+
+  // Kortet som blev kvar glider till mitten och växer lite.
+  var tMitt = tFall + 1.3;
+  tl.to(kvar, { left: 840 - B / 2, top: 520 - H / 2, scale: 1.3, duration: 1.2, ease: 'power2.inOut' }, tMitt);
+
+  // Fokus: kortet blir koppar och skälet kommer under. Ett klick.
+  var tF = tMitt + 1.2;
+  tl.to(kvar, { color: '#9C5A24', borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.from('.varfor', { opacity: 0, y: 16 }, tF + 0.5);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

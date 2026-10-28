@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S133 · Market map</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Kartan: fyra kolumner ----------
+     Varje kolumn är ett arbetsområde i skolan, med tre sorters AI-verktyg.
+     Bara generiska kategorier, inga varumärken. Allt slutar ovanför y 720,
+     så den fjärde kolumnen kan gå ända till x 1770 utan att nå kamerazonen. */
+  .kolumn {
+    position: absolute; top: 250px; width: 390px; height: 470px;
+    background: var(--cw-ljus-alt); border: 3px solid transparent;
+    border-radius: var(--cw-radie-kort);
+  }
+  .kolumn h2 {
+    margin: 0; padding: 26px 0 0; text-align: center;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); color: var(--cw-accent);
+  }
+  /* Ett verktyg: ett vitt kort med kort namn. */
+  .verktyg {
+    position: absolute; left: 20px; width: 344px; height: 100px;
+    background: #FFFFFF; border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">What AI tools do in school</h1>
+
+  <!-- Kolumnerna. Byt rubriker och kort fritt; korten ligger på y 110, 230, 350 inne i kolumnen. -->
+  <div class="kolumn k1" style="left:120px"><h2>Plan</h2>
+    <div class="verktyg" style="top:110px">Lesson planners</div>
+    <div class="verktyg" style="top:230px">Text writers</div>
+    <div class="verktyg" style="top:350px">Image makers</div>
+  </div>
+  <div class="kolumn k2" style="left:540px"><h2>Tutor</h2>
+    <div class="verktyg" style="top:110px">Chat tutors</div>
+    <div class="verktyg" style="top:230px">Practice apps</div>
+    <div class="verktyg" style="top:350px">Reading aids</div>
+  </div>
+  <div class="kolumn k3" style="left:960px"><h2>Assess</h2>
+    <div class="verktyg" style="top:110px">Quiz makers</div>
+    <div class="verktyg" style="top:230px">Feedback aids</div>
+    <div class="verktyg" style="top:350px">AI detectors</div>
+  </div>
+  <div class="kolumn k4" style="left:1380px"><h2>Run</h2>
+    <div class="verktyg" style="top:110px">Timetabling</div>
+    <div class="verktyg" style="top:230px">Admin chatbots</div>
+    <div class="verktyg" style="top:350px">Dashboards</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN ===== Provtider. Vid synk kommer varje kolumn på sitt ord. */
+  var EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Struktur först: rubriken och de fyra tomma kolumnerna med namn.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.kolumn', { opacity: 0, y: 30, stagger: 0.18 }, 0.3);
+
+  // Korten fylls i, kolumn för kolumn.
+  gsap.utils.toArray('.kolumn').forEach(function (k, i) {
+    tl.from(k.querySelectorAll('.verktyg'), { opacity: 0, y: 20, stagger: 0.18 }, 1.8 + i * 1.6);
+  });
+
+  // Fokus: kolumnen "Assess" blir koppar, de andra tonas ned. Ett klick.
+  var tF = 1.8 + 4 * 1.6 + 0.8;
+  tl.to('.k1, .k2, .k4', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.k3', { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to('.k3 h2', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

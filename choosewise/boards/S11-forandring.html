@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S11 · Change in numbers</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Talet ----------
+     Ett stort, tunt tal som räknar ned från före-värdet till efter-värdet. */
+  .tal {
+    position: absolute; left: 112px; top: 300px;
+    font-size: 220px; font-weight: var(--cw-vikt-tunn); line-height: 1;
+    letter-spacing: -0.03em; color: var(--cw-accent);
+  }
+  .tal .enhet { font-size: 96px; margin-left: 20px; }
+
+  /* Förändringen: ett märke bredvid talet, boardens fokus. */
+  .skillnad {
+    position: absolute; left: 760px; top: 360px; padding: 14px 36px; border-radius: 999px;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+    background: var(--cw-glod); color: #FFFFFF;
+    box-shadow: 0 0 0 12px var(--cw-glod-sken);
+  }
+
+  /* ---------- Mätaren ----------
+     En liggande skena (0–15 min) med en fylld stapel. Skenan slutar vid
+     x 1420 och y 720, så kamerazonen är fri. */
+  .skena {
+    position: absolute; left: 120px; top: 640px; width: 1300px; height: 40px;
+    border-radius: 20px; background: var(--cw-ljus-alt);
+  }
+  .fyll {
+    position: absolute; left: 0; top: 0; height: 100%; width: 100%;
+    border-radius: 20px; background: var(--cw-accent); transform-origin: 0 50%;
+  }
+  /* Ett tunt streck som stannar kvar där före-värdet låg. */
+  .spar {
+    position: absolute; top: -20px; width: 4px; height: 80px; border-radius: 2px;
+    background: var(--cw-text-ljus-dampad);
+  }
+  /* Etiketter under skenan. */
+  .namn {
+    position: absolute; top: 730px; font-size: var(--cw-min-etikett);
+    color: var(--cw-text-ljus-dampad); white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Marking time per essay</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Talet. Skriptet skriver om siffran medan det räknar ned. -->
+  <div class="tal"><span class="siffra">12</span><span class="enhet">min</span></div>
+  <div class="skillnad">−7 min with AI feedback drafts</div>
+
+  <!-- Mätaren. Skriptet sätter bredd och läge från FORE, EFTER och MAX. -->
+  <div class="skena"><div class="fyll"></div><div class="spar"></div></div>
+  <div class="namn fore-namn">Before: 12 min</div>
+  <div class="namn efter-namn">After: 5 min</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk räknar talet ned när Johan säger "after". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var FORE = 12, EFTER = 5, MAX = 15, BREDD = 1300;  // exempeldata
+
+  // Lägg spåret och etiketterna på rätt ställe längs skenan.
+  var xFore = BREDD * FORE / MAX, xEfter = BREDD * EFTER / MAX;
+  gsap.set('.spar', { left: xFore - 2 });
+  gsap.set('.fore-namn', { left: 120 + xFore, xPercent: -50 });
+  gsap.set('.efter-namn', { left: 120 + xEfter, xPercent: -50 });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märke och den tomma skenan.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.skena', { opacity: 0, duration: 0.6 }, 0.4);
+
+  // Före: stapeln växer till 12, talet syns och etiketten kommer.
+  tl.fromTo('.fyll', { scaleX: 0 }, { scaleX: FORE / MAX, duration: 1.0 }, 1.0);
+  tl.from('.tal', { opacity: 0, y: 24 }, 1.0);
+  tl.from('.fore-namn', { opacity: 0, y: 12 }, 1.6);
+  tl.set('.spar', { opacity: 0 }, 0);
+  tl.to('.spar', { opacity: 1, duration: 0.4 }, 2.0);
+
+  // Efter: stapeln krymper till 5 och talet räknar ned samtidigt.
+  var tE = 3.6;
+  var raknare = { v: FORE };
+  tl.to('.fyll', { scaleX: EFTER / MAX, duration: 1.4, ease: 'power2.inOut' }, tE);
+  tl.to(raknare, { v: EFTER, duration: 1.4, ease: 'power2.inOut',
+    onUpdate: function () { document.querySelector('.siffra').textContent = Math.round(raknare.v); } }, tE);
+  tl.to('.fore-namn', { opacity: 0.38, duration: 0.6 }, tE);
+  tl.from('.efter-namn', { opacity: 0, y: 12 }, tE + 1.2);
+
+  // Fokus: talet och stapeln blir koppar och skillnaden landar. Ett klick.
+  var tF = tE + 1.6;
+  tl.to('.tal', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.fyll', { backgroundColor: '#C2793A', duration: 0.6 }, tF);
+  tl.fromTo('.skillnad', { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5 }, tF);
+  Tavla.ljud(tl, tF + 0.2, 'landa');
+  tl.to({}, { duration: 3 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

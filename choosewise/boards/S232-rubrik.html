@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S232 · Tracking-in title</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Kapitelrubriken ----------
+     En lugn rubrik mellan två delar av filmen. Den visas i helbild utan
+     kamera, därför mörk scen (som D56). Allt står vänsterställt från x 120.
+     Bokstäverna börjar långt isär och glider ihop till rubriken
+     (det heter "tracking in" i Keynote). */
+
+  /* Raden ovanför: vilket kapitel det är. */
+  .kapitel {
+    position: absolute; left: 124px; top: 380px;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+    color: var(--cw-text-mork-dampad); letter-spacing: .04em;
+  }
+
+  /* Själva rubriken. Bokstavsavståndet är det som rör sig. */
+  .titel {
+    position: absolute; left: 120px; top: 460px; margin: 0;
+    font-size: 120px; font-weight: var(--cw-vikt-display); line-height: 1.1;
+    letter-spacing: -0.02em; white-space: nowrap;
+  }
+
+  /* Ett tunt streck under rubriken som ritas fram när den har landat. */
+  .streck {
+    position: absolute; left: 124px; top: 640px; width: 220px; height: 6px; border-radius: 3px;
+    background: var(--cw-text-mork-dampad); transform-origin: 0 50%;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (mörk scen: kameran syns inte här) ===== -->
+<div class="cw mork">
+  <div class="kapitel">Chapter 3</div>
+  <h1 class="titel">Assessment with AI</h1>
+  <div class="streck"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar rubriken när Johan säger kapitlets namn. */
+  var IN = 0.8, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Kapitelraden tonar in.
+  tl.from('.kapitel', { opacity: 0, y: 16 }, 0.2);
+
+  // Rubriken: bokstäverna glider ihop från stort avstånd, samtidigt som
+  // den tonar in och blir skarp. Lång och mjuk rörelse (tyst).
+  tl.from('.titel', { letterSpacing: '0.32em', opacity: 0, filter: 'blur(12px)', duration: 2.6, ease: 'power3.out' }, 0.6);
+
+  // Strecket ritas fram när rubriken har landat.
+  tl.from('.streck', { scaleX: 0, duration: 0.9, ease: 'power2.inOut' }, 2.8);
+
+  // Lång vila: rubriken ska stå still en stund innan nästa del börjar.
+  tl.to({}, { duration: 4.4 });
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

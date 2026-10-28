@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S124 · AI or human?</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Två texter sida vid sida ----------
+     Två lika stora kort med varsin kort text. Läsaren ska gissa vilken
+     som är skriven av AI. Korten slutar vid x 1500, så kamerazonen är tom. */
+  .kort {
+    position: absolute; top: 300px; width: 640px; height: 430px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 48px 52px;
+  }
+  .kort .namn { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); margin-bottom: 28px; }
+  .kort .text { font-family: var(--cw-font-serif); font-style: italic; font-size: 56px; line-height: 1.2; }
+
+  /* Svaret: en etikett under varje kort som avslöjas på slutet. */
+  .svar {
+    position: absolute; top: 780px; width: 640px; text-align: center;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+  }
+
+  /* Frågan står mellan rubriken och korten. */
+  .fraga { position: absolute; left: 120px; top: 205px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">AI or human?</h1>
+  <div class="fraga">Which one did AI write?</div>
+
+  <!-- De två texterna. Byt gärna mot elevtexter eller bilder (platshållare). -->
+  <div class="kort a" style="left:140px">
+    <div class="namn">Text A</div>
+    <div class="text">The poem made me think of my gran’s kitchen.</div>
+  </div>
+  <div class="kort b" style="left:860px">
+    <div class="namn">Text B</div>
+    <div class="text">The poem explores themes of memory and belonging.</div>
+  </div>
+
+  <!-- Svaren, dolda tills avslöjandet. -->
+  <div class="svar sa" style="left:140px; color:var(--cw-accent)">Human</div>
+  <div class="svar sb" style="left:860px">AI</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN ===== Provtider; vid synk följer avslöjandet Johans röst. */
+  var EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Struktur först: rubriken och de två tomma korten.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.kort', { opacity: 0, y: 30, stagger: 0.18 }, 0.2);
+
+  // Texterna kommer en i taget, sedan frågan. Sedan en paus för att gissa.
+  tl.from('.a .text', { opacity: 0, y: 16 }, 1.4);
+  tl.from('.b .text', { opacity: 0, y: 16 }, 2.6);
+  tl.from('.fraga', { opacity: 0, y: 16 }, 4.0);
+
+  // Avslöjandet: svaren dyker upp. Fokus på AI-texten (koppar), den andra
+  // tonas ned. Ett klick när svaret landar.
+  var tF = 7.0;
+  tl.from('.svar', { opacity: 0, y: 16, stagger: 0.18 }, tF);
+  tl.to('.a, .sa', { opacity: 0.38, duration: 0.6 }, tF + 0.6);
+  tl.to('.b', { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF + 0.6);
+  tl.to('.sb, .b .namn', { color: '#9C5A24', duration: 0.6 }, tF + 0.6);
+  Tavla.ljud(tl, tF + 0.7, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

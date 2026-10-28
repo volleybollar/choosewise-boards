@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S257 · Image wall, one becomes the hero</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Bildväggen ----------
+     Tolv platshållare för AI-bilder i ett rutnät, fyra i bredd och tre i
+     höjd. Rutnätet slutar vid x 1530 och y 920, så att kamerazonen nere
+     till höger alltid är tom. Rutorna skapas av skriptet längst ned. */
+  .ruta {
+    position: absolute; width: 330px; height: 200px;
+    background: var(--cw-ljus-alt); border-radius: var(--cw-radie-media); overflow: hidden;
+  }
+  /* Bilden i rutan: en enkel teckning (kullar och en sol) som står för
+     "här ska en bild ligga". Den fyller rutan även när rutan växer. */
+  .ruta svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  /* Bildens nummer uppe till vänster. */
+  .ruta .nr {
+    position: absolute; left: 28px; top: 18px;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  /* Bildtexten som bara syns när bilden har blivit stor. */
+  .ruta .bildtext {
+    position: absolute; left: 48px; bottom: 40px; opacity: 0;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+  <h1 class="rubrik">Twelve AI images, one keeper</h1>
+  <!-- Bildväggen fylls i av skriptet nedan. -->
+  <div class="vagg"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RUTORNA =====
+     Skriptet bygger de tolv rutorna, så att du bara behöver ändra på ett
+     ställe. HJALTE är numret på bilden som lyfts fram (räknat från 1). */
+  var HJALTE = 6;
+  var BILDTEXT = 'Image 6 shows the water cycle clearly';
+  var vagg = document.querySelector('.vagg');
+  var teckning =
+    '<svg viewBox="0 0 330 200" preserveAspectRatio="xMidYMid slice">' +
+    '<circle cx="250" cy="66" r="26" fill="#A9BBD0"/>' +
+    '<path d="M0 200 L0 150 Q70 90 140 140 Q210 100 330 150 L330 200 Z" fill="#DDE3EA"/></svg>';
+  for (var i = 0; i < 12; i++) {
+    var r = document.createElement('div');
+    r.className = 'ruta';
+    r.style.left = (120 + (i % 4) * 360) + 'px';            // 330 px bred + 30 px luft
+    r.style.top = (260 + Math.floor(i / 4) * 230) + 'px';   // 200 px hög + 30 px luft
+    r.innerHTML = teckning + '<div class="nr">' + (i + 1) + '</div>';
+    if (i + 1 === HJALTE) r.innerHTML += '<div class="bildtext">' + BILDTEXT + '</div>';
+    vagg.appendChild(r);
+  }
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar fokus på ordet som pekar ut bilden. */
+  var IN = 0.8, EASE = 'power2.out';   // tempot "Lugn"
+  var rutor = gsap.utils.toArray('.ruta');
+  var hjalte = rutor[HJALTE - 1];
+  var ovriga = rutor.filter(function (r) { return r !== hjalte; });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken, sedan fylls väggen ruta för ruta (tyst: framväxt).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(rutor, { opacity: 0, scale: 0.92, stagger: 0.12 }, 0.6);
+
+  // Fokus: de andra tonas ned och den valda bilden får en kopparram.
+  var tF = 3.6;
+  tl.to(ovriga, { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(hjalte, { boxShadow: '0 0 0 6px #C2793A, 0 0 0 18px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(hjalte.querySelector('.nr'), { color: '#9C5A24', duration: 0.6 }, tF);
+
+  // De andra försvinner och bilden växer till stor bild. Ett klick när den landar.
+  var tS = tF + 1.6;
+  tl.to(ovriga, { opacity: 0, duration: 0.6 }, tS);
+  tl.to(hjalte, { left: 120, top: 260, width: 1221, height: 740, duration: 1.2, ease: 'power2.inOut' }, tS);
+  Tavla.ljud(tl, tS + 1.2, 'landa');
+  tl.to(hjalte.querySelector('.bildtext'), { opacity: 1, y: 0, startAt: { y: 16 } }, tS + 1.3);
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

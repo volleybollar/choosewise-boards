@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S122 · Same prompt, three chatbots</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Prompten ----------
+     En bred bubbla överst. Samma text går till alla tre chattbotarna. */
+  .prompt {
+    position: absolute; left: 120px; top: 250px; width: 1380px; height: 96px;
+    background: var(--cw-ljus-alt); border-radius: 48px;
+    font-size: var(--cw-min-etikett); line-height: 96px; text-align: center;
+  }
+  /* Tre linjer från prompten ned till korten: samma fråga, tre vägar. */
+  .grenar { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  .grenar path { fill: none; stroke: var(--cw-kant-ljus); stroke-width: 4; stroke-linecap: round; }
+
+  /* ---------- Svaren ----------
+     Tre kort i rad, x 120–1500 och y 450–830, så kamerazonen är tom.
+     Botarna heter bara A, B och C: inga riktiga namn eller logotyper. */
+  .svar {
+    position: absolute; top: 450px; width: 420px; height: 380px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 36px 40px;
+  }
+  .svar .bot { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); margin-bottom: 20px; }
+  .svar .text { font-size: var(--cw-min-etikett); line-height: 1.25; }
+
+  /* Varför vinnaren vann: en kort rad under korten (till vänster om x 1570). */
+  .varfor {
+    position: absolute; left: 120px; top: 900px; white-space: nowrap;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Same prompt, three answers</h1>
+
+  <div class="prompt">Explain fractions to a nine-year-old.</div>
+
+  <!-- Linjerna från promptens underkant (y 346) till varje korts mitt upptill. -->
+  <svg class="grenar" viewBox="0 0 1920 1080">
+    <path d="M810 346 C810 400, 330 390, 330 446"/>
+    <path d="M810 346 L810 446"/>
+    <path d="M810 346 C810 400, 1290 390, 1290 446"/>
+  </svg>
+
+  <!-- De tre svaren. Byt texterna här; håll dem korta. -->
+  <div class="svar" style="left:120px"><div class="bot">Chatbot A</div><div class="text">A fraction is part of a whole.</div></div>
+  <div class="svar" style="left:600px"><div class="bot">Chatbot B</div><div class="text">A numerator over a denominator.</div></div>
+  <div class="svar" style="left:1080px"><div class="bot">Chatbot C</div><div class="text">Cut a pizza<br>into four.<br>One&nbsp;slice&nbsp;is&nbsp;¼.</div></div>
+
+  <div class="varfor">Why C: a concrete example at their level.</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje svar när Johan nämner boten.
+     Klicket ligger på vinnaren. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var svar = gsap.utils.toArray('.svar');
+  var grenar = gsap.utils.toArray('.grenar path');
+
+  // Linjerna göms genom att streckmönstret skjuts ut helt.
+  grenar.forEach(function (g) {
+    var langd = g.getTotalLength();
+    g.style.strokeDasharray = langd;
+    g.style.strokeDashoffset = langd;
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, prompten och de tre tomma korten med botarnas namn.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.prompt', { opacity: 0, y: 24 }, 0.2);
+  tl.from(svar, { opacity: 0, y: 24, stagger: STEG }, 0.5);
+
+  // Prompten skickas: alla tre linjerna ritas samtidigt.
+  tl.to(grenar, { strokeDashoffset: 0, duration: 0.9, ease: 'power2.inOut' }, 1.8);
+
+  // Svaren kommer ett i taget (tyst).
+  svar.forEach(function (s, i) {
+    tl.from(s.querySelector('.text'), { opacity: 0, y: 16 }, 2.8 + i * 1.4);
+  });
+
+  // Vinnaren lyfts: kopparkant, sken, en liten bit uppåt. De andra tonas ned,
+  // och raden om varför kommer fram. Ett klick.
+  var tF = 2.8 + svar.length * 1.4 + 0.6;
+  var vinnare = svar[2];
+  tl.to(svar.slice(0, 2).concat(grenar.slice(0, 2)), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(vinnare, { y: -24, borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(vinnare.querySelectorAll('.bot, .text'), { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to(grenar[2], { stroke: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.from('.varfor', { opacity: 0, y: 16 }, tF + 1.0);
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

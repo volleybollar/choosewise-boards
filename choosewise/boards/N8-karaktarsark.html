@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N8 · Character reference sheet</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Rutorna ----------
+     Tre höga rutor för vinklarna (framifrån, från sidan, bakifrån) och två
+     lägre rutor till höger för uttrycken. Allt står mellan x 120 och
+     x 1500 och slutar vid y 940, så att kamerazonen alltid är tom. */
+  .ruta {
+    position: absolute; background: var(--cw-ljus-alt); border-radius: var(--cw-radie-media);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    padding-bottom: 26px;
+  }
+  .vinkel { top: 240px; width: 300px; height: 600px; }
+  .uttryck { left: 1160px; width: 340px; height: 285px; }
+  .ruta svg { display: block; margin-bottom: 18px; overflow: visible; }
+  .vinkel svg { width: 240px; height: 420px; }
+  .uttryck svg { width: 153px; height: 170px; margin-bottom: 14px; }
+
+  /* Slutsatsen under rutorna. Den syns först när fokus landar. */
+  .lexa { position: absolute; left: 120px; top: 875px; font-weight: var(--cw-vikt-stark); color: var(--cw-glod-text); }
+
+  /* ---------- Figuren ----------
+     En egen, enkel figur ritad i SVG med temats färger: vitt ansikte,
+     mörkt hår, djupblå kropp och en gråblå halsduk. Halsduken är den
+     detalj som blir fokus: samma halsduk i varje bild. */
+  .linje { stroke: var(--cw-text-ljus); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+  .hy { fill: #FFFFFF; }
+  .har { fill: var(--cw-text-ljus); }
+  .kropp-f { fill: var(--cw-accent); }
+  .arm { fill: none; stroke: var(--cw-accent); stroke-width: 26; stroke-linecap: round; }
+  .arm-nara { stroke: var(--cw-serie-2); }
+  .ben { fill: var(--cw-text-ljus-dampad); }
+  .halsduk { fill: var(--cw-serie-3); }
+  .halsduk-svans { fill: none; stroke: var(--cw-serie-3); stroke-width: 22; stroke-linecap: round; }
+  .drag { fill: none; }
+  .oga { fill: var(--cw-text-ljus); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One character, every angle</h1>
+
+  <!-- Framifrån -->
+  <div class="ruta vinkel" style="left:120px">
+    <svg viewBox="0 0 240 420">
+      <g class="kropp">
+        <path class="arm" d="M74,198 L54,300"/><path class="arm" d="M166,198 L186,300"/>
+        <rect class="ben" x="84" y="320" width="28" height="80" rx="13"/><rect class="ben" x="128" y="320" width="28" height="80" rx="13"/>
+        <path class="kropp-f" d="M72,180 Q120,166 168,180 L186,330 Q120,344 54,330 Z"/>
+        <circle class="hy linje" cx="120" cy="100" r="58"/>
+        <path class="har" d="M60,110 C50,30 190,30 180,110 C176,94 168,82 158,74 C138,88 102,90 82,74 C70,84 63,96 60,110 Z"/>
+        <circle class="oga" cx="100" cy="106" r="6"/><circle class="oga" cx="140" cy="106" r="6"/>
+        <path class="drag linje" d="M104,130 Q120,142 136,130"/>
+      </g>
+      <g class="halsduk-g">
+        <rect class="halsduk" x="80" y="160" width="80" height="28" rx="14"/>
+        <rect class="halsduk" x="126" y="176" width="24" height="74" rx="11"/>
+      </g>
+    </svg>
+    <div class="etikett">Front</div>
+  </div>
+
+  <!-- Från sidan (vänd åt höger) -->
+  <div class="ruta vinkel" style="left:450px">
+    <svg viewBox="0 0 240 420">
+      <g class="kropp">
+        <rect class="ben" x="104" y="320" width="30" height="80" rx="14"/>
+        <path class="kropp-f" d="M92,180 Q122,170 152,180 L162,330 Q120,340 82,330 Z"/>
+        <path class="arm arm-nara" d="M122,200 L132,300"/>
+        <circle class="hy linje" cx="120" cy="100" r="58"/>
+        <path class="drag linje" d="M177,100 L186,114 L175,116"/>
+        <path class="har" d="M64,124 C50,52 108,30 150,44 C170,52 180,68 179,88 C162,78 142,78 130,86 C118,96 112,116 104,134 C96,150 78,152 64,124 Z"/>
+        <circle class="oga" cx="152" cy="106" r="6"/>
+        <path class="drag linje" d="M156,134 L168,131"/>
+      </g>
+      <g class="halsduk-g">
+        <path class="halsduk-svans" d="M96,176 Q72,196 68,240"/>
+        <rect class="halsduk" x="90" y="160" width="64" height="28" rx="14"/>
+      </g>
+    </svg>
+    <div class="etikett">Side</div>
+  </div>
+
+  <!-- Bakifrån -->
+  <div class="ruta vinkel" style="left:780px">
+    <svg viewBox="0 0 240 420">
+      <g class="kropp">
+        <path class="arm" d="M74,198 L54,300"/><path class="arm" d="M166,198 L186,300"/>
+        <rect class="ben" x="84" y="320" width="28" height="80" rx="13"/><rect class="ben" x="128" y="320" width="28" height="80" rx="13"/>
+        <path class="kropp-f" d="M72,180 Q120,166 168,180 L186,330 Q120,344 54,330 Z"/>
+        <circle class="har" cx="120" cy="100" r="60"/>
+      </g>
+      <g class="halsduk-g">
+        <rect class="halsduk" x="80" y="160" width="80" height="28" rx="14"/>
+        <rect class="halsduk" x="98" y="176" width="24" height="66" rx="11"/>
+      </g>
+    </svg>
+    <div class="etikett">Back</div>
+  </div>
+
+  <!-- Uttryck 1: glad -->
+  <div class="ruta uttryck" style="top:240px">
+    <svg viewBox="48 34 144 160">
+      <g class="kropp">
+        <circle class="hy linje" cx="120" cy="100" r="58"/>
+        <path class="har" d="M60,110 C50,30 190,30 180,110 C176,94 168,82 158,74 C138,88 102,90 82,74 C70,84 63,96 60,110 Z"/>
+        <path class="drag linje" d="M92,108 Q100,98 108,108"/><path class="drag linje" d="M132,108 Q140,98 148,108"/>
+        <path class="drag linje" d="M98,126 Q120,152 142,126"/>
+      </g>
+      <g class="halsduk-g"><rect class="halsduk" x="80" y="160" width="80" height="28" rx="14"/></g>
+    </svg>
+    <div class="etikett">Happy</div>
+  </div>
+
+  <!-- Uttryck 2: nyfiken -->
+  <div class="ruta uttryck" style="top:555px">
+    <svg viewBox="48 34 144 160">
+      <g class="kropp">
+        <circle class="hy linje" cx="120" cy="100" r="58"/>
+        <path class="har" d="M60,110 C50,30 190,30 180,110 C176,94 168,82 158,74 C138,88 102,90 82,74 C70,84 63,96 60,110 Z"/>
+        <path class="drag linje" d="M88,90 L110,84"/><path class="drag linje" d="M132,88 L152,94"/>
+        <circle class="oga" cx="100" cy="106" r="6"/><circle class="oga" cx="140" cy="108" r="6"/>
+        <circle class="drag linje" cx="122" cy="134" r="7"/>
+      </g>
+      <g class="halsduk-g"><rect class="halsduk" x="80" y="160" width="80" height="28" rx="14"/></g>
+    </svg>
+    <div class="etikett">Curious</div>
+  </div>
+
+  <div class="lexa etikett">Lock one detail: same scarf, every image</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje vinkel när Johan nämner den. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rutor = gsap.utils.toArray('.ruta');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, de tomma rutorna och etiketterna.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(rutor, { opacity: 0, y: 24, stagger: STEG }, 0.3);
+
+  // Figuren dyker upp i en ruta i taget (tyst: framväxt).
+  rutor.forEach(function (r, i) {
+    tl.from(r.querySelector('svg'), { opacity: 0, y: 30, duration: 0.7 }, 1.8 + i * 0.9);
+  });
+
+  // Fokus: halsduken blir koppar i alla fem bilderna, resten av figuren
+  // tonas ned, och slutsatsen kommer under rutorna. Ett klick när fokus landar.
+  var tF = 1.8 + rutor.length * 0.9 + 0.6;
+  tl.to('.kropp', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.halsduk', { fill: '#C2793A', duration: 0.6 }, tF);
+  tl.to('.halsduk-svans', { stroke: '#C2793A', duration: 0.6 }, tF);
+  tl.from('.lexa', { opacity: 0, y: 20 }, tF + 0.3);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>
