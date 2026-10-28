@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D49 · Timeline</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tidslinjen ----------
+     Hela läsåret får plats i bilden (till skillnad från N1, där kameran
+     åker). Linjen ligger på y 600 från x 140 till x 1500. */
+  .axel {
+    position: absolute; left: 140px; top: 599px; width: 1360px; height: 3px;
+    background: var(--cw-text-ljus-dampad); transform-origin: 0 50%;
+  }
+
+  /* En händelse: en punkt på linjen, en kort stjälk och ett kort.
+     Korten står omväxlande ovanför (.upp) och under (.ner) linjen,
+     så att händelser som ligger nära varandra inte krockar. */
+  .handelse { position: absolute; top: 600px; width: 0; height: 0; }
+  .punkt {
+    position: absolute; left: -16px; top: -16px; width: 32px; height: 32px;
+    border-radius: 50%; background: var(--cw-text-ljus);
+  }
+  .stjalk { position: absolute; left: -1px; width: 3px; height: 36px; background: var(--cw-kant-ljus); }
+  .upp .stjalk { bottom: 16px; }
+  .ner .stjalk { top: 16px; }
+  .kort {
+    position: absolute; left: -30px; width: 360px; white-space: nowrap;
+    background: var(--cw-ljus-alt); border-radius: var(--cw-radie-media);
+    padding: 22px 28px 26px;
+  }
+  .upp .kort { bottom: 52px; }
+  .ner .kort { top: 52px; }
+  .manad {
+    display: block; font-size: 72px; font-weight: var(--cw-vikt-tunn);
+    line-height: 1; margin-bottom: 10px;
+  }
+
+  /* "Now" står ovanför kortet som är i fokus. Det är koppar från början
+     men syns först när fokus landar. */
+  .nu {
+    position: absolute; left: -30px; bottom: 256px;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); color: var(--cw-glod-text);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One school year with AI</h1>
+  <!-- Ett påhittat exempel på en plan: byts mot skolans egna datum. -->
+  <div class="exempel" style="left:120px; top:205px">Example plan · replace with your school’s dates</div>
+
+  <div class="axel"></div>
+
+  <!-- Händelserna. data-manad är antal månader efter augusti (0 = aug),
+       så att avstånden på linjen stämmer med tiden. -->
+  <div class="handelse upp" data-manad="0">
+    <div class="stjalk"></div><div class="punkt"></div>
+    <div class="kort"><span class="manad">Aug</span><span class="etikett">AI policy</span></div>
+  </div>
+  <div class="handelse ner" data-manad="2">
+    <div class="stjalk"></div><div class="punkt"></div>
+    <div class="kort"><span class="manad">Oct</span><span class="etikett">Staff training</span></div>
+  </div>
+  <div class="handelse upp fokus" data-manad="5">
+    <div class="stjalk"></div><div class="punkt"></div>
+    <div class="kort"><span class="manad">Jan</span><span class="etikett">Pilot in Year 8</span></div>
+    <div class="nu">Now</div>
+  </div>
+  <div class="handelse ner" data-manad="8">
+    <div class="stjalk"></div><div class="punkt"></div>
+    <div class="kort"><span class="manad">Apr</span><span class="etikett">Student review</span></div>
+  </div>
+  <div class="handelse upp" data-manad="10">
+    <div class="stjalk"></div><div class="punkt"></div>
+    <div class="kort"><span class="manad">Jun</span><span class="etikett">Decision</span></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== PLACERINGEN =====
+     128 px per månad, med augusti vid x 180. */
+  var START = 180, PER_MANAD = 128;
+  var handelser = gsap.utils.toArray('.handelse');
+  handelser.forEach(function (h) {
+    h.style.left = (START + h.dataset.manad * PER_MANAD) + 'px';
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk ritas linjen medan Johan går igenom året, och
+     varje händelse dyker upp när linjen når den. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+
+  // Linjen ritas med jämn fart från vänster till höger.
+  var tLinje = 1.0, LINJETID = 6.0;
+  tl.from('.axel', { scaleX: 0, duration: LINJETID, ease: 'none' }, tLinje);
+
+  // Varje händelse kommer när linjen når dess punkt (tyst: framväxt).
+  handelser.forEach(function (h) {
+    var x = parseFloat(h.style.left);
+    var t = tLinje + (x - 140) / 1360 * LINJETID;
+    var riktning = h.classList.contains('upp') ? 20 : -20;
+    tl.from(h.querySelector('.punkt'), { scale: 0, duration: 0.5, ease: 'back.out(2)' }, t);
+    tl.from(h.querySelector('.stjalk'), { opacity: 0, duration: 0.4 }, t + 0.1);
+    tl.from(h.querySelector('.kort'), { opacity: 0, y: riktning }, t + 0.15);
+  });
+
+  // Fokus: "Jan" är där skolan står nu. Kortet och punkten blir koppar,
+  // "Now" kommer in och de andra tonas ned. Ett klick.
+  var fokus = document.querySelector('.fokus');
+  var tF = tLinje + LINJETID + 0.6;
+  tl.to(handelser.filter(function (h) { return h !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.punkt'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 14px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.manad'), { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.from(fokus.querySelector('.nu'), { opacity: 0, y: 16, duration: 0.6 }, tF + 0.1);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

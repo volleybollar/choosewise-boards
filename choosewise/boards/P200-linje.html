@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P200 · From prompt to lesson</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Banan ----------
+     En enda kurva som ritas fram från vänster till höger. SVG-ytan täcker
+     hela boarden, så att koordinaterna i kurvan är samma som board-pixlar.
+     Kurvan slutar vid x 1440, långt från kamerazonen nere till höger. */
+  .bana { position: absolute; left: 0; top: 0; }
+
+  /* Pricken som åker längst fram på linjen medan den ritas. */
+  .spets {
+    position: absolute; left: -18px; top: -18px; width: 36px; height: 36px;
+    border-radius: 50%; background: var(--cw-accent);
+  }
+
+  /* Ett stopp på vägen: en punkt på linjen och en etikett i en platt ruta.
+     Etiketten står ovanför (.upp) eller under (.ner) punkten. */
+  .stopp { position: absolute; width: 0; height: 0; }
+  .stopp .punkt {
+    position: absolute; left: -14px; top: -14px; width: 28px; height: 28px;
+    border-radius: 50%; background: var(--cw-text-ljus);
+  }
+  .stopp .namn {
+    position: absolute; left: 0; white-space: nowrap;
+    padding: 16px 36px; border-radius: 999px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    font-size: var(--cw-min-etikett); line-height: 1.2;
+  }
+  .stopp.upp .namn { bottom: 40px; }
+  .stopp.ner .namn { top: 40px; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">From prompt to lesson</h1>
+
+  <!-- Kurvan. Den går genom de fyra stoppen nedan (punkterna i d="..."). -->
+  <svg class="bana" width="1920" height="1080" viewBox="0 0 1920 1080">
+    <path class="linje" d="M220 780 C380 780 460 480 640 480 C820 480 860 720 1040 720 C1220 720 1260 400 1440 400"
+          fill="none" stroke="#0C1A2E" stroke-width="6" stroke-linecap="round"/>
+  </svg>
+
+  <!-- Stoppen. data-x och data-y är punktens plats på kurvan. -->
+  <div class="stopp ner" data-x="220"  data-y="780"><div class="punkt"></div><div class="namn">Prompt</div></div>
+  <div class="stopp upp" data-x="640"  data-y="480"><div class="punkt"></div><div class="namn">AI draft</div></div>
+  <div class="stopp ner" data-x="1040" data-y="720"><div class="punkt"></div><div class="namn">Your edits</div></div>
+  <div class="stopp upp" data-x="1440" data-y="400"><div class="punkt"></div><div class="namn">Lesson</div></div>
+
+  <div class="spets"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk ritas linjen fram medan Johan säger meningen, och
+     varje stopp dyker upp när linjen når det. */
+  var IN = 0.8, EASE = 'power2.out';
+  var linje = document.querySelector('.linje');
+  var spets = document.querySelector('.spets');
+  var stopp = gsap.utils.toArray('.stopp');
+  var langd = linje.getTotalLength();
+
+  // Placera stoppen och etiketterna (etiketten centreras över punkten).
+  stopp.forEach(function (s) {
+    s.style.left = s.dataset.x + 'px';
+    s.style.top = s.dataset.y + 'px';
+    gsap.set(s.querySelector('.namn'), { xPercent: -50 });
+  });
+
+  // Hur långt in på linjen ligger varje stopp? Vi letar upp den punkt på
+  // linjen som ligger närmast stoppet. Det styr när stoppet ska dyka upp.
+  function andelVid(x, y) {
+    var bast = 0, minsta = Infinity;
+    for (var l = 0; l <= langd; l += 2) {
+      var p = linje.getPointAtLength(l), d = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
+      if (d < minsta) { minsta = d; bast = l; }
+    }
+    return bast / langd;
+  }
+
+  // Ritningen styrs av ett enda tal, andel (0 = inget, 1 = hela linjen).
+  // rita() körs varje gång tidslinjen ritas, också när exporten hoppar
+  // till en viss bildruta, så linjen och pricken stämmer alltid.
+  var lage = { andel: 0 };
+  linje.style.strokeDasharray = langd;
+  function rita() {
+    linje.style.strokeDashoffset = langd * (1 - lage.andel);
+    var p = linje.getPointAtLength(langd * lage.andel);
+    gsap.set(spets, { x: p.x, y: p.y });
+  }
+  rita();
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN }, onUpdate: rita });
+
+  // Struktur först: rubriken.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+
+  // Linjen ritas med jämn fart, pricken åker med längst fram.
+  var tStart = 1.0, tRita = 5.0;
+  tl.from(spets, { opacity: 0, scale: 0, duration: 0.4 }, tStart - 0.2);
+  tl.to(lage, { andel: 1, duration: tRita, ease: 'none' }, tStart);
+
+  // Varje stopp dyker upp när linjen når fram till det (tyst: framväxt).
+  stopp.forEach(function (s) {
+    var t = tStart + tRita * andelVid(+s.dataset.x, +s.dataset.y);
+    tl.from(s.querySelector('.punkt'), { scale: 0, duration: 0.5, ease: 'back.out(2)' }, t);
+    tl.from(s.querySelector('.namn'), { opacity: 0, y: s.classList.contains('upp') ? 16 : -16 }, t + 0.1);
+  });
+
+  // Framme: pricken försvinner, målet får fokus i koppar och resten tonas ned.
+  // Ett klick när fokus landar.
+  var tF = tStart + tRita + 0.6;
+  var mal = stopp[stopp.length - 1];
+  tl.to(spets, { opacity: 0, duration: 0.4 }, tF - 0.4);
+  // Punkterna får en fast ljusgrå färg i stället för genomskinlighet, annars
+  // skulle den nedtonade linjen synas rakt igenom dem.
+  tl.to(stopp.slice(0, -1).map(function (s) { return s.querySelector('.namn'); }).concat([linje]), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(stopp.slice(0, -1).map(function (s) { return s.querySelector('.punkt'); }), { backgroundColor: '#A0A5AB', duration: 0.6 }, tF);
+  tl.to(mal.querySelector('.punkt'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 14px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(mal.querySelector('.namn'), { color: '#9C5A24', borderColor: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

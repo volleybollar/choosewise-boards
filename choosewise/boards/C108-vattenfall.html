@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C108 · Waterfall</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Vattenfallet ----------
+     Baslinjen ligger på y 860. Första stapeln står på noll, varje steg
+     börjar där förra slutade, och summan står på noll igen. En timme är
+     80 px. Allt håller sig till vänster om x 1440, långt från kamerazonen. */
+  .baslinje {
+    position: absolute; left: 140px; top: 860px; width: 1300px; height: 3px;
+    background: var(--cw-text-ljus); transform-origin: 0 50%;
+  }
+  .stapel { position: absolute; width: 180px; }
+  .stapel .fyll { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 12px; }
+
+  /* Färgerna: start i accent, det som tar bort tid i ljust gråblått,
+     det som lägger till tid i mellanblått, summan i textfärgen. */
+  .start .fyll { background: var(--cw-accent); }
+  .minus .fyll { background: var(--cw-serie-3); transform-origin: 50% 0; }   /* växer nedåt */
+  .plus  .fyll { background: var(--cw-serie-2); transform-origin: 50% 100%; } /* växer uppåt */
+  .summa .fyll { background: var(--cw-text-ljus); }
+  .start .fyll, .summa .fyll { transform-origin: 50% 100%; }
+
+  /* Värdet ovanför stapeln och namnet under baslinjen. */
+  .varde {
+    position: absolute; left: -30px; width: 240px; bottom: 100%; margin-bottom: 14px; text-align: center;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); white-space: nowrap;
+  }
+  .namn {
+    position: absolute; width: 260px; top: 878px; text-align: center; white-space: nowrap;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* Streckade linjer som visar att nästa steg börjar där förra slutade. */
+  .brygga { position: absolute; width: 80px; border-top: 3px dashed var(--cw-text-ljus-dampad); transform-origin: 0 50%; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">A week of marking, with AI help</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <div class="baslinje"></div>
+  <!-- Stegen. data-timmar är ändringen (minus tar bort tid). Skriptet räknar
+       fram var varje stapel börjar och slutar, och lägger bryggorna. -->
+  <div class="steg start" data-timmar="6"    data-namn="Before"><div class="stapel"><div class="fyll"></div><div class="varde">6 h</div></div></div>
+  <div class="steg minus" data-timmar="-3"   data-namn="AI drafts"><div class="stapel"><div class="fyll"></div><div class="varde">−3 h</div></div></div>
+  <div class="steg plus"  data-timmar="1.5"  data-namn="Checking"><div class="stapel"><div class="fyll"></div><div class="varde">+1.5 h</div></div></div>
+  <div class="steg plus"  data-timmar="0.5"  data-namn="Own notes"><div class="stapel"><div class="fyll"></div><div class="varde">+0.5 h</div></div></div>
+  <div class="steg summa" data-timmar="summa" data-namn="After"><div class="stapel"><div class="fyll"></div><div class="varde">5 h</div></div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk växer varje steg på ordet som namnger det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var BAS = 860, PX = 80;   // baslinjens y och pixlar per timme
+  var steg = gsap.utils.toArray('.steg');
+  var board = document.querySelector('.cw');
+
+  // Placera staplarna: varje steg börjar där förra slutade.
+  var niva = 0;
+  steg.forEach(function (s, i) {
+    var x = 160 + i * 260;
+    var fran, till;
+    if (s.dataset.timmar === 'summa') { fran = 0; till = niva; }
+    else if (i === 0) { fran = 0; till = +s.dataset.timmar; }
+    else { fran = niva; till = niva + (+s.dataset.timmar); }
+    var stapel = s.querySelector('.stapel');
+    stapel.style.left = x + 'px';
+    stapel.style.top = (BAS - Math.max(fran, till) * PX) + 'px';
+    stapel.style.height = Math.abs(till - fran) * PX + 'px';
+    niva = till;
+
+    // Namnet under baslinjen.
+    var namn = document.createElement('div');
+    namn.className = 'namn';
+    namn.style.left = (x - 40) + 'px';
+    namn.textContent = s.dataset.namn;
+    s.appendChild(namn);
+
+    // Bryggan från stapelns högra kant till nästa stapel, på nivån där den slutar.
+    if (i < steg.length - 1) {
+      var b = document.createElement('div');
+      b.className = 'brygga';
+      b.style.left = (x + 180) + 'px';
+      b.style.top = (BAS - niva * PX - 1) + 'px';
+      s.appendChild(b);
+    }
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, baslinjen och namnen.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.baslinje', { scaleX: 0, duration: 1.0, ease: 'power2.inOut' }, 0.2);
+  tl.from('.namn', { opacity: 0, y: 16, stagger: 0.08 }, 0.6);
+
+  // Stegen växer ett i taget: stapeln, värdet och sedan bryggan till nästa.
+  steg.forEach(function (s, i) {
+    var t = 1.8 + i * 1.1;
+    tl.from(s.querySelector('.fyll'), { scaleY: 0, duration: 0.7 }, t);
+    tl.from(s.querySelector('.varde'), { opacity: 0, y: 16, duration: 0.5 }, t + 0.4);
+    var b = s.querySelector('.brygga');
+    if (b) tl.from(b, { scaleX: 0, duration: 0.4 }, t + 0.7);
+  });
+
+  // Fokus: "Checking", tiden det tar att granska AI:s utkast. Steget blir
+  // koppar och de andra tonas ned. Ett klick när fokus landar.
+  var fokus = steg[2];
+  var tF = 1.8 + steg.length * 1.1 + 0.8;
+  tl.to(steg.filter(function (s) { return s !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.fyll'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.querySelectorAll('.varde, .namn'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

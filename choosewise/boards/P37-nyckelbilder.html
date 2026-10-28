@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P37 · Keyframes</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Stationerna ----------
+     Tre streckade rutor visar var kortet ska stanna. Den mittersta är
+     större, eftersom kortet växer där. Allt slutar vid x 1560, före
+     kamerazonen, och etiketterna står under varje ruta. */
+  .station {
+    position: absolute; border: 3px dashed var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media);
+  }
+  .namn {
+    position: absolute; font-size: var(--cw-min-etikett);
+    color: var(--cw-text-ljus-dampad); text-align: center;
+  }
+  .pil { position: absolute; left: 0; top: 0; overflow: visible; }
+
+  /* ---------- Kortet som reser ----------
+     Ett och samma kort hela vägen: det behåller sin identitet och flyttas
+     och skalas mellan stationerna (transform-origin uppe till vänster). */
+  .uppsats {
+    position: absolute; left: 160px; top: 380px; width: 280px; height: 280px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media); padding: 32px 30px;
+    transform-origin: 0 0;
+  }
+  .uppsats .titel { font-size: var(--cw-min-etikett); margin-bottom: 20px; }
+  .uppsats .rad { height: 14px; border-radius: 7px; background: var(--cw-ljus-alt); margin-top: 18px; }
+  /* Kommentarerna som AI:n lägger till: korta blå streck. */
+  .uppsats .kommentar { height: 14px; width: 55%; border-radius: 7px; background: var(--cw-serie-2); margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One essay, three stops</h1>
+
+  <!-- Stationerna med sina etiketter. -->
+  <div class="station" style="left:160px; top:380px; width:280px; height:280px"></div>
+  <div class="station" style="left:640px; top:300px; width:440px; height:440px"></div>
+  <div class="station" style="left:1280px; top:380px; width:280px; height:280px"></div>
+  <div class="namn" style="left:160px; top:690px; width:280px">Draft</div>
+  <div class="namn" style="left:640px; top:770px; width:440px">AI feedback</div>
+  <div class="namn" style="left:1280px; top:690px; width:280px">Final</div>
+
+  <!-- Streckade linjer mellan stationerna. -->
+  <svg class="pil" width="1920" height="1080">
+    <path d="M 470 520 L 610 520" stroke="#A9BBD0" stroke-width="5" stroke-dasharray="10 12" fill="none"/>
+    <path d="M 1110 520 L 1250 520" stroke="#A9BBD0" stroke-width="5" stroke-dasharray="10 12" fill="none"/>
+  </svg>
+
+  <!-- Kortet: en uppsats med grå textrader. -->
+  <div class="uppsats">
+    <div class="titel">Essay</div>
+    <div class="rad"></div>
+    <div class="kommentar"></div>
+    <div class="rad"></div>
+    <div class="kommentar"></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk ligger varje förflyttning på ordet som namnger
+     stationen; mellan förflyttningarna står kortet still. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var namn = gsap.utils.toArray('.namn');
+  var FLYTT = { duration: 1.0, ease: 'power2.inOut' };
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, stationer, linjer och etiketter.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.station', { opacity: 0, stagger: STEG }, 0.3);
+  tl.from('.pil path', { opacity: 0, stagger: STEG }, 0.6);
+  tl.from(namn, { opacity: 0, y: 16, stagger: STEG }, 0.6);
+
+  // Kortet dyker upp på första stationen. Kommentarerna är dolda än så länge.
+  tl.set('.kommentar', { opacity: 0 }, 0);
+  tl.from('.uppsats', { opacity: 0, y: 24 }, 1.4);
+  tl.to(namn[0], { color: '#0C1A2E', duration: 0.6 }, 1.4);
+
+  // Nyckelbild 2: kortet reser till mitten och växer (440 / 280 = 1,57).
+  tl.to('.uppsats', Object.assign({ x: 480, y: -80, scale: 440 / 280 }, FLYTT), 3.0);
+  tl.to(namn[0], { color: '#4E5A68', duration: 0.6 }, 3.0);
+  tl.to(namn[1], { color: '#0C1A2E', duration: 0.6 }, 3.4);
+  // AI:ns kommentarer dyker upp i uppsatsen.
+  tl.to('.kommentar', { opacity: 1, duration: 0.6, stagger: 0.3 }, 4.2);
+
+  // Nyckelbild 3: kortet reser vidare och blir normalstort igen.
+  tl.to('.uppsats', Object.assign({ x: 1120, y: 0, scale: 1 }, FLYTT), 5.6);
+  tl.to(namn[1], { color: '#4E5A68', duration: 0.6 }, 5.6);
+  // På vägen blir kommentarerna vanliga textrader: eleven har reviderat.
+  tl.to('.kommentar', { backgroundColor: '#EFF2F6', width: '100%', duration: 0.8 }, 5.8);
+
+  // Fokus: kortet landar på "Final" och får kopparkant. Ett klick.
+  var tF = 6.6;
+  tl.to('.uppsats', { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(namn[2], { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

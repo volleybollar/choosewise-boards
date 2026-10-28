@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>Choosewise boards</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* Galleriet: ett rutnät med en miniatyr per board. Miniatyren är boardens
+     slutbild. Klicka för att öppna boarden och spela den med ljud. */
+  body { margin: 0; background: var(--cw-ljus); color: var(--cw-text-ljus); font-family: var(--cw-font); }
+  h1 { font-weight: var(--cw-vikt-display); font-size: 48px; margin: 48px 48px 8px; }
+  p { margin: 0 48px 32px; color: var(--cw-text-ljus-dampad); font-size: 18px; }
+  .rutnat { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; padding: 0 48px 64px; }
+  .kort { text-decoration: none; color: inherit; }
+  .kort img { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; border: 1px solid var(--cw-kant-ljus); display: block; }
+  .kort span { display: block; margin-top: 8px; font-size: 16px; }
+  .kort:hover img { border-color: var(--cw-glod); }
+</style>
+</head>
+<body>
+  <h1>Choosewise boards</h1>
+  <p>74 boards. Bilden visar slutläget. Klicka för att spela; mellanslag spelar om, K visar Borumi-rutan.</p>
+  <!-- En länk per board. Listan byggdes 2026-10-28 ur filerna i den här mappen. -->
+  <div class="rutnat">
+    <a class="kort" href="A136-filens-delar.html"><img src="miniatyrer/A136-filens-delar.jpg" alt=""><span>A136 · File anatomy</span></a>
+    <a class="kort" href="A137-mappstruktur.html"><img src="miniatyrer/A137-mappstruktur.jpg" alt=""><span>A137 · Folder tree</span></a>
+    <a class="kort" href="A138-andring.html"><img src="miniatyrer/A138-andring.jpg" alt=""><span>A138 · Diff view</span></a>
+    <a class="kort" href="A139-fel-och-losning.html"><img src="miniatyrer/A139-fel-och-losning.jpg" alt=""><span>A139 · Error to fix</span></a>
+    <a class="kort" href="A141-beslut.html"><img src="miniatyrer/A141-beslut.jpg" alt=""><span>A141 · Decision flowchart</span></a>
+    <a class="kort" href="B134-prompt-svar.html"><img src="miniatyrer/B134-prompt-svar.jpg" alt=""><span>B134 · Prompt to answer</span></a>
+    <a class="kort" href="C108-vattenfall.html"><img src="miniatyrer/C108-vattenfall.jpg" alt=""><span>C108 · Waterfall</span></a>
+    <a class="kort" href="C109-staplad.html"><img src="miniatyrer/C109-staplad.jpg" alt=""><span>C109 · Stacked bars</span></a>
+    <a class="kort" href="C110-grupperade.html"><img src="miniatyrer/C110-grupperade.jpg" alt=""><span>C110 · Grouped bars</span></a>
+    <a class="kort" href="C111-fore-efter.html"><img src="miniatyrer/C111-fore-efter.jpg" alt=""><span>C111 · Slope chart</span></a>
+    <a class="kort" href="C112-punkter.html"><img src="miniatyrer/C112-punkter.jpg" alt=""><span>C112 · Dot plot</span></a>
+    <a class="kort" href="C113-nyckeltal.html"><img src="miniatyrer/C113-nyckeltal.jpg" alt=""><span>C113 · Key numbers with trends</span></a>
+    <a class="kort" href="C114-rankning.html"><img src="miniatyrer/C114-rankning.jpg" alt=""><span>C114 · Ranking</span></a>
+    <a class="kort" href="C115-matare.html"><img src="miniatyrer/C115-matare.jpg" alt=""><span>C115 · Gauge and checklist</span></a>
+    <a class="kort" href="C116-varmekarta.html"><img src="miniatyrer/C116-varmekarta.jpg" alt=""><span>C116 · Heatmap</span></a>
+    <a class="kort" href="C239-kort.html"><img src="miniatyrer/C239-kort.jpg" alt=""><span>C239 · Card reveal</span></a>
+    <a class="kort" href="C240-tabell.html"><img src="miniatyrer/C240-tabell.jpg" alt=""><span>C240 · Table with row focus</span></a>
+    <a class="kort" href="C241-diagramfokus.html"><img src="miniatyrer/C241-diagramfokus.jpg" alt=""><span>C241 · Chart with one bar in focus</span></a>
+    <a class="kort" href="C242-appfonster.html"><img src="miniatyrer/C242-appfonster.jpg" alt=""><span>C242 · App window with one area in focus</span></a>
+    <a class="kort" href="C243-kodfokus.html"><img src="miniatyrer/C243-kodfokus.jpg" alt=""><span>C243 · Prompt panel with one line in focus</span></a>
+    <a class="kort" href="C244-resultatlapp.html"><img src="miniatyrer/C244-resultatlapp.jpg" alt=""><span>C244 · Result slip prints out</span></a>
+    <a class="kort" href="C245-nodgraf.html"><img src="miniatyrer/C245-nodgraf.jpg" alt=""><span>C245 · Node graph with one node in focus</span></a>
+    <a class="kort" href="C246-telefon.html"><img src="miniatyrer/C246-telefon.jpg" alt=""><span>C246 · Phone with a notification</span></a>
+    <a class="kort" href="C247-valfilter.html"><img src="miniatyrer/C247-valfilter.jpg" alt=""><span>C247 · Chips: from many to three</span></a>
+    <a class="kort" href="C248-nyckeltal.html"><img src="miniatyrer/C248-nyckeltal.jpg" alt=""><span>C248 · Four key numbers, one in focus</span></a>
+    <a class="kort" href="C249-versus.html"><img src="miniatyrer/C249-versus.jpg" alt=""><span>C249 · Two ways, one winner</span></a>
+    <a class="kort" href="C251-mapptrad.html"><img src="miniatyrer/C251-mapptrad.jpg" alt=""><span>C251 · Folder tree: grow and open</span></a>
+    <a class="kort" href="C252-lupp.html"><img src="miniatyrer/C252-lupp.jpg" alt=""><span>C252 · Magnifier lens</span></a>
+    <a class="kort" href="C254-kortlek.html"><img src="miniatyrer/C254-kortlek.jpg" alt=""><span>C254 · Deal the stack, pull one out</span></a>
+    <a class="kort" href="D43-staplar.html"><img src="miniatyrer/D43-staplar.jpg" alt=""><span>D43 · Bar chart</span></a>
+    <a class="kort" href="D44-linje.html"><img src="miniatyrer/D44-linje.jpg" alt=""><span>D44 · Line chart</span></a>
+    <a class="kort" href="D45-andel.html"><img src="miniatyrer/D45-andel.jpg" alt=""><span>D45 · Share and big number</span></a>
+    <a class="kort" href="D46-pyramid.html"><img src="miniatyrer/D46-pyramid.jpg" alt=""><span>D46 · Pyramid</span></a>
+    <a class="kort" href="D47-kretslopp.html"><img src="miniatyrer/D47-kretslopp.jpg" alt=""><span>D47 · Cycle</span></a>
+    <a class="kort" href="D48-tratt.html"><img src="miniatyrer/D48-tratt.jpg" alt=""><span>D48 · Funnel</span></a>
+    <a class="kort" href="D49-tidslinje.html"><img src="miniatyrer/D49-tidslinje.jpg" alt=""><span>D49 · Timeline</span></a>
+    <a class="kort" href="D50-venn.html"><img src="miniatyrer/D50-venn.jpg" alt=""><span>D50 · Venn</span></a>
+    <a class="kort" href="D51-matris.html"><img src="miniatyrer/D51-matris.jpg" alt=""><span>D51 · 2×2 matrix</span></a>
+    <a class="kort" href="D52-trad.html"><img src="miniatyrer/D52-trad.jpg" alt=""><span>D52 · Tree</span></a>
+    <a class="kort" href="D53-steg.html"><img src="miniatyrer/D53-steg.jpg" alt=""><span>D53 · Numbered steps</span></a>
+    <a class="kort" href="D54-terminal.html"><img src="miniatyrer/D54-terminal.jpg" alt=""><span>D54 · Terminal</span></a>
+    <a class="kort" href="D56-kapitel.html"><img src="miniatyrer/D56-kapitel.jpg" alt=""><span>D56 · Chapter divider</span></a>
+    <a class="kort" href="D57-citat.html"><img src="miniatyrer/D57-citat.jpg" alt=""><span>D57 · Kinetic quote</span></a>
+    <a class="kort" href="H143-agenda.html"><img src="miniatyrer/H143-agenda.jpg" alt=""><span>H143 · Agenda</span></a>
+    <a class="kort" href="H144-myt-fakta.html"><img src="miniatyrer/H144-myt-fakta.jpg" alt=""><span>H144 · Myth vs fact</span></a>
+    <a class="kort" href="H145-tre-saker.html"><img src="miniatyrer/H145-tre-saker.jpg" alt=""><span>H145 · Three things to remember</span></a>
+    <a class="kort" href="K123-poangkort.html"><img src="miniatyrer/K123-poangkort.jpg" alt=""><span>K123 · Scorecard</span></a>
+    <a class="kort" href="P196-kinetisk.html"><img src="miniatyrer/P196-kinetisk.jpg" alt=""><span>P196 · Kinetic type</span></a>
+    <a class="kort" href="P197-maskstiga.html"><img src="miniatyrer/P197-maskstiga.jpg" alt=""><span>P197 · Mask line reveal</span></a>
+    <a class="kort" href="P198-matarverk.html"><img src="miniatyrer/P198-matarverk.jpg" alt=""><span>P198 · Odometer roll</span></a>
+    <a class="kort" href="P199-avkodning.html"><img src="miniatyrer/P199-avkodning.jpg" alt=""><span>P199 · Scramble decode</span></a>
+    <a class="kort" href="P200-linje.html"><img src="miniatyrer/P200-linje.jpg" alt=""><span>P200 · From prompt to lesson</span></a>
+    <a class="kort" href="P209-vandkort.html"><img src="miniatyrer/P209-vandkort.jpg" alt=""><span>P209 · Before and after on one card</span></a>
+    <a class="kort" href="P211-solfjader.html"><img src="miniatyrer/P211-solfjader.jpg" alt=""><span>P211 · One task, four versions</span></a>
+    <a class="kort" href="P217-kabel.html"><img src="miniatyrer/P217-kabel.jpg" alt=""><span>P217 · Goal and assessment stay linked</span></a>
+    <a class="kort" href="P218-laddning.html"><img src="miniatyrer/P218-laddning.jpg" alt=""><span>P218 · From waiting to done</span></a>
+    <a class="kort" href="P219-dialog.html"><img src="miniatyrer/P219-dialog.jpg" alt=""><span>P219 · A conversation with AI</span></a>
+    <a class="kort" href="P220-ordvag.html"><img src="miniatyrer/P220-ordvag.jpg" alt=""><span>P220 · One word with a wave</span></a>
+    <a class="kort" href="P221-konfetti.html"><img src="miniatyrer/P221-konfetti.jpg" alt=""><span>P221 · Approved</span></a>
+    <a class="kort" href="P226-fyllning.html"><img src="miniatyrer/P226-fyllning.jpg" alt=""><span>P226 · Filling up</span></a>
+    <a class="kort" href="P227-fyll-i.html"><img src="miniatyrer/P227-fyll-i.jpg" alt=""><span>P227 · Scribble fill</span></a>
+    <a class="kort" href="P228-stryk-och-skriv.html"><img src="miniatyrer/P228-stryk-och-skriv.jpg" alt=""><span>P228 · Cross out and rewrite</span></a>
+    <a class="kort" href="P230-ordrulle.html"><img src="miniatyrer/P230-ordrulle.jpg" alt=""><span>P230 · Rotating word</span></a>
+    <a class="kort" href="P236-checklista.html"><img src="miniatyrer/P236-checklista.jpg" alt=""><span>P236 · Checklist</span></a>
+    <a class="kort" href="P237-overstrykning.html"><img src="miniatyrer/P237-overstrykning.jpg" alt=""><span>P237 · Highlighter sweep</span></a>
+    <a class="kort" href="P36-fokus.html"><img src="miniatyrer/P36-fokus.jpg" alt=""><span>P36 · Focus pull</span></a>
+    <a class="kort" href="P37-nyckelbilder.html"><img src="miniatyrer/P37-nyckelbilder.jpg" alt=""><span>P37 · Keyframes</span></a>
+    <a class="kort" href="W69-noder.html"><img src="miniatyrer/W69-noder.jpg" alt=""><span>W69 · Node graph</span></a>
+    <a class="kort" href="X41-slutbild.html"><img src="miniatyrer/X41-slutbild.jpg" alt=""><span>X41 · End screen</span></a>
+    <a class="kort" href="Y163-andel.html"><img src="miniatyrer/Y163-andel.jpg" alt=""><span>Y163 · Share split</span></a>
+    <a class="kort" href="Y164-jamforelse.html"><img src="miniatyrer/Y164-jamforelse.jpg" alt=""><span>Y164 · Versus ledger</span></a>
+    <a class="kort" href="Y165-enheter.html"><img src="miniatyrer/Y165-enheter.jpg" alt=""><span>Y165 · Device connections</span></a>
+    <a class="kort" href="Y175-fran-text-till-bedomning.html"><img src="miniatyrer/Y175-fran-text-till-bedomning.jpg" alt=""><span>Y175 · From student text to assessment</span></a>
+    <a class="kort" href="Y182-steg-pa-spar.html"><img src="miniatyrer/Y182-steg-pa-spar.jpg" alt=""><span>Y182 · Steps on a track</span></a>
+  </div>
+</body>
+</html>

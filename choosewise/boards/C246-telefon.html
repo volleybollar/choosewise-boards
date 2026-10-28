@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C246 · Phone with a notification</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* Rubriken får brytas på två rader, så att den håller sig till vänster
+     om telefonen. */
+  .rubrik { width: 760px; }
+
+  /* ---------- Telefonen ----------
+     En generisk telefon utan märke: en mörk ram och en ljus skärm.
+     Den står mellan x 960 och x 1500 och slutar vid y 1000, så att
+     kamerazonen nere till höger alltid är tom. */
+  .telefon {
+    position: absolute; left: 960px; top: 100px; width: 540px; height: 900px;
+    background: var(--cw-text-ljus); border-radius: 76px; padding: 18px;
+    transform-origin: 50% 100%;
+  }
+  .skarm {
+    position: relative; width: 100%; height: 100%; border-radius: 60px;
+    background: var(--cw-ljus-alt); overflow: hidden;
+  }
+
+  /* Flödet i skärmen: kort med en bildyta och två grå textstreck.
+     Inga riktiga texter, det är bara "något att scrolla". */
+  .flode { position: absolute; left: 24px; right: 24px; top: 24px; }
+  .kort { height: 240px; background: #FFFFFF; border-radius: 32px; margin-bottom: 24px; padding: 24px; }
+  .bild { height: 110px; border-radius: 18px; background: var(--cw-kant-ljus); margin-bottom: 22px; }
+  .streck { height: 16px; border-radius: 8px; background: var(--cw-kant-ljus); margin-bottom: 18px; }
+
+  /* Notisen som faller ned uppifrån. Kopparpricken är fokus. */
+  .notis {
+    position: absolute; left: 24px; right: 24px; top: 40px;
+    background: #FFFFFF; border-radius: 32px; padding: 26px 32px;
+    box-shadow: 0 18px 40px rgba(11, 58, 111, .18);
+    font-size: var(--cw-min-etikett); line-height: 1.25;
+  }
+  .notis .nar { display: flex; align-items: center; gap: 16px; color: var(--cw-text-ljus-dampad); }
+  .notis .prick { width: 22px; height: 22px; border-radius: 50%; background: var(--cw-glod); }
+  .notis .vad { font-weight: var(--cw-vikt-stark); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">When feedback reaches the student</h1>
+
+  <div class="telefon">
+    <div class="skarm">
+      <!-- Flödet som scrollar. -->
+      <div class="flode">
+        <div class="kort"><div class="bild"></div><div class="streck" style="width:80%"></div><div class="streck" style="width:55%"></div></div>
+        <div class="kort"><div class="bild"></div><div class="streck" style="width:70%"></div><div class="streck" style="width:45%"></div></div>
+        <div class="kort"><div class="bild"></div><div class="streck" style="width:85%"></div><div class="streck" style="width:60%"></div></div>
+        <div class="kort"><div class="bild"></div><div class="streck" style="width:65%"></div><div class="streck" style="width:50%"></div></div>
+        <div class="kort"><div class="bild"></div><div class="streck" style="width:75%"></div><div class="streck" style="width:40%"></div></div>
+      </div>
+
+      <!-- Notisen. -->
+      <div class="notis">
+        <div class="nar"><span class="prick"></span>Just now</div>
+        <div class="vad">Feedback is ready</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk faller notisen ned på ordet "notification" eller
+     "feedback". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+
+  // Telefonen fjädrar upp nedifrån med en liten lutning som rätar ut sig (tyst).
+  tl.from('.telefon', { y: 900, rotation: 8, duration: 1.1, ease: 'back.out(1.4)' }, 0.4);
+
+  // Flödet scrollar mjukt uppåt en gång och stannar.
+  tl.to('.flode', { y: -420, duration: 2.4, ease: 'power2.inOut' }, 2.0);
+
+  // Notisen faller ned uppifrån med en liten studs, sedan tonas flödet ned
+  // så att notisen står ensam i fokus. Tyst.
+  var tN = 5.0;
+  tl.from('.notis', { y: -260, duration: 0.8, ease: 'back.out(2)' }, tN);
+  tl.from('.notis .prick', { scale: 0, duration: 0.5, ease: 'back.out(2)' }, tN + 0.6);
+  tl.to('.flode', { opacity: 0.38, duration: 0.6 }, tN + 0.6);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

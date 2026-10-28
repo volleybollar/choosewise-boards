@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C112 · Dot plot</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Diagramytan ----------
+     Origo (0,0) ligger på x 200, y 900. X-axeln är tiden det tar att
+     komma igång, y-axeln är tiden man sparar. Ytan slutar vid x 1480,
+     så att kamerazonen nere till höger är tom. */
+  .xaxel { position: absolute; left: 200px; top: 900px; width: 1280px; height: 3px; background: var(--cw-text-ljus); transform-origin: 0 50%; }
+  .yaxel { position: absolute; left: 200px; top: 260px; width: 3px; height: 643px; background: var(--cw-text-ljus); transform-origin: 50% 100%; }
+  .axeltext { position: absolute; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); white-space: nowrap; }
+
+  /* Det bästa hörnet: lite arbete, mycket sparad tid. Tonad yta med namn. */
+  .hornet {
+    position: absolute; left: 203px; top: 260px; width: 640px; height: 300px;
+    background: var(--cw-ljus-alt); border-radius: 0 0 var(--cw-radie-kort) 0;
+  }
+  .hornet span { position: absolute; left: 32px; top: 22px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+
+  /* En punkt per användning, med en etikett till höger. */
+  .punkt { position: absolute; width: 0; height: 0; }
+  .punkt i {
+    position: absolute; left: -24px; top: -24px; width: 48px; height: 48px;
+    border-radius: 50%; background: var(--cw-accent); display: block;
+  }
+  .punkt span {
+    position: absolute; left: 44px; top: -26px; white-space: nowrap;
+    font-size: var(--cw-min-etikett); line-height: 52px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Little effort, lots of time back</h1>
+  <!-- Lägena är en bedömning, inte mätningar. Byts mot riktiga siffror. -->
+  <div class="exempel" style="left:120px; top:1000px">Example data · replace with real numbers and source</div>
+
+  <!-- Det tonade hörnet ligger under axlarna och punkterna. -->
+  <div class="hornet"><span>Quick wins</span></div>
+  <div class="xaxel"></div>
+  <div class="yaxel"></div>
+  <div class="axeltext" style="left:200px; top:200px">↑ Time saved</div>
+  <div class="axeltext" style="left:1130px; top:920px">Setup time →</div>
+
+  <!-- Punkterna. left/top är läget i bilden (x, y). -->
+  <div class="punkt" style="left:420px; top:470px"><i></i><span>Quiz questions</span></div>
+  <div class="punkt" style="left:1060px; top:340px"><i></i><span>Custom chatbot</span></div>
+  <div class="punkt" style="left:900px; top:600px"><i></i><span>Lesson plans</span></div>
+  <div class="punkt" style="left:340px; top:760px"><i></i><span>Parent emails</span></div>
+  <div class="punkt" style="left:1180px; top:800px"><i></i><span>Auto-grading</span></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje punkt när Johan säger dess namn. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var punkter = gsap.utils.toArray('.punkt');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, axlarna och axeltexterna.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.xaxel', { scaleX: 0, duration: 1.0, ease: 'power2.inOut' }, 0.2);
+  tl.from('.yaxel', { scaleY: 0, duration: 1.0, ease: 'power2.inOut' }, 0.2);
+  tl.from('.axeltext', { opacity: 0, y: 16, stagger: 0.08 }, 0.6);
+
+  // Punkterna kommer en i taget: först pricken, sedan namnet.
+  punkter.forEach(function (p, i) {
+    var t = 1.6 + i * 1.1;
+    tl.from(p.querySelector('i'), { scale: 0, duration: 0.5, ease: 'back.out(2)' }, t);
+    tl.from(p.querySelector('span'), { opacity: 0, x: -12, duration: 0.5 }, t + 0.15);
+  });
+
+  // Det bästa hörnet tonas fram och får sitt namn.
+  var tH = 1.6 + punkter.length * 1.1 + 0.4;
+  tl.from('.hornet', { opacity: 0, duration: 0.8 }, tH);
+
+  // Fokus: "Quiz questions" ligger i hörnet. Pricken blir koppar med en ring,
+  // de andra tonas ned. Ett klick när fokus landar.
+  var fokus = punkter[0];
+  var tF = tH + 1.4;
+  tl.to(punkter.filter(function (p) { return p !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('i'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 14px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('span'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

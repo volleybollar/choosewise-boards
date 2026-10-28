@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D57 · Kinetic quote</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Citatet ----------
+     Den enda meningen tittaren ska komma ihåg. Ett stort citattecken,
+     meningen i 132 px och vem som säger den. Allt till vänster om x 1460. */
+
+  /* Det stora citattecknet i accentfärg, med den kursiva antikvan. */
+  .tecken {
+    position: absolute; left: 104px; top: 120px;
+    font-family: var(--cw-font-serif); font-style: italic;
+    font-size: 340px; line-height: 1; color: var(--cw-accent);
+  }
+
+  /* Meningen. Varje ord är ett eget span, så att orden kan tändas ett i taget. */
+  .mening {
+    position: absolute; left: 120px; top: 310px; width: 1340px; margin: 0;
+    font-size: 132px; font-weight: var(--cw-vikt-display); line-height: 1.15; letter-spacing: -0.02em;
+  }
+  .ord { display: inline-block; position: relative; }
+
+  /* Nyckelordet får ett kopparstreck under sig när fokus landar. */
+  .ord .streck {
+    position: absolute; left: 0; right: 0; bottom: 4px; height: 8px; border-radius: 4px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+
+  /* Vem som säger det: typsnittet med fast teckenbredd, versaler. */
+  .kalla {
+    position: absolute; left: 124px; top: 700px;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+    letter-spacing: .06em; text-transform: uppercase; color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+  <div class="tecken">“</div>
+
+  <!-- Meningen är Johans egen fråga, "the trade-off question".
+       Radbrytningen (br) är satt för hand, så att inget ord blir ensamt. -->
+  <h1 class="mening"><span class="ord">What</span> <span class="ord">does</span> <span class="ord">AI</span><br><span class="ord">make</span> <span class="ord">us</span> <span class="ord nyckel">worse<b class="streck"></b></span> <span class="ord">at?</span></h1>
+
+  <div class="kalla">— The trade-off question</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk tänds varje ord på sekunden då Johan säger det. */
+  var IN = 0.8, EASE = 'power2.out';
+  var ord = gsap.utils.toArray('.ord');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: citattecknet och hela meningen, svagt (18 %).
+  tl.from('.tecken', { opacity: 0, y: 30 }, 0);
+  tl.set(ord, { opacity: 0.18 }, 0);
+  tl.from('.mening', { opacity: 0, duration: 0.6 }, 0.3);
+
+  // Orden tänds ett i taget, i talets takt (ungefär tre ord i sekunden).
+  ord.forEach(function (o, i) {
+    tl.to(o, { opacity: 1, duration: 0.3 }, 1.4 + i * 0.4);
+  });
+
+  // Fokus: "worse" får kopparstrecket och blir koppar. Ett klick när det landar.
+  var tF = 1.4 + ord.length * 0.4 + 0.6;
+  tl.to('.nyckel .streck', { scaleX: 1, duration: 0.8 }, tF);
+  tl.to('.nyckel', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  // Källan kommer sist.
+  tl.from('.kalla', { opacity: 0, y: 16 }, tF + 1.0);
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -46,9 +46,17 @@
   --cw-glod-text: #9C5A24;
   --cw-glod-sken: rgba(194, 121, 58, .34);
 
+  /* Färger för diagram med flera serier: djupblått, mellanblått, gråblått.
+     Kopparn är aldrig en serie, den är bara fokus. */
+  --cw-serie-1: #0B3A6F;
+  --cw-serie-2: #4A7FB5;
+  --cw-serie-3: #A9BBD0;
+
   /* Typsnitt och tjocklekar. Stor och tunn typografi är riktning A. */
   --cw-font: 'Hanken Grotesk', -apple-system, 'Helvetica Neue', sans-serif;
   --cw-font-serif: 'Instrument Serif', Georgia, serif;
+  /* Kod och terminal: Macens egna typsnitt med fast teckenbredd. */
+  --cw-font-mono: 'SF Mono', Menlo, ui-monospace, monospace;
   --cw-vikt-tunn: 200;
   --cw-vikt-display: 300;
   --cw-vikt-text: 400;

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P220 · One word with a wave</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Ordet ----------
+     Ett enda ord, stort och tunt. Varje bokstav är en egen <span>, så att
+     bokstäverna kan lyftas en i taget och bilda en våg genom ordet.
+     Ordet slutar ovanför y 720, så kamerazonen är tom. */
+  .ord {
+    position: absolute; left: 120px; top: 360px; margin: 0;
+    font-size: 280px; font-weight: var(--cw-vikt-tunn);
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  /* inline-block behövs för att en bokstav ska kunna flyttas uppåt. */
+  .ord span { display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">What AI can’t replace</h1>
+
+  <!-- Ordet. Bokstäverna delas upp i <span> av skriptet nedan, så det räcker
+       att byta ordet här. -->
+  <div class="ord">judgement</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk går vågen när Johan säger ordet, och ordet blir
+     koppar när han betonar det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+
+  // Dela upp ordet i en <span> per bokstav.
+  var ord = document.querySelector('.ord');
+  ord.innerHTML = ord.textContent.split('').map(function (b) { return '<span>' + b + '</span>'; }).join('');
+  var bokstaver = gsap.utils.toArray('.ord span');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, sedan ordet bokstav för bokstav (tyst: framväxt).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(bokstaver, { opacity: 0, y: 30, stagger: 0.06 }, 0.6);
+
+  // Vågen: varje bokstav lyfts, blir mellanblå och sjunker tillbaka.
+  // Nästa bokstav startar 0,1 s senare, så vågen rullar genom ordet en gång.
+  var tVag = 2.8;
+  bokstaver.forEach(function (b, i) {
+    var t = tVag + i * 0.1;
+    tl.to(b, { y: -48, color: '#4A7FB5', duration: 0.35, ease: 'power2.out' }, t);
+    tl.to(b, { y: 0, color: '#0C1A2E', duration: 0.5, ease: 'power2.inOut' }, t + 0.35);
+  });
+
+  // Fokus: när vågen har lagt sig blir hela ordet koppar. Ett klick.
+  var tF = tVag + bokstaver.length * 0.1 + 1.2;
+  tl.to(bokstaver, { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2.5 }, tF + 0.6);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

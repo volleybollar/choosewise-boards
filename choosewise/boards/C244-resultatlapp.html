@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C244 · Result slip prints out</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Skrivaren ----------
+     En enkel platt skrivare med en springa. Lappen matas ut under den.
+     Skrivaren ligger ovanpå lappen (z-index), så att lappen ser ut att
+     komma ut ur springan. */
+  .skrivare {
+    position: absolute; left: 560px; top: 280px; width: 800px; height: 72px;
+    background: var(--cw-accent); border-radius: 24px; z-index: 2;
+  }
+  .springa {
+    position: absolute; left: 60px; right: 60px; bottom: 18px; height: 8px;
+    border-radius: 4px; background: var(--cw-text-ljus);
+  }
+
+  /* ---------- Lappen ----------
+     Resultatlappen i fast teckenbredd, som ett kvitto. Längst ned finns
+     ett tomt fält där stämpeln landar, så att den inte täcker någon text.
+     Lappen slutar vid x 1320, långt från kamerazonen. */
+  .lapp {
+    position: absolute; left: 600px; top: 330px; width: 720px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus); border-top: 0;
+    border-radius: 0 0 18px 18px; padding: 48px 56px 40px;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett); line-height: 64px;
+  }
+  .rad { display: flex; justify-content: space-between; }
+  .huvud { font-weight: var(--cw-vikt-stark); }
+  .linje { border-top: 3px dashed var(--cw-kant-ljus); margin: 16px 0; }
+  .summa { font-weight: var(--cw-vikt-stark); }
+  .stampfalt { height: 150px; }
+
+  /* ---------- Stämpeln ----------
+     Omdömet som landar på lappen. Den är koppar: det är boardens fokus. */
+  .stampel {
+    position: absolute; left: 840px; top: 810px;
+    padding: 6px 30px; border: 6px solid var(--cw-glod); border-radius: 16px;
+    color: var(--cw-glod-text); font-size: 56px; font-weight: var(--cw-vikt-stark);
+    letter-spacing: .08em; transform: rotate(-8deg); opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One quiz, summed up</h1>
+  <!-- Byts mot riktiga siffror innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <div class="skrivare"><div class="springa"></div></div>
+
+  <!-- Lappen: rubrikrad, tre delmoment, summa sist och ett tomt stämpelfält. -->
+  <div class="lapp">
+    <div class="rad huvud"><span>QUIZ · FRACTIONS</span></div>
+    <div class="linje"></div>
+    <div class="rad"><span>Adding</span><span>8/10</span></div>
+    <div class="rad"><span>Comparing</span><span>6/10</span></div>
+    <div class="rad"><span>Word problems</span><span>9/10</span></div>
+    <div class="linje"></div>
+    <div class="rad summa"><span>Total</span><span>23/30</span></div>
+    <div class="stampfalt"></div>
+  </div>
+
+  <div class="stampel">REVIEWED</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar stämpeln på ordet där läraren säger sitt omdöme. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket och skrivaren.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.skrivare', { opacity: 0, y: -24 }, 0.4);
+
+  // Lappen matas ut i små ryck, som en riktig skrivare: den avslöjas
+  // uppifrån och ned i 18 steg. Rubrikraden kommer först, summan sist (tyst).
+  tl.fromTo('.lapp', { clipPath: 'inset(0% 0% 100% 0%)' },
+                     { clipPath: 'inset(0% 0% 0% 0%)', duration: 4.6, ease: 'steps(18)' }, 1.4);
+
+  // Stämpeln slår ned: från stor och snett till sin plats, snabbt.
+  // Ett klick när omdömet landar.
+  var tS = 6.8;
+  tl.fromTo('.stampel', { opacity: 0, scale: 2.4, rotation: -14 },
+                        { opacity: 1, scale: 1, rotation: -8, duration: 0.25, ease: 'power4.in' }, tS);
+  Tavla.ljud(tl, tS + 0.25, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>W69 · Node graph</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Arbetsflödet som noder ----------
+     Fyra noder i rad, kopplade med ledningar. Varje nod har ett namn, en
+     bild av vad steget ger (här en platshållare) och en rad med filen som
+     kommer ut. Allt ligger ovanför y 720, så bredden räcker till x 1800. */
+  .nod {
+    position: absolute; top: 320px; width: 340px; height: 380px;
+    background: #FFFFFF; border: 4px solid var(--cw-kant-ljus); border-radius: 24px;
+    box-shadow: 0 16px 40px rgba(11, 58, 111, .10); overflow: hidden;
+  }
+  /* Nodens huvud med namnet. */
+  .huvud {
+    height: 84px; padding: 0 24px; display: flex; align-items: center;
+    background: var(--cw-ljus-alt); font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+  }
+  /* Platshållaren för en bild: en ljus ruta med en kort etikett.
+     Byt mot en riktig skärmbild när den finns (16:9). */
+  .bild {
+    margin: 22px 22px 0; height: 164px; border-radius: 14px;
+    border: 3px dashed var(--cw-kant-ljus); background: var(--cw-ljus);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  /* Filen som steget ger, i kodtypsnitt. */
+  .utdata { margin: 22px 22px 0; font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett); white-space: nowrap; }
+
+  /* Ledningarna mellan noderna och "paketet" som åker längs dem. */
+  .ledningar { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  .ledning { fill: none; stroke: var(--cw-accent); stroke-width: 6; stroke-linecap: round; }
+  .paket {
+    position: absolute; left: 0; top: 0; width: 30px; height: 30px; margin: -15px 0 0 -15px;
+    border-radius: 50%; background: var(--cw-glod); box-shadow: 0 0 0 10px var(--cw-glod-sken);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">From learning goal to lesson</h1>
+
+  <!-- Ledningarna ritas av skriptet mellan noderna. -->
+  <svg class="ledningar" viewBox="0 0 1920 1080"></svg>
+
+  <!-- Noderna, från vänster till höger. Byt namn, bildetikett och fil här. -->
+  <div class="nod" style="left:120px"><div class="huvud">Goal</div><div class="bild">Notes</div><div class="utdata">goal.txt</div></div>
+  <div class="nod" style="left:566px"><div class="huvud">AI draft</div><div class="bild">Draft</div><div class="utdata">draft.docx</div></div>
+  <div class="nod" style="left:1012px"><div class="huvud">Teacher edit</div><div class="bild">Edits</div><div class="utdata">v2.docx</div></div>
+  <div class="nod" style="left:1458px"><div class="huvud">Lesson</div><div class="bild">Slides</div><div class="utdata">lesson.key</div></div>
+
+  <div class="paket"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== FÖRBEREDELSER: rita ledningarna ===== */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var noder = gsap.utils.toArray('.nod');
+  var svg = document.querySelector('.ledningar');
+  var Y = 506;   // ledningarna går i höjd med bildernas mitt
+
+  var ledningar = [];
+  for (var i = 0; i < noder.length - 1; i++) {
+    var x1 = parseFloat(noder[i].style.left) + 340, x2 = parseFloat(noder[i + 1].style.left);
+    var l = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    l.setAttribute('d', 'M' + (x1 + 8) + ',' + Y + ' L' + (x2 - 8) + ',' + Y);
+    l.setAttribute('class', 'ledning');
+    svg.appendChild(l);
+    // Ledningen göms genom att streckmönstret skjuts ut helt.
+    var langd = l.getTotalLength();
+    l.style.strokeDasharray = langd;
+    l.style.strokeDashoffset = langd;
+    l.x1 = x1; l.x2 = x2;
+    ledningar.push(l);
+  }
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk tänds varje nod när Johan nämner steget. */
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, sedan noderna från vänster till höger (tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(noder, { opacity: 0, y: 30, stagger: STEG }, 0.4);
+  tl.to(ledningar, { strokeDashoffset: 0, duration: 0.6, stagger: STEG }, 1.4);
+
+  // Paketet är osynligt tills det åker. Första noden tänds först.
+  gsap.set('.paket', { y: Y, opacity: 0 });
+  function tand(nod, t) {
+    tl.to(nod, { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, t);
+    tl.to(nod.querySelector('.huvud'), { color: '#9C5A24', duration: 0.6 }, t);
+  }
+  function slack(nod, t) {
+    tl.to(nod, { borderColor: '#DDE3EA', boxShadow: '0 16px 40px rgba(11,58,111,.10)', duration: 0.5 }, t);
+    tl.to(nod.querySelector('.huvud'), { color: '#0C1A2E', duration: 0.5 }, t);
+  }
+  tand(noder[0], 2.6);
+
+  // Paketet åker längs varje ledning; noden det når tänds, den förra släcks.
+  var tid = 3.8;
+  ledningar.forEach(function (l, i) {
+    tl.to('.paket', { opacity: 1, duration: 0.3 }, tid);
+    tl.fromTo('.paket', { x: l.x1 }, { x: l.x2, duration: 1.0, ease: 'power2.inOut' }, tid);
+    tl.to('.paket', { opacity: 0, duration: 0.3 }, tid + 0.9);
+    slack(noder[i], tid + 0.9);
+    tand(noder[i + 1], tid + 0.9);
+    tid += 2.2;
+  });
+
+  // Fokus landar på sista noden: lektionen är klar. Ett klick.
+  Tavla.ljud(tl, tid - 2.2 + 1.0, 'landa');
+  tl.to({}, { duration: 2 }, tid);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

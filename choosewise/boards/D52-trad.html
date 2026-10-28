@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>D52 · Tree</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Trädet ----------
+     Roten överst i mitten, tre grenar under den och två löv under varje
+     gren. Allt ligger till vänster om x 1560, så kamerazonen är tom. */
+
+  /* Roten: det som bryts ned. Fylld i accentfärg, så att den syns först. */
+  .rot {
+    position: absolute; left: 590px; top: 240px; width: 500px; height: 116px;
+    background: var(--cw-accent); color: #fff; border-radius: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 54px; font-weight: var(--cw-vikt-display);
+  }
+
+  /* En gren: en ljusgrå platta med namnet på delen. */
+  .gren {
+    position: absolute; top: 470px; width: 360px; height: 104px;
+    background: var(--cw-ljus-alt); border: 2px solid var(--cw-kant-ljus); border-radius: 26px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 50px; font-weight: var(--cw-vikt-stark);
+  }
+
+  /* Ett löv: ett exempel på vad grenen innehåller. Bredden följer texten. */
+  .lov {
+    position: absolute; height: 92px; padding: 0 30px; white-space: nowrap;
+    background: #fff; border: 2px solid var(--cw-kant-ljus); border-radius: 22px;
+    display: flex; align-items: center;
+  }
+
+  /* Linjerna mellan delarna ritas i en SVG över hela boarden. */
+  svg.linjer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  svg.linjer path { fill: none; stroke-linecap: round; }
+  .till-gren { stroke: var(--cw-text-ljus); stroke-width: 5; }
+  .till-lov  { stroke: var(--cw-serie-2); stroke-width: 4; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">What a good prompt is made of</h1>
+
+  <!-- Linjerna. Varje gren (data-gren) har sin egen grupp, så att hela
+       grenen kan tonas ned eller färgas när fokus flyttas. -->
+  <svg class="linjer" viewBox="0 0 1920 1080" aria-hidden="true">
+    <g data-gren="0">
+      <path class="till-gren" d="M840 356 C840 420 330 410 330 470"/>
+      <path class="till-lov" d="M190 574 V686 H230"/>
+      <path class="till-lov" d="M190 686 V816 H230"/>
+    </g>
+    <g data-gren="1">
+      <path class="till-gren" d="M840 356 V470"/>
+      <path class="till-lov" d="M700 574 V686 H740"/>
+      <path class="till-lov" d="M700 686 V816 H740"/>
+    </g>
+    <g data-gren="2">
+      <path class="till-gren" d="M840 356 C840 420 1350 410 1350 470"/>
+      <path class="till-lov" d="M1210 574 V686 H1250"/>
+      <path class="till-lov" d="M1210 686 V816 H1250"/>
+    </g>
+  </svg>
+
+  <div class="rot">A good prompt</div>
+
+  <!-- Grenarna och deras löv. Löven sitter i samma grupp som sin gren. -->
+  <div class="del" data-gren="0">
+    <div class="gren" style="left:150px">Task</div>
+    <div class="lov etikett" style="left:230px; top:640px">Write a quiz</div>
+    <div class="lov etikett" style="left:230px; top:770px">Ten questions</div>
+  </div>
+  <div class="del" data-gren="1">
+    <div class="gren" style="left:660px">Context</div>
+    <div class="lov etikett" style="left:740px; top:640px">Year 7 science</div>
+    <div class="lov etikett" style="left:740px; top:770px">Mixed abilities</div>
+  </div>
+  <div class="del" data-gren="2">
+    <div class="gren" style="left:1170px">Format</div>
+    <div class="lov etikett" style="left:1250px; top:640px">A table</div>
+    <div class="lov etikett" style="left:1250px; top:770px">Answer key</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje gren på ordet som namnger den. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+
+  // Linjerna ritas fram: varje linje får ett streckmönster lika långt som
+  // linjen själv, och förskjutningen tweenas från full längd till noll.
+  document.querySelectorAll('svg.linjer path').forEach(function (p) {
+    var l = p.getTotalLength();
+    p.style.strokeDasharray = l;
+    p.style.strokeDashoffset = l;
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och roten finns när boarden öppnar.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.rot', { opacity: 0, y: 24 }, 0.3);
+
+  // Varje gren: linjen ritas ned (0,4 s), plattan kommer, sedan löven.
+  var delar = gsap.utils.toArray('.del');
+  delar.forEach(function (d, i) {
+    var t = 1.4 + i * 1.6;
+    var g = document.querySelector('svg g[data-gren="' + i + '"]');
+    tl.to(g.querySelector('.till-gren'), { strokeDashoffset: 0, duration: 0.4, ease: 'power2.inOut' }, t);
+    tl.from(d.querySelector('.gren'), { opacity: 0, y: 20, duration: 0.6 }, t + 0.35);
+    g.querySelectorAll('.till-lov').forEach(function (p, j) {
+      tl.to(p, { strokeDashoffset: 0, duration: 0.4, ease: 'power2.inOut' }, t + 0.7 + j * STEG);
+    });
+    tl.from(d.querySelectorAll('.lov'), { opacity: 0, x: -20, stagger: STEG, duration: 0.6 }, t + 0.9);
+  });
+
+  // Fokus: "Context", delen som oftast glöms bort. Grenen blir koppar,
+  // de andra grenarna tonas ned. Ett klick när fokus landar.
+  var tF = 1.4 + delar.length * 1.6 + 0.8;
+  delar.forEach(function (d, i) {
+    if (i === 1) return;
+    tl.to([d, 'svg g[data-gren="' + i + '"]'], { opacity: 0.38, duration: 0.6 }, tF);
+  });
+  tl.to('.del[data-gren="1"] .gren', { backgroundColor: '#C2793A', borderColor: '#C2793A', color: '#FFFFFF',
+    boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to('.del[data-gren="1"] .lov', { borderColor: '#C2793A', color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('svg g[data-gren="1"] path', { stroke: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

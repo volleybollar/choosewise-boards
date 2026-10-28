@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P236 · Checklist</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Checklistan ----------
+     Fyra punkter under varandra. Varje punkt får en handritad bock som
+     går lite utanför rutan, sedan ett tunt streck genom texten. Under
+     listan fylls en framstegslist, och till höger räknas klara punkter.
+     Listan slutar vid x 1150; räknaren ligger ovanför y 720. */
+  .punkt { position: absolute; left: 120px; height: 90px; width: 1100px; }
+  .ruta {
+    position: absolute; left: 0; top: 6px; width: 78px; height: 78px;
+    border: 4px solid var(--cw-kant-ljus); border-radius: 16px; background: #FFFFFF;
+  }
+  /* Bocken: ett SVG-streck som ritas fram. Det är större än rutan med flit. */
+  .bock { position: absolute; left: -10px; top: -26px; width: 120px; height: 120px; overflow: visible; }
+  .bock path { fill: none; stroke: #0B3A6F; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; }
+  .text {
+    position: absolute; left: 120px; top: 0; white-space: nowrap;
+    font-size: 56px; line-height: 90px;
+  }
+  /* Strecket genom texten, ritas fram från vänster. */
+  .text .streck {
+    position: absolute; left: -6px; right: -6px; top: 47px; height: 4px; border-radius: 2px;
+    background: var(--cw-text-ljus-dampad); transform-origin: 0 50%; transform: scaleX(0);
+  }
+
+  /* Framstegslisten: en tom skena och en fyllning som växer åt höger. */
+  .skena {
+    position: absolute; left: 120px; top: 880px; width: 1300px; height: 24px;
+    border-radius: 12px; background: var(--cw-ljus-alt);
+  }
+  .fyllning {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    border-radius: 12px; background: var(--cw-accent); transform-origin: 0 50%;
+  }
+
+  /* Räknaren: ett nyckeltal, stort och tunt. */
+  .raknare {
+    position: absolute; left: 1320px; top: 300px; white-space: nowrap;
+    font-size: 180px; font-weight: var(--cw-vikt-tunn); line-height: 1;
+  }
+  .raknare-text { position: absolute; left: 1328px; top: 500px; font-size: 42px; color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Before AI meets your class</h1>
+
+  <!-- Punkterna. Byt texterna här; håll dem korta. -->
+  <div class="punkt" style="top:300px"><div class="ruta"></div><svg class="bock" viewBox="0 0 120 120"><path d="M22,62 L50,92 L112,8"/></svg><div class="text">Check the age limit<b class="streck"></b></div></div>
+  <div class="punkt" style="top:430px"><div class="ruta"></div><svg class="bock" viewBox="0 0 120 120"><path d="M22,62 L50,92 L112,8"/></svg><div class="text">Try the prompt yourself<b class="streck"></b></div></div>
+  <div class="punkt" style="top:560px"><div class="ruta"></div><svg class="bock" viewBox="0 0 120 120"><path d="M22,62 L50,92 L112,8"/></svg><div class="text">Decide what students do themselves<b class="streck"></b></div></div>
+  <div class="punkt" style="top:690px"><div class="ruta"></div><svg class="bock" viewBox="0 0 120 120"><path d="M22,62 L50,92 L112,8"/></svg><div class="text">Plan how they show their thinking<b class="streck"></b></div></div>
+
+  <div class="skena"><div class="fyllning"></div></div>
+
+  <div class="raknare">0/4</div>
+  <div class="raknare-text">ready</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk bockas varje punkt av när Johan säger "done". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var punkter = gsap.utils.toArray('.punkt');
+  var raknare = document.querySelector('.raknare');
+
+  // Bockarna göms genom att streckmönstret skjuts ut helt.
+  punkter.forEach(function (p) {
+    var bock = p.querySelector('.bock path');
+    var langd = bock.getTotalLength();
+    bock.style.strokeDasharray = langd;
+    bock.style.strokeDashoffset = langd;
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, alla punkter, skenan och räknaren.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(punkter, { opacity: 0, y: 24, stagger: STEG }, 0.3);
+  tl.from('.skena, .raknare, .raknare-text', { opacity: 0, stagger: STEG }, 0.9);
+  tl.set('.fyllning', { scaleX: 0 }, 0);
+
+  // Varje punkt: bocken ritas, strecket dras genom texten, texten tonas ned,
+  // listen fylls en fjärdedel och räknaren går upp ett steg (tyst).
+  var start = 2.4, MELLAN = 1.9;
+  punkter.forEach(function (p, i) {
+    var t = start + i * MELLAN;
+    tl.to(p.querySelector('.bock path'), { strokeDashoffset: 0, duration: 0.5 }, t);
+    tl.to(p.querySelector('.streck'), { scaleX: 1, duration: 0.5 }, t + 0.3);
+    tl.to(p.querySelector('.text'), { opacity: 0.38, duration: 0.5 }, t + 0.6);
+    tl.to('.fyllning', { scaleX: (i + 1) / punkter.length, duration: 0.8 }, t + 0.3);
+    // Räknaren byter siffra med en tween, så att exporten kan spola i den.
+    var tal = { n: i };
+    tl.to(tal, { n: i + 1, duration: 0.01, onUpdate: (function (tal) {
+      return function () { raknare.textContent = Math.round(tal.n) + '/4'; };
+    })(tal) }, t + 0.5);
+  });
+
+  // Fokus: när sista punkten är klar blir räknaren och listen koppar. Ett klick.
+  var tF = start + punkter.length * MELLAN;
+  tl.to('.raknare, .raknare-text', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.fyllning', { backgroundColor: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

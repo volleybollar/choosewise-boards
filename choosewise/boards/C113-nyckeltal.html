@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C113 · Key numbers with trends</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Fyra kort i ett rutnät (2 × 2) ----------
+     Korten slutar vid x 1480 och y 960, så att kamerazonen nere till
+     höger är tom. Varje kort har en etikett, ett stort tal och en
+     liten kurva (trenden) längst ned. */
+  .kort {
+    position: absolute; width: 660px; height: 330px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 34px 44px;
+  }
+  .kort .namn { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .kort .tal {
+    font-size: 120px; font-weight: var(--cw-vikt-tunn); line-height: 1;
+    letter-spacing: -0.02em; margin-top: 10px; color: var(--cw-accent);
+  }
+  /* Trendkurvan: sju punkter, ritas fram från vänster. */
+  .kort svg { position: absolute; left: 380px; top: 150px; width: 240px; height: 120px; overflow: visible; }
+  .kort polyline { fill: none; stroke: var(--cw-accent); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One term of the AI pilot</h1>
+  <!-- Byts mot riktiga siffror med källa (och datum) innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Korten. data-mal är talet det räknar upp till, data-decimaler hur
+       många decimaler som visas, data-efter det som står efter talet.
+       data-trend är sju värden (0–10) för kurvan. -->
+  <div class="kort" style="left:120px; top:270px" data-mal="68" data-decimaler="0" data-efter="%" data-trend="2,3,3,5,6,7,9">
+    <div class="namn">Teachers using AI</div><div class="tal"></div><svg><polyline/></svg>
+  </div>
+  <div class="kort" style="left:820px; top:270px" data-mal="412" data-decimaler="0" data-efter="" data-trend="1,2,4,5,6,8,10">
+    <div class="namn">Lessons planned</div><div class="tal"></div><svg><polyline/></svg>
+  </div>
+  <div class="kort" style="left:120px; top:630px" data-mal="3.5" data-decimaler="1" data-efter=" h" data-trend="2,2,3,4,4,5,6">
+    <div class="namn">Saved per week</div><div class="tal"></div><svg><polyline/></svg>
+  </div>
+  <div class="kort" style="left:820px; top:630px" data-mal="1240" data-decimaler="0" data-efter="" data-trend="3,3,4,6,7,7,9">
+    <div class="namn">Students reached</div><div class="tal"></div><svg><polyline/></svg>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk räknar varje tal upp när Johan säger det.
+     Alla fyra talen är lika viktiga, så ingen sak får koppar och ingen
+     klick hörs (C113 är tavlan för "alla siffror spelar roll"). */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var kort = gsap.utils.toArray('.kort');
+
+  // Visa ett tal med tusentalsavgränsare och rätt antal decimaler.
+  function skriv(k, v) {
+    var d = +k.dataset.decimaler;
+    k.querySelector('.tal').textContent =
+      v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + k.dataset.efter;
+  }
+
+  // Rita kurvan: sju punkter jämnt fördelade på 240 px, 0–10 → 120–0 px.
+  kort.forEach(function (k) {
+    var pl = k.querySelector('polyline');
+    var p = k.dataset.trend.split(',').map(function (v, i) { return (i * 40) + ',' + (120 - v * 12); });
+    pl.setAttribute('points', p.join(' '));
+    var langd = pl.getTotalLength();
+    pl.style.strokeDasharray = langd; pl.style.strokeDashoffset = langd;   // "oritad" från början
+    skriv(k, 0);
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket och de tomma korten med sina etiketter.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from(kort, { opacity: 0, y: 30, stagger: STEG }, 0.3);
+
+  // Talen räknar upp ett i taget, kurvan ritas samtidigt (tyst).
+  kort.forEach(function (k, i) {
+    var t = 1.8 + i * 1.8;
+    var r = { v: 0 }, mal = +k.dataset.mal;
+    tl.from(k.querySelector('.tal'), { opacity: 0, duration: 0.4 }, t);
+    tl.to(r, { v: mal, duration: 1.2, ease: 'power2.out',
+      onUpdate: function () { skriv(k, r.v); } }, t);
+    tl.to(k.querySelector('polyline'), { strokeDashoffset: 0, duration: 1.2, ease: 'power2.inOut' }, t + 0.1);
+  });
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

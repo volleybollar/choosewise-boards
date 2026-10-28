@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C243 · Prompt panel with one line in focus</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Panelen ----------
+     En kodpanel i fast teckenbredd. Här står en strukturerad prompt i
+     stället för programkod: samma rörelseidé, men ur lärarens vardag.
+     Panelen slutar vid x 1440 och y 900, långt från kamerazonen. */
+  .panel {
+    position: absolute; left: 140px; top: 270px; width: 1300px; height: 620px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .10);
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+  }
+  /* Panelens list med filnamnet. */
+  .list { height: 96px; background: var(--cw-ljus-alt); padding: 0 40px; line-height: 96px; margin-bottom: 36px; color: var(--cw-text-ljus-dampad); }
+
+  /* En rad: radnummer till vänster, texten till höger. Raden är 84 px hög. */
+  .rad { position: relative; height: 84px; line-height: 84px; padding-left: 140px; white-space: nowrap; }
+  .nr { position: absolute; left: 48px; top: 0; color: var(--cw-text-ljus-dampad); }
+  /* Nyckelordet före kolon i djupblått, som syntaxfärg i en kodeditor. */
+  .nyckel { color: var(--cw-accent); }
+  .text { display: inline-block; position: relative; }
+
+  /* Fokusbandet: en kopparton bakom raden med en tjock markör till vänster.
+     Det sveper fram från vänster i fokusögonblicket. */
+  .band {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: var(--cw-glod-sken); border-left: 12px solid var(--cw-glod);
+    transform-origin: 0 50%; transform: scaleX(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">A prompt, read line by line</h1>
+
+  <div class="panel">
+    <div class="list">quiz-prompt.txt</div>
+
+    <!-- Raderna. Var och en "skrivs" fram från vänster till höger.
+         Rad 3 är den som fokus pekar ut. -->
+    <div class="rad"><span class="nr">1</span><span class="text"><span class="nyckel">role:</span> Year 7 science teacher</span></div>
+    <div class="rad"><span class="nr">2</span><span class="text"><span class="nyckel">task:</span> Write three quiz questions</span></div>
+    <div class="rad fokus"><div class="band"></div><span class="nr">3</span><span class="text"><span class="nyckel">level:</span> Age 12, plain words</span></div>
+    <div class="rad"><span class="nr">4</span><span class="text"><span class="nyckel">format:</span> One question per line</span></div>
+    <div class="rad"><span class="nr">5</span><span class="text"><span class="nyckel">check:</span> Mark the right answer</span></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk skrivs raderna fram i Johans tempo, och bandet
+     sveper fram när han förklarar rad 3. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.rad');
+  var fokus = document.querySelector('.rad.fokus');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och panelen glider in från vänster.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.panel', { opacity: 0, x: -120 }, 0.3);
+
+  // Raderna skrivs fram en i taget: radnumret syns direkt, texten avslöjas
+  // från vänster till höger (tyst, Johans val 2026-10-28).
+  rader.forEach(function (r, i) {
+    var t = 1.4 + i * 0.8;
+    tl.from(r.querySelector('.nr'), { opacity: 0, duration: 0.3 }, t);
+    tl.fromTo(r.querySelector('.text'), { clipPath: 'inset(0% 100% 0% 0%)' },
+                                        { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: 'none' }, t);
+  });
+
+  // Fokus: bandet sveper fram bakom rad 3, texten blir koppar och de andra
+  // raderna tonas ned. Fokuskonturen är tyst.
+  var tF = 1.4 + rader.length * 0.8 + 1.0;
+  tl.to(rader.filter(function (r) { return r !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.band'), { scaleX: 1, duration: 0.9 }, tF);
+  tl.to(fokus.querySelectorAll('.text, .nyckel, .nr'), { color: '#9C5A24', duration: 0.6 }, tF + 0.2);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

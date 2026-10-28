@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>H145 · Three things to remember</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tre kort i rad ----------
+     Korten står i en rad ovanför y 720 och slutar vid x 1520, så
+     kamerazonen nere till höger är tom. Korten (ramarna) finns från start,
+     innehållet delas ut ett kort i taget, ett för varje punkt Johan säger. */
+  .kort {
+    position: absolute; top: 260px; width: 440px; height: 360px;
+    padding: 48px 48px; background: var(--cw-ljus-alt);
+    border-radius: var(--cw-radie-kort);
+  }
+  .nr {
+    display: block; font-size: var(--cw-min-siffra); font-weight: var(--cw-vikt-tunn);
+    line-height: 1; color: var(--cw-accent); margin-bottom: 36px;
+  }
+  .lardom { font-size: 48px; font-weight: var(--cw-vikt-display); line-height: 1.2; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Three things to remember</h1>
+
+  <!-- De tre lärdomarna. Exakt tre, med orden från videon. -->
+  <div class="kort" style="left:120px"><div class="innehall"><span class="nr">1</span><div class="lardom">Start with the learning goal</div></div></div>
+  <div class="kort" style="left:600px"><div class="innehall"><span class="nr">2</span><div class="lardom">Check what the AI gives you</div></div></div>
+  <div class="kort" style="left:1080px"><div class="innehall"><span class="nr">3</span><div class="lardom">Let pupils show their thinking</div></div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar varje kort när Johan säger sin punkt.
+     Boarden är tyst: ingen enskild punkt är viktigare än de andra. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var kort = gsap.utils.toArray('.kort');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och de tre tomma korten.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(kort, { opacity: 0, y: 24, stagger: STEG }, 0.2);
+
+  // Korten fylls ett i taget. Det nya kortet får fokus (siffran i koppar),
+  // det förra tonas ned.
+  kort.forEach(function (k, i) {
+    var t = 1.4 + i * 2.2;
+    if (i > 0) {
+      var forra = kort[i - 1];
+      tl.to(forra, { opacity: 0.38, duration: 0.6 }, t);
+      tl.to(forra.querySelector('.nr'), { color: '#0B3A6F', duration: 0.6 }, t);
+    }
+    tl.from(k.querySelector('.innehall'), { opacity: 0, y: 24 }, t);
+    tl.to(k.querySelector('.nr'), { color: '#9C5A24', duration: 0.6 }, t + 0.3);
+  });
+
+  // Till sist står alla tre lika starka, utan fokus: det är sammanfattningen.
+  var tS = 1.4 + kort.length * 2.2 + 0.6;
+  tl.to(kort, { opacity: 1, duration: 0.6 }, tS);
+  tl.to(kort[kort.length - 1].querySelector('.nr'), { color: '#0B3A6F', duration: 0.6 }, tS);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

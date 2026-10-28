@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C116 · Heatmap</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Rutnätet ----------
+     Fem rader (måndag–fredag) och tolv kolumner (veckor). Varje ruta är
+     80 px med 14 px mellanrum. Rutnätet börjar på x 300, y 290 och slutar
+     vid x 1422, långt från kamerazonen. Fyra nyanser av blått: ju mörkare,
+     desto fler lektioner med AI den dagen. */
+  .dag {
+    position: absolute; left: 120px; width: 150px; height: 80px; line-height: 80px;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  .ruta { position: absolute; width: 80px; height: 80px; border-radius: 16px; }
+  .n0 { background: var(--cw-ljus-alt); }
+  .n1 { background: var(--cw-serie-3); }
+  .n2 { background: var(--cw-serie-2); }
+  .n3 { background: var(--cw-serie-1); }
+
+  /* Ramen runt veckan i fokus. Den ritas i koppar när fokus landar. */
+  .ram {
+    position: absolute; width: 104px; border-radius: 24px;
+    border: 5px solid var(--cw-glod); box-shadow: 0 0 0 10px var(--cw-glod-sken);
+  }
+
+  /* Texter under rutnätet: veckonummer, förklaringen och fokustexten. */
+  .under { position: absolute; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); white-space: nowrap; }
+  .forklaring { position: absolute; left: 300px; top: 900px; display: flex; align-items: center; gap: 14px; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .forklaring i { width: 48px; height: 48px; border-radius: 12px; display: block; }
+  .fokustext { position: absolute; top: 790px; font-size: var(--cw-min-etikett); color: var(--cw-glod-text); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Twelve weeks of AI in lessons</h1>
+  <!-- Byts mot riktiga siffror (till exempel skolans loggar) innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Rutorna, veckonumren och ramen byggs i skriptet från listan DATA. -->
+  <div class="falt"></div>
+
+  <!-- Förklaringen: från lite till mycket. -->
+  <div class="forklaring">Less<i class="n0"></i><i class="n1"></i><i class="n2"></i><i class="n3"></i>More</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== DATA =====
+     En rad per dag, en siffra per vecka: 0 = inget, 3 = mycket.
+     Vecka 7 (studiedagen) är veckan i fokus. Ändra här. */
+  var DAGAR = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  var DATA = [
+    '001011233323',
+    '010101323332',
+    '000110333233',
+    '101001232323',
+    '000100122312'
+  ];
+  var FOKUSVECKA = 6;              // vecka 7 (räknat från 0)
+  var X0 = 300, Y0 = 290, STEGPX = 94;
+  var cw = document.querySelector('.cw');
+
+  function ny(klass, stil, text) {
+    var d = document.createElement('div');
+    d.className = klass; d.style.cssText = stil; if (text) d.textContent = text;
+    cw.appendChild(d); return d;
+  }
+
+  // Dagarnas namn till vänster och rutorna, kolumn för kolumn.
+  DAGAR.forEach(function (namn, r) { ny('dag', 'top:' + (Y0 + r * STEGPX) + 'px', namn); });
+  var kolumner = [];
+  for (var v = 0; v < 12; v++) {
+    var kol = [];
+    for (var r = 0; r < 5; r++) {
+      kol.push(ny('ruta n' + DATA[r][v], 'left:' + (X0 + v * STEGPX) + 'px;top:' + (Y0 + r * STEGPX) + 'px'));
+    }
+    kolumner.push(kol);
+  }
+  var nedreKant = Y0 + 4 * STEGPX + 80;   // 746
+  ny('under', 'left:' + X0 + 'px;top:' + (nedreKant + 44) + 'px', 'Week 1');
+  ny('under', 'left:' + (X0 + 11 * STEGPX + 80) + 'px;top:' + (nedreKant + 44) + 'px;transform:translateX(-100%)', 'Week 12');
+
+  // Ramen runt fokusveckan och texten under den.
+  var fx = X0 + FOKUSVECKA * STEGPX;
+  var ram = ny('ram', 'left:' + (fx - 12) + 'px;top:' + (Y0 - 12) + 'px;height:' + (nedreKant - Y0 + 24) + 'px');
+  var fokustext = ny('fokustext', 'left:' + (fx + 40) + 'px;transform:translateX(-50%)', 'After the training day');
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk fylls veckorna när Johan pratar om perioden,
+     och fokus landar när han säger "efter studiedagen". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, dagarna, veckonumren och förklaringen.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.dag, .under, .forklaring', { opacity: 0, y: 16, stagger: 0.06 }, 0.5);
+
+  // Veckorna fylls en i taget från vänster till höger (tyst).
+  kolumner.forEach(function (kol, v) {
+    tl.from(kol, { opacity: 0, scale: 0.6, duration: 0.5, stagger: 0.05 }, 1.6 + v * 0.35);
+  });
+
+  // Fokus: ramen runt vecka 7 ritas i koppar, texten kommer fram under den
+  // och de andra veckorna tonas ned. Ett klick när fokus landar.
+  var tF = 1.6 + 12 * 0.35 + 1.0;
+  var ovriga = [];
+  kolumner.forEach(function (kol, v) { if (v !== FOKUSVECKA) ovriga = ovriga.concat(kol); });
+  tl.to(ovriga, { opacity: 0.38, duration: 0.6 }, tF);
+  tl.from(ram, { opacity: 0, scale: 1.08, duration: 0.6 }, tF);
+  tl.from(fokustext, { opacity: 0, y: 16, duration: 0.6 }, tF + 0.2);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

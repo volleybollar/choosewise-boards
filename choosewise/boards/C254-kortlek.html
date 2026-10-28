@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C254 · Deal the stack, pull one out</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Korten ----------
+     Fem utkast till återkoppling, alla lika stora. De läggs i en hög vid
+     x 200, en aning förskjutna så att man ser att de är flera. Kortet som
+     väljs dras ut till höger och slutar vid x 1400, före kamerazonen. */
+  .kort {
+    position: absolute; left: 200px; top: 340px; width: 540px; height: 340px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 44px 52px;
+  }
+  .kort .namn { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  /* Grå streck i stället för text på korten som inte väljs. */
+  .kort .rad { height: 20px; border-radius: 10px; background: var(--cw-ljus-alt); margin-top: 34px; }
+  .kort .rad.kort-rad { width: 60%; }
+  /* Texten på det valda kortet. */
+  .kort .text { font-size: 56px; font-weight: var(--cw-vikt-display); line-height: 1.15; margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Five drafts. Keep the best one.</h1>
+
+  <!-- Högen. Ordningen i koden är ordningen de delas ut i:
+       Draft 1 hamnar underst, Draft 5 överst. Draft 3 är den som väljs. -->
+  <div class="kort"><div class="namn">Draft 1</div><div class="rad"></div><div class="rad kort-rad"></div></div>
+  <div class="kort"><div class="namn">Draft 2</div><div class="rad"></div><div class="rad kort-rad"></div></div>
+  <div class="kort vald"><div class="namn">Draft 3</div><div class="text">Names one clear next step</div></div>
+  <div class="kort"><div class="namn">Draft 4</div><div class="rad"></div><div class="rad kort-rad"></div></div>
+  <div class="kort"><div class="namn">Draft 5</div><div class="rad"></div><div class="rad kort-rad"></div></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk dras kortet ut på ordet då Johan väljer det. */
+  var EASE = 'power2.out';
+  var kort = gsap.utils.toArray('.kort');
+  var vald = document.querySelector('.kort.vald');
+
+  // Var varje kort hamnar i högen: liten förskjutning och vridning.
+  var LAGE = [
+    { x: 0,  y: 0,   r: -4 },
+    { x: 14, y: -10, r: 3 },
+    { x: 6,  y: -18, r: -2 },
+    { x: 20, y: -26, r: 4 },
+    { x: 10, y: -34, r: -1 }
+  ];
+  kort.forEach(function (k, i) {
+    gsap.set(k, { x: LAGE[i].x, y: LAGE[i].y, rotation: LAGE[i].r, zIndex: i + 1 });
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+
+  // Korten delas ut ett i taget, inflygande uppifrån höger med en vridning.
+  kort.forEach(function (k, i) {
+    tl.from(k, { x: 1500, y: -600, rotation: 30, duration: 0.9 }, 0.6 + i * 0.45);
+  });
+
+  // Draft 3 dras ut ur mitten av högen och lägger sig till höger med en
+  // liten fjädring. Innehållet i högen tonas ned. Ett klick när kortet landar.
+  var tF = 4.8;
+  tl.set(vald, { zIndex: 10 }, tF);
+  tl.to(vald, { x: 680, y: -40, rotation: 0, duration: 0.9, ease: 'back.out(1.4)' }, tF);
+  // Bara innehållet tonas ned: korten är kvar som vita ytor, annars skulle
+  // texterna i högen lysa igenom varandra.
+  tl.to('.kort:not(.vald) .namn, .kort:not(.vald) .rad', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(vald, { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF + 0.5);
+  tl.to(vald.querySelector('.namn'), { color: '#9C5A24', duration: 0.6 }, tF + 0.5);
+  Tavla.ljud(tl, tF + 0.6, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

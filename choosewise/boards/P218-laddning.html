@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P218 · From waiting to done</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Hjulet ----------
+     En ljusgrå ring med en blå båge som snurrar medan något pågår. När det
+     är klart växer en kopparskiva fram över ringen och en bock ritas.
+     SVG-ytan täcker hela boarden, så koordinaterna är board-pixlar. */
+  .ytan { position: absolute; left: 0; top: 0; }
+
+  /* Texten till höger om hjulet. De två raderna ligger på samma plats:
+     "pågår"-raden tonas ut och "klart"-raden tonas in. */
+  .status { position: absolute; left: 900px; top: 470px; width: 640px; }
+  .rad { position: absolute; left: 0; top: 0; }
+  .rad .huvud { font-size: 84px; font-weight: var(--cw-vikt-display); letter-spacing: -0.02em; line-height: 1.05; }
+  .rad .etikett { margin-top: 18px; color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">From waiting to done</h1>
+
+  <!-- Hjulet. Mittpunkt (580, 590), radie 170. Allt ligger långt till
+       vänster om kamerazonen. -->
+  <svg class="ytan" width="1920" height="1080" viewBox="0 0 1920 1080">
+    <circle cx="580" cy="590" r="170" fill="none" stroke="#DDE3EA" stroke-width="26"/>
+    <!-- Bågen som snurrar: en bit av ringen (220 av omkretsen 1068). -->
+    <circle class="bage" cx="580" cy="590" r="170" fill="none" stroke="#0B3A6F" stroke-width="26"
+            stroke-linecap="round" stroke-dasharray="220 900"/>
+    <!-- Klart: en kopparskiva och en vit bock. -->
+    <g class="klar">
+      <circle class="skiva" cx="580" cy="590" r="184" fill="#C2793A"/>
+      <path class="bock" d="M500 594 L558 652 L668 536" fill="none" stroke="#FFFFFF" stroke-width="28"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </svg>
+
+  <div class="status">
+    <div class="rad pagar"><div class="huvud">Building a quiz…</div><div class="etikett">Ten questions on fractions</div></div>
+    <div class="rad klart"><div class="huvud">Quiz ready</div><div class="etikett">Now check it before class</div></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk snurrar hjulet medan Johan beskriver vad som pågår,
+     och bocken kommer på ordet "done" eller "ready". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var bock = document.querySelector('.bock');
+  var bockLangd = bock.getTotalLength();
+  bock.style.strokeDasharray = bockLangd;
+
+  // Startläge: klart-delen är dold. Bågen vrids runt hjulets mittpunkt.
+  gsap.set('.bage', { svgOrigin: '580 590' });
+  gsap.set('.skiva', { scale: 0, svgOrigin: '580 590' });
+  // Bocken är dessutom osynlig tills den ritas, annars syns dess runda
+  // ände som en liten vit prick på hjulet.
+  gsap.set(bock, { strokeDashoffset: bockLangd, opacity: 0 });
+  gsap.set('.klart', { opacity: 0 });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, hjulet och "pågår"-raden.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.ytan', { opacity: 0, duration: 0.6 }, 0.3);
+  tl.from('.pagar > *', { opacity: 0, y: 20, stagger: STEG }, 0.6);
+
+  // Bågen snurrar med jämn fart medan det pågår, och saktar in mot slutet.
+  var tSnurr = 0.6, snurr = 4.6;
+  tl.to('.bage', { rotation: 3 * 360, duration: snurr, ease: 'power1.inOut' }, tSnurr);
+
+  // Klart: skivan växer fram över hjulet, bocken ritas och texten byts.
+  var tKlar = tSnurr + snurr;
+  tl.to('.bage', { opacity: 0, duration: 0.3 }, tKlar);
+  tl.to('.skiva', { scale: 1, duration: 0.6, ease: 'back.out(1.6)' }, tKlar);
+  tl.set(bock, { opacity: 1 }, tKlar + 0.35);
+  tl.to(bock, { strokeDashoffset: 0, duration: 0.6 }, tKlar + 0.35);
+  tl.to('.pagar', { opacity: 0, y: -20, duration: 0.5 }, tKlar);
+  tl.fromTo('.klart', { opacity: 0, y: 20 }, { opacity: 1, y: 0 }, tKlar + 0.3);
+  // Fokus: "Quiz ready" i koppar, samtidigt som skivan landar. Ett klick.
+  tl.to('.klart .huvud', { color: '#9C5A24', duration: 0.6 }, tKlar + 0.3);
+  Tavla.ljud(tl, tKlar + 0.4, 'landa');
+  tl.to({}, { duration: 2.5 }, tKlar + 1.1);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

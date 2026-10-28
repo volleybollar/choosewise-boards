@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C240 · Table with row focus</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Tabellen ----------
+     En vit ruta med en rubrikrad och fyra rader. Den slutar vid x 1480
+     och y ungefär 870, långt från kamerazonen. Tre kolumner: uppgiften,
+     tiden utan AI och tiden med AI. */
+  .tabell {
+    position: absolute; left: 120px; top: 280px; width: 1360px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+  }
+  .rad {
+    display: grid; grid-template-columns: 1fr 280px 280px; align-items: center;
+    height: 116px; padding: 0 56px; font-size: var(--cw-min-etikett);
+    border-top: 2px solid var(--cw-kant-ljus); background: #FFFFFF;
+    position: relative;   /* så att raden i fokus kan lyfta ovanför de andra */
+  }
+  .rad div:nth-child(n+2) { text-align: right; }
+  /* Rubrikraden: dämpad text, ingen linje ovanför. */
+  .rad.topp { border-top: 0; color: var(--cw-text-ljus-dampad); height: 104px; border-radius: var(--cw-radie-kort) var(--cw-radie-kort) 0 0; }
+  /* Sista raden får rundade hörn nedtill, som tabellen. */
+  .rad:last-child { border-radius: 0 0 var(--cw-radie-kort) var(--cw-radie-kort); }
+  .rad .med { font-weight: var(--cw-vikt-stark); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Where the minutes come back</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Tabellen. Minuter per vecka för varje uppgift. -->
+  <div class="tabell">
+    <div class="rad topp"><div>Task</div><div>Without AI</div><div>With AI</div></div>
+    <div class="rad"><div>Quiz questions</div><div>45 min</div><div class="med">15 min</div></div>
+    <div class="rad"><div>Report comments</div><div>120 min</div><div class="med">40 min</div></div>
+    <div class="rad"><div>Parent emails</div><div>30 min</div><div class="med">20 min</div></div>
+    <div class="rad"><div>Lesson plans</div><div>90 min</div><div class="med">60 min</div></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk glider varje rad in när Johan säger uppgiften,
+     och fokus landar när han säger svaret. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var rader = gsap.utils.toArray('.rad:not(.topp)');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik och märket, sedan torkas tabellen fram uppifrån.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.fromTo('.tabell',
+    { clipPath: 'inset(0% 0% 100% 0% round 42px)' },
+    { clipPath: 'inset(0% 0% 0% 0% round 42px)', duration: 1.0, ease: 'power2.inOut' }, 0.5);
+  // Masken tas bort när tabellen är framme, annars klipps raden i fokus när den lyfter.
+  tl.set('.tabell', { clipPath: 'none' }, 1.6);
+
+  // Raderna glider in från vänster, en i taget (tyst).
+  rader.forEach(function (r, i) {
+    tl.from(r.children, { opacity: 0, x: -40, stagger: 0.1 }, 1.8 + i * 1.0);
+  });
+
+  // Fokus: "Report comments" sparar mest. Raden lyfter 3 %, blir koppar
+  // och får en ring; de andra raderna tonas ned. Ett klick när fokus landar.
+  var fokus = rader[1];
+  var tF = 1.8 + rader.length * 1.0 + 0.8;
+  tl.to(rader.filter(function (r) { return r !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { scale: 1.03, zIndex: 2, borderRadius: 24, boxShadow: '0 0 0 6px #C2793A, 0 0 0 18px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.children, { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>P36 · Focus pull</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Listan till vänster ----------
+     Tre kort under varandra, ett för varje steg. Den lilla kopparfliken
+     (.flik) åker längs listan och visar vilket steg som är i fokus. */
+  .steg {
+    position: absolute; left: 160px; width: 680px; height: 130px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 0 48px;
+    display: flex; align-items: center;
+    font-size: 48px; font-weight: var(--cw-vikt-display);
+    transform-origin: 0 50%;
+  }
+  .flik {
+    position: absolute; left: 120px; top: 310px; width: 14px; height: 70px;
+    border-radius: 7px; background: var(--cw-glod);
+  }
+
+  /* ---------- Rutorna till höger ----------
+     Platshållare där Sirio hade videoklipp: en ljusgrå ruta med en kort
+     etikett. Rutorna slutar vid y 560, ovanför kamerazonen. */
+  .ruta {
+    position: absolute; top: 300px; width: 260px; height: 260px;
+    background: var(--cw-ljus-alt); border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Three moves in an AI lesson</h1>
+
+  <!-- Stegen. Kort nummer 1 hör ihop med ruta nummer 1, och så vidare. -->
+  <div class="steg" style="top:280px">Students try first</div>
+  <div class="steg" style="top:450px">AI gives feedback</div>
+  <div class="steg" style="top:620px">Students revise</div>
+
+  <div class="ruta" style="left:920px">Draft</div>
+  <div class="ruta" style="left:1210px">Feedback</div>
+  <div class="ruta" style="left:1500px">Revision</div>
+
+  <div class="flik"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk flyttas fokus på ordet som namnger nästa steg. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var steg = gsap.utils.toArray('.steg');
+  var rutor = gsap.utils.toArray('.ruta');
+  var INGEN_GLOD = '0 0 0 0px rgba(194,121,58,0)';
+  var GLOD = '0 0 0 12px rgba(194,121,58,.34)';
+  gsap.set(steg.concat(rutor), { boxShadow: INGEN_GLOD });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, alla kort och alla rutor syns från början.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(steg, { opacity: 0, x: -24, stagger: STEG }, 0.3);
+  tl.from(rutor, { opacity: 0, y: 24, stagger: STEG }, 0.6);
+  tl.from('.flik', { opacity: 0, duration: 0.5 }, 2.4);
+
+  // Fokus flyttas ett steg i taget. Steget i fokus (kortet och dess ruta)
+  // blir helt synligt, lite större och får kopparkant. Resten tonas ned.
+  var tider = [2.4, 4.8, 7.2];
+  tider.forEach(function (t, i) {
+    var paFokus = [steg[i], rutor[i]];
+    var andra = steg.concat(rutor).filter(function (e) { return paFokus.indexOf(e) < 0; });
+    tl.to(andra, { opacity: 0.38, scale: 1, borderColor: '#DDE3EA', boxShadow: INGEN_GLOD, duration: 0.6 }, t);
+    tl.to(paFokus, { opacity: 1, scale: 1.03, borderColor: '#C2793A', boxShadow: GLOD, duration: 0.6 }, t);
+    tl.to(rutor[i], { color: '#9C5A24', duration: 0.6 }, t);
+    if (i > 0) tl.to(rutor[i - 1], { color: '#4E5A68', duration: 0.6 }, t);
+    // Fliken glider till kortet i fokus.
+    if (i > 0) tl.to('.flik', { y: i * 170, duration: 0.8, ease: 'power2.inOut' }, t);
+  });
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

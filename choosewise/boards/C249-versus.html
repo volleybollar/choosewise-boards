@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C249 · Two ways, one winner</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Korten ----------
+     Två kort som möts: vänster kort mellan x 120 och 700, höger mellan
+     x 920 och 1500. Båda slutar vid y 800 och x 1500, så kamerazonen
+     nere till höger förblir tom. */
+  .kort {
+    position: absolute; top: 300px; width: 580px; height: 500px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); text-align: center; padding-top: 72px;
+  }
+  .kort .namn { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .kort .tal { font-size: 168px; font-weight: var(--cw-vikt-tunn); line-height: 1.15; margin: 24px 0 12px; }
+  .kort .per { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+
+  /* "vs"-skivan mellan korten. */
+  .vs {
+    position: absolute; left: 740px; top: 480px; width: 140px; height: 140px; border-radius: 50%;
+    background: var(--cw-accent); color: #FFFFFF;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Klistermärket som sätts på vinnaren. Koppar: det hör till fokus. */
+  .marke {
+    position: absolute; left: 1290px; top: 252px; padding: 10px 32px; border-radius: 999px;
+    background: var(--cw-glod); color: #FFFFFF;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+    transform: rotate(6deg); opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Feedback on 30 essays</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Vänster kort (förloraren) och höger kort (vinnaren). -->
+  <div class="kort vanster" style="left:120px">
+    <div class="namn">Marking alone</div><div class="tal">6 h</div><div class="per">per class set</div>
+  </div>
+  <div class="kort hoger" style="left:920px">
+    <div class="namn">AI draft + teacher</div><div class="tal">2 h</div><div class="per">per class set</div>
+  </div>
+
+  <div class="vs">vs</div>
+  <div class="marke">Faster</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk faller avgörandet på ordet där Johan säger vilket
+     sätt som vinner. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+
+  // Korten glider in från var sitt håll, skivan snurrar in mellan dem (tyst).
+  tl.from('.vanster', { x: -300, opacity: 0 }, 0.6);
+  tl.from('.hoger', { x: 300, opacity: 0 }, 0.8);
+  tl.from('.vs', { scale: 0, rotation: -180, duration: 0.7, ease: 'back.out(1.6)' }, 1.4);
+
+  // Avgörandet: vinnaren lyfts och lutar lite med kopparglöd, förloraren
+  // krymper och tonas ned, klistermärket sätts på. Ett klick när det landar.
+  var tA = 4.8;
+  tl.to('.hoger', { y: -22, rotation: -1.5, borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.7, ease: 'back.out(2)' }, tA);
+  tl.to('.hoger .tal', { color: '#9C5A24', duration: 0.6 }, tA);
+  tl.to('.vanster', { scale: 0.94, opacity: 0.38, duration: 0.7 }, tA);
+  tl.to('.vs', { opacity: 0.38, duration: 0.6 }, tA);
+  Tavla.ljud(tl, tA + 0.1, 'landa');
+  tl.fromTo('.marke', { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, rotation: 6, duration: 0.5, ease: 'back.out(2.5)' }, tA + 0.4);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

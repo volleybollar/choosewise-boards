@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C248 · Four key numbers, one in focus</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Rutorna ----------
+     Fyra rutor i en rad mellan y 320 och y 700. De ligger ovanför y 720 och
+     får därför gå ut till x 1760 utan att krocka med kamerazonen. */
+  .ruta {
+    position: absolute; top: 320px; width: 380px; height: 380px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort); padding: 44px 44px 0;
+  }
+  .ruta .namn { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  /* Nyckeltalet: stort och tunt. */
+  .ruta .tal {
+    display: block; margin-top: 18px; font-size: 128px; font-weight: var(--cw-vikt-tunn);
+    line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  /* Den lilla kurvan längst ned i rutan. */
+  .ruta svg { position: absolute; left: 44px; bottom: 44px; overflow: visible; }
+  .ruta path { stroke: var(--cw-accent); stroke-width: 6; fill: none; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Four numbers, one that matters</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Rutorna. data-varde är talet som räknas upp; kurvan är bara form. -->
+  <div class="ruta" style="left:120px" data-varde="94">
+    <span class="namn">Attendance</span><span class="tal">0%</span>
+    <svg width="290" height="80"><path d="M0 50 L58 44 L116 48 L174 36 L232 40 L290 30"/></svg>
+  </div>
+  <div class="ruta" style="left:540px" data-varde="81">
+    <span class="namn">Homework</span><span class="tal">0%</span>
+    <svg width="290" height="80"><path d="M0 60 L58 52 L116 56 L174 40 L232 44 L290 28"/></svg>
+  </div>
+  <div class="ruta" style="left:960px" data-varde="76">
+    <span class="namn">Reading</span><span class="tal">0%</span>
+    <svg width="290" height="80"><path d="M0 40 L58 46 L116 34 L174 38 L232 26 L290 30"/></svg>
+  </div>
+  <div class="ruta fokus" style="left:1380px" data-varde="58">
+    <span class="namn">Writing</span><span class="tal">0%</span>
+    <svg width="290" height="80"><path d="M0 20 L58 28 L116 26 L174 42 L232 50 L290 62"/></svg>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk lyfts "Writing" på ordet som pekar ut den. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rutor = gsap.utils.toArray('.ruta');
+  var fokus = document.querySelector('.ruta.fokus');
+
+  // Kurvorna ritas med streckmönstret: hela längden "gömd" till att börja med.
+  rutor.forEach(function (r) {
+    var p = r.querySelector('path'), l = p.getTotalLength();
+    gsap.set(p, { strokeDasharray: l, strokeDashoffset: l });
+  });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+
+  // Rutorna fälls ned från sin överkant, en i taget. Talet räknas upp
+  // medan kurvan ritas (tyst: framväxt).
+  rutor.forEach(function (r, i) {
+    var t = 0.8 + i * 0.5;
+    var tal = r.querySelector('.tal'), mal = +r.dataset.varde, rakn = { v: 0 };
+    tl.from(r, { rotationX: -90, transformPerspective: 1200, transformOrigin: '50% 0%', opacity: 0, duration: 0.8 }, t);
+    tl.to(rakn, { v: mal, duration: 1.6, ease: 'power2.out',
+      onUpdate: function () { tal.textContent = Math.round(rakn.v) + '%'; } }, t + 0.4);
+    tl.to(r.querySelector('path'), { strokeDashoffset: 0, duration: 1.6 }, t + 0.4);
+  });
+
+  // Fokus: "Writing" lyfts med en kopparglöd, de tre andra tonas ned.
+  // Ett klick när fokus landar.
+  var tF = 0.8 + rutor.length * 0.5 + 2.2;
+  tl.to(rutor.filter(function (r) { return r !== fokus; }), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { y: -16, borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.tal'), { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('path'), { stroke: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

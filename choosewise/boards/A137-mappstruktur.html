@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A137 · Folder tree</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Mappträdet ----------
+     En lärares kursmapp, rad för rad uppifrån och ned. Mappar står i fet
+     stil, filer i vanlig. Indraget visar vad som ligger i vad. Trädet
+     håller sig till vänster om x 900, så kamerazonen är alltid tom. */
+  .trad { position: absolute; left: 120px; top: 250px; }
+  .rad {
+    display: flex; align-items: center; height: 76px;
+    font-size: var(--cw-min-etikett); white-space: nowrap;
+  }
+  .rad.mapp { font-weight: var(--cw-vikt-stark); }
+  /* Indraget: 72 px per nivå. */
+  .niva1 { padding-left: 72px; }
+  .niva2 { padding-left: 144px; }
+
+  /* Ikonerna är enkla former, inga emojier: en fylld mapp och ett tomt blad. */
+  .ikon { flex: 0 0 auto; margin-right: 24px; }
+  .mapp .ikon {
+    position: relative; width: 46px; height: 34px; border-radius: 6px;
+    background: var(--cw-accent);
+  }
+  .mapp .ikon::before {      /* mappens flik uppe till vänster */
+    content: ''; position: absolute; left: 0; top: -7px; width: 20px; height: 10px;
+    border-radius: 4px 4px 0 0; background: inherit;
+  }
+  .fil .ikon {
+    width: 30px; height: 38px; margin-left: 8px; margin-right: 32px;
+    border: 3px solid var(--cw-text-ljus-dampad); border-radius: 5px;
+  }
+
+  /* Etiketten som pekar ut mappen i fokus. Den står på samma höjd som
+     raden "Prompt library" (rad 4: 250 + 3 × 76 = 478). */
+  .pil {
+    position: absolute; left: 860px; top: 478px; height: 76px;
+    display: flex; align-items: center; white-space: nowrap;
+    font-size: var(--cw-min-etikett); color: var(--cw-glod-text);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Where your prompts live</h1>
+
+  <!-- Trädet. Varje rad är en mapp eller en fil. Byt namnen mot din egen
+       mappstruktur; lägg till eller ta bort rader efter behov. -->
+  <div class="trad">
+    <div class="rad mapp"><i class="ikon"></i>Year 8 Science</div>
+    <div class="rad mapp niva1"><i class="ikon"></i>Lesson plans</div>
+    <div class="rad mapp niva1"><i class="ikon"></i>Worksheets</div>
+    <div class="rad mapp niva1 fokus"><i class="ikon"></i>Prompt library</div>
+    <div class="rad fil niva2 inne"><i class="ikon"></i>Lesson planning.txt</div>
+    <div class="rad fil niva2 inne"><i class="ikon"></i>Essay feedback.txt</div>
+    <div class="rad fil niva2 inne"><i class="ikon"></i>Quiz questions.txt</div>
+    <div class="rad mapp niva1"><i class="ikon"></i>Student work</div>
+  </div>
+
+  <!-- Pekaren till mappen i fokus. -->
+  <div class="pil">←&nbsp;&nbsp;Save every good prompt here</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer raderna när Johan går igenom mapparna, och
+     fokus landar när han säger var prompterna ska sparas. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.rad');
+  var fokus = document.querySelector('.rad.fokus');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Rubriken först, sedan raderna uppifrån och ned (tyst: en framväxt har inget ljud).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(rader, { opacity: 0, x: -24, stagger: 0.35 }, 0.8);
+
+  // Fokus: "Prompt library" blir koppar. Filerna i mappen står kvar,
+  // resten av trädet tonas ned. Ett klick när fokus landar.
+  var tF = 0.8 + rader.length * 0.35 + 1.0;
+  var ovriga = rader.filter(function (r) { return r !== fokus && !r.classList.contains('inne'); });
+  tl.to(ovriga, { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(fokus, { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to(fokus.querySelector('.ikon'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.from('.pil', { opacity: 0, x: 24 }, tF + 0.3);
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>
