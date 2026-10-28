@@ -1,0 +1,10 @@
+{
+  "rost": "rost.wav",
+  "fonster": [
+    { "board": "D43-staplar.html", "start": 0.0, "slut": 8.5,
+      "ankare": [ {"steg": 2, "tid": 2.4}, {"steg": 4, "tid": 4.32}, {"steg": 6, "tid": 5.1},
+                  {"steg": 8, "tid": 5.94}, {"steg": 10, "tid": 6.44}, {"steg": 12, "tid": 7.74} ] },
+    { "board": "N5-ai-chatt.html", "start": 8.6, "slut": 17.6,
+      "ankare": [ {"steg": 1, "tid": 10.1}, {"steg": 4, "tid": 14.58} ] }
+  ]
+}
