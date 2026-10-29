@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>N12 · Ask me first</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Webbläsarfönstret ----------
+     Samma generiska fönster som i N5, utan varumärke. Det slutar vid
+     x 1500, så att kamerazonen nere till höger alltid är tom. */
+  .fonster {
+    position: absolute; left: 140px; top: 90px; width: 1360px; height: 900px;
+    background: var(--cw-vit, #FFFFFF); color: var(--cw-text-ljus);
+    border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  /* Fönstrets list: tre prickar och ett tomt adressfält. */
+  .list { height: 76px; background: var(--cw-ljus-alt); display: flex; align-items: center; gap: 14px; padding: 0 28px; }
+  .list i { width: 18px; height: 18px; border-radius: 50%; background: var(--cw-kant-ljus); }
+  .adress { margin-left: 24px; flex: 1; height: 40px; border-radius: 999px; background: var(--cw-ljus); }
+
+  /* ---------- Promptrutan ----------
+     Den stora rutan där man skriver. Prompten står redan där när boarden
+     öppnar; rutan har fast storlek så att den står still medan den nya
+     meningen skrivs fram under prompten. */
+  .ruta {
+    position: absolute; left: 70px; top: 150px; width: 1220px; height: 640px;
+    box-sizing: border-box; padding: 48px 56px;
+    border: 2px solid var(--cw-kant-ljus); border-radius: 36px;
+    font-size: var(--cw-min-etikett); line-height: 1.4;
+  }
+  .ruta p { margin: 0 0 40px; }
+
+  /* Den nya meningen. Strecket under ritas fram i koppar när den landar. */
+  .ny { position: relative; display: inline-block; }
+  .ny .streck {
+    position: absolute; left: 0; right: 0; bottom: -6px; height: 5px; border-radius: 3px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+  /* Markören som följer texten medan den skrivs. Den blinkar inte
+     (allt ska stå still när det har landat) och tonas bort på slutet. */
+  .markor {
+    display: inline-block; width: 4px; height: 52px; margin-left: 4px;
+    vertical-align: -10px; background: var(--cw-text-ljus);
+  }
+
+  /* Skicka-knappen nere till höger i rutan: en rund knapp med en pil. */
+  .skicka {
+    position: absolute; right: 36px; bottom: 36px; width: 84px; height: 84px;
+    border-radius: 50%; background: var(--cw-accent);
+  }
+  .skicka svg { width: 84px; height: 84px; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+  <div class="fonster">
+    <div class="list"><i></i><i></i><i></i><div class="adress"></div></div>
+
+    <div class="ruta">
+      <!-- Prompten som redan är skriven. Byt gärna till en egen. -->
+      <p class="gammal">Create a 45-minute lesson plan on photosynthesis for 12&#8209;year&#8209;olds. Include a starter, two activities and an exit ticket.</p>
+
+      <!-- Meningen som skrivs fram. Texten står i data-text, så att den är lätt att byta. -->
+      <p><span class="ny" data-text="If you have any questions, ask me before you begin!"><span class="text"></span><span class="markor"></span><b class="streck"></b></span></p>
+
+      <div class="skicka"><svg viewBox="0 0 84 84"><path d="M42,60 L42,26 M28,40 L42,26 L56,40" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN ===== Provtider; vid synk följer skrivandet Johans röst. */
+  var EASE = 'power2.out';
+  var ny = document.querySelector('.ny');
+  var falt = ny.querySelector('.text');
+  var mening = ny.dataset.text;
+  function visa(n) { falt.textContent = mening.slice(0, n); }
+  visa(0);
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: 0.8 } });
+
+  // Fönstret glider upp med prompten redan på plats (tyst).
+  tl.from('.fonster', { opacity: 0, y: 40 }, 0);
+
+  // Prompten tonas ned: nu är det den nya meningen som gäller.
+  tl.to('.gammal', { opacity: 0.38, duration: 0.6 }, 1.6);
+
+  // Meningen skrivs fram, ungefär 18 tecken i sekunden (tyst).
+  var skrivStart = 2.0, skrivTid = mening.length / 18;
+  var raknare = { n: 0 };
+  tl.to(raknare, { n: mening.length, duration: skrivTid, ease: 'none',
+    onUpdate: function () { visa(Math.round(raknare.n)); } }, skrivStart);
+
+  // Fokus: markören försvinner, meningen blir kopparfärgad och strecket
+  // ritas fram under den. Ett klick när den landar.
+  var tF = skrivStart + skrivTid + 0.3;
+  tl.to('.markor', { opacity: 0, duration: 0.3 }, tF);
+  tl.to('.ny', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.ny .streck', { scaleX: 1, duration: 0.9 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>
