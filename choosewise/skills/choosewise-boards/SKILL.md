@@ -17,6 +17,7 @@ Repot: `~/Projekt/choosewise-boards` (en fork av Sirio Beratis YouTube-AI-Motion
 | `choosewise/tema.css` | Färger, typsnitt, storlekar (ur grafikramverkets Choosewise-stil) |
 | `choosewise/spelare.js` | Förhandsvisning: startknapp, K visar Borumi-rutan, ljudlistan för exporten |
 | `choosewise/verktyg/stillbilder.py` | Kontroll: stillbilder, JS-fel, kamerazonen |
+| `choosewise/verktyg/ramkoll.py` | Kontroll av varje bildruta: text utanför bilden, i Borumi-rutan, utanför sitt kort, text på text |
 | `choosewise/prov/` | De tre första godkända proven (facit) |
 
 Förhandsvisning: `python3 -m http.server 8765` i repots rot, öppna `http://127.0.0.1:8765/choosewise/boards/index.html`.
@@ -35,7 +36,7 @@ Förhandsvisning: `python3 -m http.server 8765` i repots rot, öppna `http://127
 1. Kopiera boarden från `choosewise/boards/` till filmens mapp `choosewise/film-<namn>/` (samma djup, så att `../tema.css` fungerar; boards med `media/` behöver mappen kopierad eller sökvägen ändrad).
 2. Byt innehåll enligt planen: rubrik, etiketter, siffror med källa. Ta bort exempeldata-märket bara när siffrorna är riktiga och källan står på boarden.
 3. Behåll rörelsen och stegen; ankarna i planen pekar på stegen.
-4. Kontrollera med `stillbilder.py` och titta på bilderna. Visa Johan innan synk.
+4. Kontrollera med `stillbilder.py` och `ramkoll.py` och titta på bilderna. Visa Johan innan synk.
 
 ## Bygga en ny board
 
