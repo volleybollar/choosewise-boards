@@ -51,8 +51,9 @@ Tyst som standard. Enda tillåtna ljudet är `Tavla.ljud(tl, tid, 'landa')`, ett
 1. En lokal server kör på port 8765 i repots rot.
 2. Kör `/opt/homebrew/bin/python3.12 -I choosewise/verktyg/stillbilder.py http://127.0.0.1:8765/choosewise/boards/<fil> <scratch>/<id> <3–4 tider>` med tider mitt i uppbyggnaden, vid fokus och i slutvilan.
 3. `fel` ska vara tom och varje tid `ok` (ingen krock med kamerazonen).
-4. **Titta på varje stillbild** med Read: ingen text avklippt vid kanten, inget överlapp, inget under 42 px, luft runt allt, fokus syns.
-5. Rätta och kör om tills allt är rent.
+4. Kör `/opt/homebrew/bin/python3.12 -I choosewise/verktyg/ramkoll.py http://127.0.0.1:8765/choosewise/boards/<fil>`. Den prövar varje bildruta (var 0,1 s): text utanför bilden eller i Borumi-rutan, text som sticker ut ur sitt kort och text på text. Den ska svara `ren`. Ligger något med flit ovanpå annat (en lupps kopia, ett spökord), märk elementet med `data-layered` och en kommentar som säger varför.
+5. **Titta på varje stillbild** med Read: inget under 42 px, luft runt allt, fokus syns. Ramkollen mäter geometri, inte smak.
+6. Rätta och kör om tills allt är rent.
 
 ## Nya boards (utan förlaga i repot)
 
