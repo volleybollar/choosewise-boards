@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M15 · Bar race</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Diagrammet ----------
+     Fyra liggande staplar som växer åt höger från en lodrät axel vid
+     x 560. Namnen står till vänster om axeln. Den längsta stapeln slutar
+     vid x 1380 och värdet åker med spetsen, så allt håller sig till
+     vänster om x 1570 och kamerazonen är tom. */
+  .axel {
+    position: absolute; left: 560px; top: 300px; width: 3px; height: 600px;
+    background: var(--cw-text-ljus); transform-origin: 50% 0;
+  }
+  .rad { position: absolute; left: 0; width: 1500px; height: 100px; }
+  .rad .namn {
+    position: absolute; left: 120px; width: 400px; top: 0; height: 100px; line-height: 100px;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); white-space: nowrap;
+  }
+  /* Stapeln. Bredden sätts av rörelsen nedan (0 i början). */
+  .rad .fyll {
+    position: absolute; left: 563px; top: 14px; height: 72px; width: 0;
+    background: var(--cw-accent); border-radius: 0 18px 18px 0;
+  }
+  /* Värdet, som flyttas så att det alltid står strax efter spetsen. */
+  .rad .varde {
+    position: absolute; left: 587px; top: 0; height: 100px; line-height: 100px;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); white-space: nowrap;
+  }
+  /* Enheten under diagrammet, så att tittaren vet vad talen betyder. */
+  .enhet {
+    position: absolute; left: 590px; top: 930px;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Which task saves the most time?</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <div class="axel"></div>
+
+  <!-- Raderna. data-min är minuter som sparas per vecka. Vinnaren står
+       inte överst, så att tittaren ser den dra ifrån under racet. -->
+  <div class="rad" data-min="40" style="top:320px"><div class="namn">Feedback</div><div class="fyll"></div><div class="varde">0 min</div></div>
+  <div class="rad" data-min="55" style="top:460px"><div class="namn">Quiz questions</div><div class="fyll"></div><div class="varde">0 min</div></div>
+  <div class="rad" data-min="20" style="top:600px"><div class="namn">Parent emails</div><div class="fyll"></div><div class="varde">0 min</div></div>
+  <div class="rad" data-min="30" style="top:740px"><div class="namn">Reading texts</div><div class="fyll"></div><div class="varde">0 min</div></div>
+
+  <div class="enhet">Minutes saved per week</div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk startar racet när Johan frågar och vinnaren
+     blir koppar när han säger svaret. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var rader = gsap.utils.toArray('.rad');
+  var MAXBREDD = 820;   // den längsta stapeln, i px
+  var max = Math.max.apply(null, rader.map(function (r) { return +r.dataset.min; }));
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, axeln, namnen och enheten.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.axel', { scaleY: 0, duration: 1.0, ease: 'power2.inOut' }, 0.2);
+  tl.from('.namn, .enhet', { opacity: 0, y: 16, stagger: 0.08 }, 0.6);
+  tl.from('.varde', { opacity: 0, duration: 0.5 }, 1.4);
+
+  // Racet: alla staplar växer samtidigt med lång inbromsning (expo.out).
+  // Ett räkneobjekt per rad styr stapelns bredd, värdets plats och talet,
+  // så att exporten kan hoppa till vilken bildruta som helst (tyst).
+  var tStart = 1.8, RACE = 4.2;
+  rader.forEach(function (r, i) {
+    var fyll = r.querySelector('.fyll'), varde = r.querySelector('.varde');
+    var p = { v: 0 };
+    tl.to(p, { v: +r.dataset.min, duration: RACE, ease: 'expo.out',
+      onUpdate: function () {
+        var b = MAXBREDD * p.v / max;
+        fyll.style.width = b + 'px';
+        varde.style.left = (587 + b) + 'px';
+        varde.textContent = Math.round(p.v) + ' min';
+      } }, tStart + i * STEG);
+  });
+
+  // Fokus: vinnaren (störst värde) blir koppar, de andra tonas ned.
+  // Ett klick när fokus landar.
+  var vinnare = rader.filter(function (r) { return +r.dataset.min === max; })[0];
+  var tF = tStart + RACE + 0.4;
+  // Delarna i varje rad tonas ned var för sig: tonas hela raden ned på en
+  // gång ritar webbläsaren en synlig skarv mitt i den breda stapeln.
+  rader.filter(function (r) { return r !== vinnare; }).forEach(function (r) {
+    tl.to(r.children, { opacity: 0.38, duration: 0.6 }, tF);
+  });
+  tl.to(vinnare.querySelector('.fyll'), { backgroundColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(vinnare.querySelectorAll('.namn, .varde'), { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

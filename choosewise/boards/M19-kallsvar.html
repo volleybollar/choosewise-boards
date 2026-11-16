@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M19 · Cited answer</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Svarskortet (överst) ----------
+     Frågan i en grå bubbla till höger, svaret till vänster. Varje påstående
+     slutar med ett numrerat källchip. Kortet går från x 120 till x 1540. */
+  .svarskort {
+    position: absolute; left: 120px; top: 270px; width: 1420px; height: 372px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .12);
+  }
+  .fraga {
+    position: absolute; right: 48px; top: 32px; padding: 18px 36px;
+    background: var(--cw-ljus-alt); border-radius: 36px; font-size: var(--cw-min-etikett);
+  }
+  .svar { position: absolute; left: 48px; top: 144px; width: 1300px; display: flex; gap: 28px; }
+  .avatar { flex: 0 0 60px; height: 60px; border-radius: 50%; background: var(--cw-accent); }
+  .svar p { margin: 0 0 4px; height: 62px; font-size: var(--cw-min-etikett); line-height: 62px; }
+
+  /* Källchipset: en liten rundad ruta med källans nummer. Samma chip
+     står på källkortet nedanför, så att man ser vilket kort som hör ihop. */
+  .chip {
+    display: inline-block; min-width: 58px; height: 54px; padding: 0 14px; margin-left: 14px;
+    border-radius: 14px; background: var(--cw-ljus-alt); border: 2px solid var(--cw-kant-ljus);
+    color: var(--cw-accent); text-align: center; vertical-align: 2px;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); line-height: 50px;
+  }
+
+  /* ---------- Källistan (nederst) ----------
+     Tre källkort i rad, från x 120 till x 1540 och ned till y 988, så att
+     kamerazonen nere till höger alltid är tom. */
+  .kalla {
+    position: absolute; top: 690px; width: 440px; height: 298px; padding: 30px 32px;
+    background: #FFFFFF; border: 3px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+  }
+  .kalla .huvud { display: flex; align-items: center; gap: 4px; height: 58px; }
+  .kalla .chip { margin-left: 0; margin-right: 18px; }
+  .kalla .namn { font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark); }
+  .kalla .byt { margin: 12px 0 0; font-size: var(--cw-min-etikett); line-height: 1.2; color: var(--cw-text-ljus-dampad); }
+  /* Det citerade stycket visas som två grå textrader. Under dem ritas en
+     kopparlinje fram när källan är i fokus. */
+  .stycke { position: relative; margin-top: 18px; }
+  .stycke i { display: block; height: 14px; border-radius: 7px; background: var(--cw-kant-ljus); margin-bottom: 24px; }
+  .stycke i:last-of-type { width: 70%; }
+  .stycke .streck {
+    position: absolute; left: 0; height: 5px; border-radius: 3px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Every claim shows its source</h1>
+  <!-- Källorna är platshållare och byts mot riktiga källor före filmen. -->
+  <div class="exempel" style="left:120px; top:205px">Example answer · replace with real sources</div>
+
+  <div class="svarskort">
+    <div class="fraga">How should pupils revise?</div>
+    <!-- Svaret: ett påstående per rad. Texten står i data-text och skrivs
+         fram ord för ord; chipset landar när påståendet är klart. -->
+    <div class="svar">
+      <div class="avatar"></div>
+      <div>
+        <p class="rad"><span class="text" data-text="Test yourself instead of rereading."></span><span class="chip">1</span></p>
+        <p class="rad"><span class="text" data-text="Spread revision over several days."></span><span class="chip">2</span></p>
+        <p class="rad"><span class="text" data-text="Sleep well before the test."></span><span class="chip">3</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Källkorten. Byt "Replace with the real source" mot källans namn. -->
+  <div class="kalla" style="left:120px">
+    <div class="huvud"><span class="chip">1</span><span class="namn">Source 1</span></div>
+    <p class="byt">Replace with the real source</p>
+    <div class="stycke"><i></i><i></i></div>
+  </div>
+  <div class="kalla" style="left:610px">
+    <div class="huvud"><span class="chip">2</span><span class="namn">Source 2</span></div>
+    <p class="byt">Replace with the real source</p>
+    <div class="stycke"><i></i><i></i><b class="streck" style="top:20px; width:100%"></b><b class="streck" style="top:58px; width:70%"></b></div>
+  </div>
+  <div class="kalla" style="left:1100px">
+    <div class="huvud"><span class="chip">3</span><span class="namn">Source 3</span></div>
+    <p class="byt">Replace with the real source</p>
+    <div class="stycke"><i></i><i></i></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk skrivs varje påstående när Johan säger det, och
+     källa 2 lyfts fram när han säger "check the source". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.svar .rad');
+  var kallor = gsap.utils.toArray('.kalla');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, märket, svarskortet med frågan och de tre
+  // källkorten. Svaret är tomt än så länge (tyst).
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.svarskort', { opacity: 0, y: 40 }, 0.3);
+  tl.from(kallor, { opacity: 0, y: 30, stagger: STEG }, 0.6);
+  tl.from('.avatar', { opacity: 0, scale: 0.6, duration: 0.5 }, 1.4);
+
+  // Påståendena skrivs fram ord för ord, ungefär fyra ord i sekunden.
+  // Texten skrivs om i onUpdate, så att exporten kan hoppa till vilken
+  // bildruta som helst. Chipset landar strax efter varje påstående.
+  var t = 1.7;
+  rader.forEach(function (rad) {
+    var falt = rad.querySelector('.text');
+    var ord = falt.dataset.text.split(' ');
+    var r = { n: 0 };
+    function visa() { falt.textContent = ord.slice(0, Math.round(r.n)).join(' '); }
+    visa();
+    var tid = ord.length / 4;
+    tl.to(r, { n: ord.length, duration: tid, ease: 'none', onUpdate: visa }, t);
+    tl.from(rad.querySelector('.chip'), { opacity: 0, scale: 0.6, duration: 0.5 }, t + tid + 0.1);
+    t += tid + 0.8;
+  });
+
+  // Fokus: chip 2 tänds i koppar, de andra raderna och korten tonas ned.
+  // Ett klick när fokus landar.
+  var tF = t + 0.4;
+  var fokusRad = rader[1], fokusKalla = kallor[1];
+  tl.to([rader[0], rader[2], kallor[0], kallor[2]], { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to([fokusRad.querySelector('.chip'), fokusKalla.querySelector('.chip')],
+    { backgroundColor: '#C2793A', borderColor: '#C2793A', color: '#FFFFFF', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  // Källkort 2 lyfts fram och det citerade stycket stryks under.
+  tl.to(fokusKalla, { y: -24, borderColor: '#C2793A', boxShadow: '0 28px 60px rgba(11,58,111,.18)' }, tF + 0.5);
+  tl.to(fokusKalla.querySelectorAll('.streck'), { scaleX: 1, duration: 0.9, stagger: 0.3 }, tF + 1.2);
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

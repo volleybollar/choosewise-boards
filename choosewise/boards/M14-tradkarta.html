@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M14 · Treemap</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Ytan som delas upp ----------
+     En trädkarta visar andelar som ytor: ju större block, desto större
+     andel. Hela ytan (100 %) ligger på plats när boarden öppnar, som en
+     ljusgrå platta från x 120 till x 1500 och från y 290 till y 980.
+     Den slutar långt till vänster om kamerazonen (x 1570). */
+  .yta {
+    position: absolute; left: 120px; top: 290px; width: 1380px; height: 690px;
+    background: var(--cw-ljus-alt); border-radius: var(--cw-radie-media);
+  }
+
+  /* Ett block: en andel av ytan. Platsen och storleken står på varje
+     block i HTML-koden nedan. Namnet står uppe till vänster och värdet
+     (ett stort, tunt tal) nere till vänster. */
+  .block {
+    position: absolute; border-radius: var(--cw-radie-media);
+    padding: 32px 36px;
+  }
+  .block .namn { position: absolute; left: 36px; top: 28px; font-size: var(--cw-min-etikett); line-height: 1.2; white-space: nowrap; }
+  .block .varde {
+    position: absolute; left: 36px; bottom: 24px;
+    font-size: 120px; font-weight: var(--cw-vikt-tunn); line-height: 1;
+  }
+
+  /* Blockens färger: seriefärgerna från mörkt till ljust, störst först.
+     Kopparn används inte här: den kommer först när fokus landar. */
+  .b1 { background: var(--cw-serie-1); color: var(--cw-ljus); }
+  .b2 { background: var(--cw-serie-2); color: var(--cw-ljus); }
+  .b3 { background: var(--cw-serie-3); color: var(--cw-text-ljus); }
+  .b4 { background: var(--cw-kant-ljus); color: var(--cw-text-ljus); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Where the AI time goes</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Hela ytan, det vill säga 100 %. -->
+  <div class="yta"></div>
+
+  <!-- Blocken, störst först. data-andel är procenttalet som räknas upp.
+       Storlekarna är ungefär i proportion: Planning tar 40 % av bredden,
+       de andra delar på resten. Ändrar du andelarna, ändra också
+       left/top/width/height så att ytorna stämmer. -->
+  <div class="block b1" data-andel="40" style="left:120px; top:290px; width:544px; height:690px">
+    <div class="namn">Planning</div><div class="varde">0%</div>
+  </div>
+  <div class="block b2" data-andel="30" style="left:680px; top:290px; width:820px; height:337px">
+    <div class="namn">Feedback</div><div class="varde">0%</div>
+  </div>
+  <div class="block b3" data-andel="18" style="left:680px; top:643px; width:482px; height:337px">
+    <div class="namn">Differentiation</div><div class="varde">0%</div>
+  </div>
+  <div class="block b4" data-andel="12" style="left:1178px; top:643px; width:322px; height:337px">
+    <div class="namn">Admin</div><div class="varde">0%</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kommer varje block när Johan säger dess namn. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var block = gsap.utils.toArray('.block');
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket och hela ytan.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.yta', { opacity: 0, duration: 0.6 }, 0.3);
+
+  // Ytan delas upp: varje block avslöjas från vänster (en mask som öppnas)
+  // och talet räknar upp till andelen. Talet skrivs i onUpdate, så att
+  // exporten kan hoppa till vilken bildruta som helst (tyst: framväxt).
+  block.forEach(function (b, i) {
+    var t = 1.4 + i * 1.5;
+    var varde = b.querySelector('.varde');
+    var r = { v: 0 };
+    // Masken slutar en bit utanför blocket, så att kopparskenet runt
+    // blocket inte klipps bort när fokus landar.
+    var w = b.offsetWidth;
+    tl.fromTo(b, { clipPath: 'inset(-30px ' + w + 'px -30px -30px)' },
+                 { clipPath: 'inset(-30px -30px -30px -30px)', duration: 1.0, ease: 'power2.inOut' }, t);
+    tl.to(r, { v: +b.dataset.andel, duration: 1.2,
+      onUpdate: function () { varde.textContent = Math.round(r.v) + '%'; } }, t + 0.2);
+  });
+
+  // Fokus: det största blocket blir koppar, de andra tonas ned.
+  // Ett klick när fokus landar.
+  var storst = block[0];
+  var tF = 1.4 + block.length * 1.5 + 0.6;
+  tl.to(block.slice(1), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(storst, { backgroundColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

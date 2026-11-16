@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M18 · AI memory</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Chattfönstret (vänster) ----------
+     Ett generiskt fönster utan varumärke, från x 120 till x 980.
+     Det slutar vid y 850, långt från kamerazonen nere till höger. */
+  .fonster {
+    position: absolute; left: 120px; top: 250px; width: 860px; height: 600px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media); overflow: hidden;
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  /* Fönstrets list: tre prickar och ett tomt adressfält. */
+  .list { height: 70px; background: var(--cw-ljus-alt); display: flex; align-items: center; gap: 14px; padding: 0 28px; }
+  .list i { width: 18px; height: 18px; border-radius: 50%; background: var(--cw-kant-ljus); }
+  .adress { margin-left: 24px; flex: 1; height: 38px; border-radius: 999px; background: var(--cw-ljus); }
+
+  /* Lärarens önskemål: en grå bubbla till höger med fast storlek
+     (plats för två rader), så att den står still medan texten skrivs. */
+  .prompt {
+    position: absolute; right: 48px; top: 110px; width: 600px; height: 166px;
+    background: var(--cw-ljus-alt); border-radius: 36px; padding: 28px 36px;
+    font-size: var(--cw-min-etikett); line-height: 1.3;
+  }
+  /* Chattbotens svar till vänster, också med fast höjd för två rader. */
+  .svar { position: absolute; left: 48px; top: 316px; width: 764px; display: flex; gap: 28px; }
+  .avatar { flex: 0 0 60px; height: 60px; border-radius: 50%; background: var(--cw-accent); }
+  .svar .text { height: 110px; font-size: var(--cw-min-etikett); line-height: 1.3; }
+
+  /* Chippet "Memory updated" under svaret: en rundad etikett i accentblått
+     med en liten bock. Det visar att chattboten har sparat något. */
+  .chip {
+    position: absolute; left: 136px; top: 470px; height: 72px; padding: 0 30px 0 22px;
+    display: flex; align-items: center; gap: 14px;
+    border: 3px solid var(--cw-accent); border-radius: 999px; color: var(--cw-accent);
+    font-size: var(--cw-min-etikett); background: #FFFFFF;
+  }
+
+  /* ---------- Minnespanelen (höger) ----------
+     Panelen där chattboten sparar det den ska komma ihåg. Den går ut till
+     x 1800 men slutar vid y 698, alltså ovanför kamerazonen (y 720). */
+  .panel {
+    position: absolute; left: 1060px; top: 250px; width: 740px; height: 448px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .10);
+  }
+  .panel .huvud {
+    position: absolute; left: 40px; top: 34px;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+  }
+  /* Ett sparat minne. Platserna ligger 100 px under varandra:
+     plats 1 vid top 132, plats 2 vid 232, plats 3 vid 332. */
+  .minne {
+    position: absolute; left: 40px; right: 40px; height: 84px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; border-radius: 24px; background: var(--cw-ljus-alt);
+    border: 3px solid transparent; font-size: var(--cw-min-etikett);
+  }
+  /* Taggen "New" på det nya minnet. Den landar i blått och blir koppar
+     först när fokus landar. */
+  .ny-tagg {
+    height: 60px; padding: 0 24px; border-radius: 999px; line-height: 60px;
+    background: var(--cw-accent); color: #FFFFFF;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">It remembers what you tell it</h1>
+
+  <!-- Chatten. Texterna står i data-text, så att de är lätta att byta. -->
+  <div class="fonster">
+    <div class="list"><i></i><i></i><i></i><div class="adress"></div></div>
+    <div class="prompt" data-text="Remember: my pupils are in Year 5."></div>
+    <div class="svar">
+      <div class="avatar"></div>
+      <div class="text" data-text="Got it. I will write for Year 5 from now on."></div>
+    </div>
+    <div class="chip">
+      <svg width="40" height="40" viewBox="0 0 40 40"><path d="M9 21 L17 29 L31 12" fill="none" stroke="#0B3A6F" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Memory updated</span>
+    </div>
+  </div>
+
+  <!-- Minnespanelen. Två minnen finns sedan tidigare; det nya landar överst. -->
+  <div class="panel">
+    <div class="huvud">Memory</div>
+    <div class="minne gammalt" style="top:132px"><span>Teaches science</span></div>
+    <div class="minne gammalt" style="top:232px"><span>Likes short answers</span></div>
+    <div class="minne nytt" style="top:132px"><span>Pupils are in Year 5</span><span class="ny-tagg">New</span></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk skrivs önskemålet när Johan säger det, och det nya
+     minnet landar när han säger att chattboten kommer ihåg. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+
+  // Lärarens önskemål skrivs fram tecken för tecken. Texten skrivs om i
+  // onUpdate, så att exporten kan hoppa till vilken bildruta som helst.
+  var prompt = document.querySelector('.prompt');
+  var promptText = prompt.dataset.text;
+  function visaPrompt(n) { prompt.textContent = promptText.slice(0, n); }
+  visaPrompt(0);
+
+  // Svaret skrivs fram ord för ord, som när en chattbot svarar.
+  var svar = document.querySelector('.svar .text');
+  var ord = svar.dataset.text.split(' ');
+  function visaSvar(n) { svar.textContent = ord.slice(0, n).join(' '); }
+  visaSvar(0);
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och chattfönstret med den tomma bubblan (tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.fonster', { opacity: 0, y: 40 }, 0.3);
+
+  // Önskemålet skrivs, ungefär 18 tecken i sekunden (tyst, inget tangentljud).
+  var skrivStart = 1.3, skrivTid = promptText.length / 18;
+  var r1 = { n: 0 };
+  tl.to(r1, { n: promptText.length, duration: skrivTid, ease: 'none',
+    onUpdate: function () { visaPrompt(Math.round(r1.n)); } }, skrivStart);
+
+  // Avataren och svaret, ungefär fem ord i sekunden.
+  var tSvar = skrivStart + skrivTid + 0.5;
+  tl.from('.avatar', { opacity: 0, scale: 0.6, duration: 0.5 }, tSvar);
+  var r2 = { n: 0 };
+  tl.to(r2, { n: ord.length, duration: ord.length / 5, ease: 'none',
+    onUpdate: function () { visaSvar(Math.round(r2.n)); } }, tSvar + 0.3);
+
+  // Chippet "Memory updated" dyker upp under svaret.
+  var tChip = tSvar + 0.3 + ord.length / 5 + 0.4;
+  tl.from('.chip', { opacity: 0, y: 16, scale: 0.9 }, tChip);
+
+  // Minnespanelen reser sig med de två gamla minnena.
+  var tPanel = tChip + 0.9;
+  tl.from('.panel', { opacity: 0, y: 20 }, tPanel);
+
+  // De gamla minnena kliver ned ett steg, det nya landar överst.
+  var tNy = tPanel + 1.3;
+  tl.to('.minne.gammalt', { y: 100, stagger: STEG }, tNy);
+  tl.from('.minne.nytt', { opacity: 0, y: -30 }, tNy + 0.6);
+
+  // Fokus: det nya minnet blir koppar, allt annat tonas ned.
+  // Ett klick när fokus landar.
+  var tF = tNy + 1.6;
+  tl.to('.fonster, .minne.gammalt', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.minne.nytt', { borderColor: '#C2793A', boxShadow: '0 0 0 12px rgba(194,121,58,.34)', color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.ny-tagg', { backgroundColor: '#C2793A', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

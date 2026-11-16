@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M11 · Two bell curves</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Diagrammet ----------
+     Två klockkurvor (normalfördelningar) över en baslinje på y 820.
+     Kurvorna ritas i en SVG som täcker hela boarden; formen räknas fram
+     i skriptet ur effektstorleken d. Allt slutar före x 1500, så
+     kamerazonen nere till höger är tom. */
+  .graf { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+
+  /* Namnen på grupperna. Skriptet placerar dem på kurvornas sidor. */
+  .namn { position: absolute; white-space: nowrap; }
+  .namn.utan { color: var(--cw-text-ljus-dampad); text-align: right; }
+
+  /* Avståndet mellan medelvärdena: "d = 0.4" ovanför klamret. */
+  .dtext {
+    position: absolute; width: 300px; margin-left: -150px; text-align: center;
+    font-size: var(--cw-min-etikett); font-family: var(--cw-font-serif); font-style: italic;
+  }
+
+  /* Axelns namn under baslinjen, längst till höger. */
+  .axelnamn { position: absolute; left: 1260px; top: 840px; width: 240px; text-align: right; color: var(--cw-text-ljus-dampad); }
+
+  /* ---------- Överlappet ----------
+     Nyckeltalet uppe till höger, där kurvorna är låga: tunt och stort. */
+  .overlapp { position: absolute; left: 1160px; top: 270px; }
+  .overlapp .etikett { display: block; color: var(--cw-text-ljus-dampad); }
+  .overlapp .tal { display: block; font-size: 160px; font-weight: var(--cw-vikt-tunn); line-height: 1; margin-top: 8px; }
+
+  /* Den relativa meningen som kommer sist. */
+  .slutsats { position: absolute; left: 160px; top: 910px; margin: 0; font-size: 56px; font-weight: var(--cw-vikt-display); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">How far apart are the groups?</h1>
+  <!-- Byts mot riktiga värden med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Kurvorna. Skriptet fyller i formerna (d-attributen). -->
+  <svg class="graf" viewBox="0 0 1920 1080" aria-hidden="true">
+    <!-- Baslinjen. -->
+    <line class="bas" x1="160" y1="820" x2="1500" y2="820" stroke="#0C1A2E" stroke-width="3"/>
+    <!-- Kurvan "Without" (seriefärg 3, gråblå). -->
+    <g class="kurva1">
+      <path class="yta" fill="#A9BBD0" fill-opacity="0.30" stroke="none"/>
+      <path class="linje" fill="none" stroke="#A9BBD0" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+    <!-- Kurvan "With" (seriefärg 1, djupblå). Den glider åt höger med d. -->
+    <g class="kurva2">
+      <path class="yta" fill="#0B3A6F" fill-opacity="0.10" stroke="none"/>
+      <path class="linje" fill="none" stroke="#0B3A6F" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+    <!-- Överlappet: ytan som båda kurvorna delar. Koppar, eftersom det är fokus. -->
+    <path class="delad" fill="#C2793A" fill-opacity="0.45" stroke="none"/>
+    <!-- Streckade linjer vid medelvärdena och klamret mellan dem. -->
+    <g class="matt" stroke="#4E5A68" stroke-width="3">
+      <line class="m1" stroke-dasharray="10 10"/>
+      <line class="m2" stroke-dasharray="10 10"/>
+      <line class="klammer"/>
+    </g>
+  </svg>
+
+  <div class="namn utan etikett">Without</div>
+  <div class="namn med etikett">With</div>
+  <div class="dtext"></div>
+  <div class="axelnamn etikett">Test score</div>
+
+  <div class="overlapp"><span class="etikett">Overlap</span><span class="tal">0%</span></div>
+
+  <!-- Omdömet uttrycks relativt, aldrig som "low effect". Byt meningen om d ändras mycket. -->
+  <p class="slutsats">The groups overlap a lot.</p>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== SIFFRAN =====
+     Effektstorleken d (Cohens d): hur många standardavvikelser "With"
+     ligger till höger om "Without". Exempeldata: byt mot det riktiga värdet.
+     Allt annat på boarden (kurvornas läge, överlappet, talet) räknas ur d. */
+  var D = 0.4;
+
+  /* ===== MATEMATIKEN =====
+     Överlappet är "overlap coefficient" (OVL): den andel av ytan som de två
+     normalfördelningarna delar. För två lika breda kurvor gäller
+     OVL = 2 · Φ(−|d| / 2), där Φ är standardnormalfördelningens
+     fördelningsfunktion. Φ räknas med en vanlig närmeformel för erf
+     (Abramowitz & Stegun 7.1.26), som räcker gott för ett heltal i procent. */
+  function erf(x) {
+    var s = x < 0 ? -1 : 1; x = Math.abs(x);
+    var t = 1 / (1 + 0.3275911 * x);
+    var y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+    return s * y;
+  }
+  function Phi(z) { return 0.5 * (1 + erf(z / Math.SQRT2)); }
+  var OVL = 2 * Phi(-Math.abs(D) / 2);
+  var PROCENT = Math.round(OVL * 100);
+
+  /* ===== FORMERNA =====
+     Kurvan för "Without" har medelvärdet 0. Skalan: z från −3 till 3 + d
+     fördelas på x 160–1500. Toppen är 420 px hög och baslinjen ligger på y 820. */
+  var ZMIN = -3, ZMAX = 3 + D, X0 = 160, X1 = 1500, BAS = 820, TOPP = 420;
+  var SKALA = (X1 - X0) / (ZMAX - ZMIN);       // px per standardavvikelse
+  function X(z) { return X0 + (z - ZMIN) * SKALA; }
+  function f(z) { return Math.exp(-z * z / 2); }          // klockformen, 1 i toppen
+  function Y(h) { return BAS - h * TOPP; }
+
+  // En kurva från z −3 till 3 runt medelvärdet 0 (den andra flyttas med d).
+  var pts = [];
+  for (var i = 0; i <= 120; i++) { var z = -3 + i * 0.05; pts.push(X(z).toFixed(1) + ' ' + Y(f(z)).toFixed(1)); }
+  var linjeD = 'M' + pts.join(' L');
+  var ytaD = linjeD + ' L' + X(3) + ' ' + BAS + ' L' + X(-3) + ' ' + BAS + ' Z';
+  document.querySelectorAll('.kurva1 .linje, .kurva2 .linje').forEach(function (p) { p.setAttribute('d', linjeD); });
+  document.querySelectorAll('.kurva1 .yta, .kurva2 .yta').forEach(function (p) { p.setAttribute('d', ytaD); });
+
+  // Överlappet: den lägsta av de två kurvorna i varje punkt.
+  var delade = [];
+  for (var j = 0; j <= 160; j++) { var zz = ZMIN + j * (ZMAX - ZMIN) / 160; delade.push(X(zz).toFixed(1) + ' ' + Y(Math.min(f(zz), f(zz - D))).toFixed(1)); }
+  document.querySelector('.delad').setAttribute('d', 'M' + X(ZMIN) + ' ' + BAS + ' L' + delade.join(' L') + ' L' + X(ZMAX) + ' ' + BAS + ' Z');
+
+  // Medelvärdenas streck och klamret mellan dem, strax ovanför topparna.
+  var xa = X(0), xb = X(D), yK = Y(1) - 28;
+  function satt(sel, a) { var el = document.querySelector(sel); for (var k in a) el.setAttribute(k, a[k]); }
+  satt('.m1', { x1: xa, y1: BAS, x2: xa, y2: yK });
+  satt('.m2', { x1: xb, y1: BAS, x2: xb, y2: yK });
+  satt('.klammer', { x1: xa, y1: yK, x2: xb, y2: yK });
+  var dtext = document.querySelector('.dtext');
+  dtext.textContent = 'd = ' + D;
+  gsap.set(dtext, { left: (xa + xb) / 2, top: yK - 66 });
+
+  // Namnen på kurvornas sidor: "Without" till vänster, "With" till höger.
+  gsap.set('.namn.utan', { left: X(-1.25) - 300, width: 300, top: Y(f(1.25)) - 72 });
+  gsap.set('.namn.med', { left: X(D + 1.25), top: Y(f(1.25)) - 72 });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk glider "With" när Johan säger d, och överlappet
+     landar när han säger talet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Linjen för "Without" ritas med streckteknik: ett streck lika långt som
+  // linjen, som förskjuts till noll.
+  var linje1 = document.querySelector('.kurva1 .linje');
+  var langd = linje1.getTotalLength();
+  gsap.set(linje1, { strokeDasharray: langd, strokeDashoffset: langd });
+
+  // Struktur först: rubrik, märke, baslinjen och axelns namn.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.bas', { attr: { x2: 160 }, duration: 1.0, ease: 'power2.inOut' }, 0.3);
+  tl.from('.axelnamn', { opacity: 0, y: 16 }, 0.8);
+
+  // Första kurvan ritas, ytan tonas in och namnet kommer (tyst: framväxt).
+  tl.to(linje1, { strokeDashoffset: 0, duration: 1.6, ease: 'power2.inOut' }, 1.4);
+  tl.from('.kurva1 .yta', { opacity: 0, duration: 0.8 }, 2.6);
+  tl.from('.namn.utan', { opacity: 0, x: -24 }, 2.8);
+
+  // Andra kurvan tonas in ovanpå den första och glider åt höger till d.
+  tl.from('.kurva2', { opacity: 0, duration: 0.6 }, 3.8);
+  tl.to('.kurva2', { x: D * SKALA, duration: 1.6, ease: 'power2.inOut' }, 4.4);
+  tl.from('.namn.med', { opacity: 0, x: 24 }, 5.8);
+  // Medelvärdena och avståndet d mellan dem.
+  tl.from('.matt', { opacity: 0, duration: 0.6 }, 6.2);
+  tl.from(dtext, { opacity: 0, y: 16 }, 6.4);
+
+  // Fokus: överlappet skuggas i koppar och talet räknar upp, allt annat
+  // tonas ned. Talet skrivs ut i onUpdate, så att det går att spola.
+  var tF = 7.6;
+  tl.to(['.kurva1', '.kurva2', '.matt', '.namn', dtext, '.axelnamn'], { opacity: 0.38, duration: 0.6 }, tF);
+  tl.from('.delad', { opacity: 0, duration: 0.8 }, tF);
+  tl.from('.overlapp', { opacity: 0, y: 24 }, tF);
+  var tal = document.querySelector('.overlapp .tal');
+  var raknare = { v: 0 };
+  tl.to(raknare, { v: PROCENT, duration: 1.2, ease: EASE,
+    onUpdate: function () { tal.textContent = Math.round(raknare.v) + '%'; } }, tF);
+  tl.to('.overlapp .etikett, .overlapp .tal', { color: '#9C5A24', duration: 0.6 }, tF + 0.6);
+  Tavla.ljud(tl, tF + 1.2, 'landa');   // klicket när talet har landat
+
+  // Sist den relativa meningen.
+  tl.from('.slutsats', { opacity: 0, y: 24 }, tF + 2.0);
+
+  tl.to({}, { duration: 2 }, tF + 2.8);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

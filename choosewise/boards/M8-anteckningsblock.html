@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M8 · Notebook list</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Anteckningsblocket ----------
+     Ett vitt, linjerat block. Linjerna ritas med en upprepad bakgrund:
+     en tunn grå linje var 150:e pixel. Blocket slutar vid x 1440, så
+     kamerazonen nere till höger är tom. */
+  .block {
+    position: absolute; left: 200px; top: 250px; width: 1240px; height: 660px;
+    background-color: #FFFFFF;
+    background-image: repeating-linear-gradient(to bottom, transparent 0 147px, var(--cw-kant-ljus) 147px 150px);
+    background-position: 0 83px; background-repeat: no-repeat;
+    border: 2px solid var(--cw-kant-ljus); border-radius: var(--cw-radie-media);
+  }
+  /* Marginallinjen till vänster, i den ljusa seriefärgen (inte koppar). */
+  .marginal { position: absolute; left: 150px; top: 0; bottom: 0; width: 3px; background: var(--cw-serie-3); }
+
+  /* Spiralen överst: små stående ringar som går över blockets kant.
+     Skriptet nedan lägger in fjorton stycken. */
+  .spiral { position: absolute; left: 260px; top: 222px; width: 1120px; display: flex; justify-content: space-between; }
+  .spiral i { width: 18px; height: 56px; border-radius: 9px; background: var(--cw-text-ljus-dampad); }
+
+  /* ---------- Raderna ----------
+     Handskriven känsla: kursiv antikva i djupblått, som bläck.
+     Varje rad står strax ovanför en linje i blocket. */
+  .rad {
+    position: absolute; left: 190px; white-space: nowrap;
+    font-family: var(--cw-font-serif); font-style: italic;
+    font-size: 72px; line-height: 1.2; color: var(--cw-accent);
+  }
+
+  /* Ordet som ringas in, och ringen runt det. Ordet får lite extra luft
+     på sidorna så att ringen inte skär grannorden. Ringen är en handritad
+     ögla i koppar som ligger centrerad över ordet. */
+  .mal { position: relative; margin: 0 24px; }
+  .ring {
+    position: absolute; left: 50%; top: 50%; width: 210px; height: 130px;
+    margin: -62px 0 0 -105px; overflow: visible; pointer-events: none;
+  }
+  .ring path { fill: none; stroke: var(--cw-glod); stroke-width: 6; stroke-linecap: round; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Three questions before you start</h1>
+
+  <!-- Blocket med marginallinjen och de tre raderna. -->
+  <div class="block">
+    <div class="marginal"></div>
+    <div class="rad" style="top:140px">What do I want to learn?</div>
+    <div class="rad" style="top:290px">What do I already know?</div>
+    <!-- "check" får ringen. -->
+    <div class="rad" style="top:440px">How will I <span class="mal">check<svg class="ring" viewBox="0 0 210 130"><path d="M112 10 C 175 8, 204 38, 202 66 C 200 102, 150 122, 102 121 C 50 120, 8 100, 8 64 C 8 32, 50 10, 130 16"/></svg></span> it?</div>
+  </div>
+
+  <!-- Spiralen läggs efter blocket i koden, så att ringarna syns framför kanten. -->
+  <div class="spiral"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== SPIRALEN ===== Fjorton ringar längs blockets överkant. */
+  for (var i = 0; i < 14; i++) document.querySelector('.spiral').appendChild(document.createElement('i'));
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk skrivs varje rad när Johan läser frågan. */
+  var IN = 0.8, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.rad');
+
+  // Ringen görs osynlig: streckmönstret skjuts ut helt.
+  var ring = document.querySelector('.ring path');
+  var langd = ring.getTotalLength();
+  gsap.set(ring, { strokeDasharray: langd, strokeDashoffset: langd, opacity: 0 });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och det tomma blocket med spiralen (framväxt, tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.block, .spiral', { opacity: 0, y: 40 }, 0.3);
+
+  // Raderna skrivs fram en i taget från vänster, som med en penna.
+  // Masken öppnas lite utanför raden, så att ringen inte klipps senare.
+  rader.forEach(function (rad, i) {
+    tl.fromTo(rad, { clipPath: 'inset(-60px 100% -60px 0px)' },
+      { clipPath: 'inset(-60px -80px -60px -20px)', duration: 1.4, ease: 'power1.inOut' }, 1.6 + i * 1.8);
+  });
+
+  // Fokus: de två första raderna tonas ned, "check" blir koppar och
+  // ringen ritas runt ordet. Ett klick när ringen sluts.
+  var tF = 7.0;
+  tl.to(rader.slice(0, 2), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.mal', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.set(ring, { opacity: 1 }, tF);
+  tl.to(ring, { strokeDashoffset: 0, duration: 0.9, ease: 'power2.inOut' }, tF);
+  Tavla.ljud(tl, tF + 0.9, 'landa');
+  tl.to({}, { duration: 2 }, tF + 0.9);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

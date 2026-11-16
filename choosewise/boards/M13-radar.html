@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M13 · Radar chart</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Radarnätet ----------
+     Fem ekrar ut från en mittpunkt på x 660, y 660. Den yttersta ringen
+     (värdet 5) ligger 300 px från mitten. Nät, former och prickar ritas i en
+     SVG som täcker hela boarden; allt slutar långt från kamerazonen. */
+  .graf { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+
+  /* Ekrarnas namn. Skriptet placerar dem utanför nätets hörn. */
+  .eker { position: absolute; white-space: nowrap; }
+
+  /* ---------- Förklaringen ----------
+     Två rader uppe till höger: en färgruta och vad formen betyder. */
+  .forklaring { position: absolute; left: 1180px; display: flex; align-items: center; gap: 22px; }
+  .forklaring i { width: 44px; height: 14px; border-radius: 7px; }
+
+  /* Meningen som kommer sist, under förklaringen. */
+  .slutsats { position: absolute; left: 1180px; top: 450px; margin: 0; font-size: 56px; font-weight: var(--cw-vikt-display); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">AI skills before and after training</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Nätet, formerna och hörnprickarna. Skriptet fyller i alla former. -->
+  <svg class="graf" viewBox="0 0 1920 1080" aria-hidden="true">
+    <g class="ringar" fill="none" stroke="#DDE3EA" stroke-width="2"></g>
+    <g class="ekrar" stroke="#DDE3EA" stroke-width="2"></g>
+    <!-- Grå form: vid läsårets start (seriefärg 3). -->
+    <polygon class="fore" fill="#A9BBD0" fill-opacity="0.35" stroke="#A9BBD0" stroke-width="5" stroke-linejoin="round"/>
+    <!-- Djupblå form: efter fortbildningen (seriefärg 1). -->
+    <polygon class="efter" fill="#0B3A6F" fill-opacity="0.12" stroke="#0B3A6F" stroke-width="6" stroke-linejoin="round"/>
+    <g class="prickar"></g>
+  </svg>
+
+  <!-- Ekrarnas namn läggs ut av skriptet. -->
+  <div class="namnlager"></div>
+
+  <!-- Förklaringen: vilken form är vilken. -->
+  <div class="forklaring etikett" style="top:300px"><i style="background:var(--cw-serie-3)"></i>Start of year</div>
+  <div class="forklaring etikett" style="top:372px"><i style="background:var(--cw-serie-1)"></i>After training</div>
+
+  <!-- Meningen fylls i av skriptet med namnet på ekern som växte mest. -->
+  <p class="slutsats"></p>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== SIFFRORNA =====
+     Lärarnas egen skattning på en skala 0–5, för fem förmågor.
+     Exempeldata: byt mot riktiga siffror. Ordningen går medurs från toppen.
+     Fokus hamnar automatiskt på förmågan som växte mest. */
+  var NAMN  = ['Prompting', 'Checking', 'Ethics', 'Subject use', 'Teaching'];
+  var FORE  = [2, 1, 2, 3, 2];     // vid läsårets start
+  var EFTER = [4, 4, 3, 4, 3];     // efter fortbildningen
+  var MAX = 5;
+
+  /* ===== GEOMETRIN =====
+     Varje eker har en vinkel: den första pekar rakt upp, sedan 72° medurs.
+     punkt(k, v) ger platsen på eker k för värdet v. */
+  var CX = 660, CY = 660, R = 300, N = NAMN.length;
+  function vinkel(k) { return (-90 + k * 360 / N) * Math.PI / 180; }
+  function punkt(k, v) { var a = vinkel(k), r = R * v / MAX; return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; }
+  function form(varden) { return varden.map(function (v, k) { return punkt(k, v).map(function (n) { return n.toFixed(1); }).join(','); }).join(' '); }
+  var SVG = 'http://www.w3.org/2000/svg';
+
+  // Nätet: en femhörning per skalsteg 1–5 och en eker per förmåga.
+  var ringar = document.querySelector('.ringar'), ekrar = document.querySelector('.ekrar');
+  for (var s = 1; s <= MAX; s++) {
+    var ring = document.createElementNS(SVG, 'polygon');
+    ring.setAttribute('points', form(NAMN.map(function () { return s; })));
+    ringar.appendChild(ring);
+  }
+  NAMN.forEach(function (n, k) {
+    var yttre = punkt(k, MAX), l = document.createElementNS(SVG, 'line');
+    l.setAttribute('x1', CX); l.setAttribute('y1', CY);
+    l.setAttribute('x2', yttre[0]); l.setAttribute('y2', yttre[1]);
+    l.style.strokeDasharray = R; l.style.strokeDashoffset = R;   // ritas fram i rörelsen
+    ekrar.appendChild(l);
+  });
+
+  // Ekrarnas namn: ovanför toppen, under de nedre hörnen och vid sidorna.
+  var namnlager = document.querySelector('.namnlager');
+  var namnEl = NAMN.map(function (n, k) {
+    var d = document.createElement('div');
+    d.className = 'eker etikett';
+    d.textContent = n;
+    namnlager.appendChild(d);
+    var p = punkt(k, MAX), x = Math.cos(vinkel(k)), y = Math.sin(vinkel(k));
+    if (Math.abs(x) < 0.1) gsap.set(d, { left: p[0], top: p[1] - 30, xPercent: -50, yPercent: -100 });      // toppen
+    else if (y > 0.5)      gsap.set(d, { left: p[0], top: p[1] + 24, xPercent: -50 });                      // nedre hörnen
+    else if (x > 0)        gsap.set(d, { left: p[0] + 36, top: p[1], yPercent: -50 });                      // höger sida
+    else                   gsap.set(d, { left: p[0] - 36, top: p[1], xPercent: -100, yPercent: -50 });      // vänster sida
+    return d;
+  });
+
+  // Den grå formen ritas direkt; den djupblå ritas om medan den växer.
+  document.querySelector('.fore').setAttribute('points', form(FORE));
+  var efter = document.querySelector('.efter');
+
+  // Hörnprickarna sitter där den djupblå formen landar.
+  var prickar = EFTER.map(function (v, k) {
+    var p = punkt(k, v), c = document.createElementNS(SVG, 'circle');
+    c.setAttribute('cx', p[0]); c.setAttribute('cy', p[1]); c.setAttribute('r', 14);
+    c.setAttribute('fill', '#0B3A6F');
+    c.setAttribute('stroke', 'rgba(194,121,58,.34)'); c.setAttribute('stroke-width', 0);   // skenet vid fokus
+    document.querySelector('.prickar').appendChild(c);
+    return c;
+  });
+
+  // Fokus: förmågan som växte mest.
+  var fokus = 0;
+  NAMN.forEach(function (n, k) { if (EFTER[k] - FORE[k] > EFTER[fokus] - FORE[fokus]) fokus = k; });
+  document.querySelector('.slutsats').textContent = NAMN[fokus] + ' grew the most.';
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk växer varje eker när Johan nämner förmågan. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märke, förklaring, nätet och ekrarnas namn.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.ringar polygon', { scale: 0, svgOrigin: CX + ' ' + CY, opacity: 0, stagger: 0.12 }, 0.3);
+  tl.to('.ekrar line', { strokeDashoffset: 0, duration: 0.8, stagger: 0.1 }, 0.6);
+  tl.from(namnEl, { opacity: 0, y: 16, stagger: STEG }, 1.0);
+  tl.from('.forklaring', { opacity: 0, y: 16, stagger: STEG }, 1.2);
+
+  // Den grå formen växer ut från mitten (tyst: framväxt).
+  tl.from('.fore', { scale: 0, svgOrigin: CX + ' ' + CY, duration: 1.0 }, 2.4);
+
+  // Den djupblå formen börjar ovanpå den grå och växer förbi den eker för
+  // eker. Ett enda förloppsobjekt tweenas; i onUpdate räknas varje hörns
+  // läge ut, så att det går att spola till vilken bildruta som helst.
+  var START = 3.8, MELLAN = 0.6, VAXT = 0.8;
+  var lugn = gsap.parseEase(EASE);
+  var forlopp = { t: 0 };
+  function ritaEfter() {
+    efter.setAttribute('points', form(EFTER.map(function (v, k) {
+      var p = Math.min(1, Math.max(0, (forlopp.t - k * MELLAN) / VAXT));
+      return FORE[k] + (v - FORE[k]) * lugn(p);
+    })));
+  }
+  ritaEfter();
+  tl.from(efter, { opacity: 0, duration: 0.4 }, START - 0.4);
+  tl.to(forlopp, { t: (N - 1) * MELLAN + VAXT, duration: (N - 1) * MELLAN + VAXT, ease: 'none', onUpdate: ritaEfter }, START);
+
+  // Hörnprickarna landar när hörnet har kommit fram.
+  prickar.forEach(function (c, k) {
+    tl.from(c, { scale: 0, svgOrigin: c.getAttribute('cx') + ' ' + c.getAttribute('cy'), duration: 0.5, ease: 'back.out(2)' }, START + k * MELLAN + VAXT - 0.2);
+  });
+
+  // Fokus: förmågan som växte mest blir koppar (prick och namn), allt annat
+  // tonas ned. Ett klick när fokus landar. Sedan kommer meningen.
+  var tF = START + (N - 1) * MELLAN + VAXT + 0.6;
+  var ovriga = prickar.filter(function (c, k) { return k !== fokus; })
+    .concat(namnEl.filter(function (d, k) { return k !== fokus; }));
+  tl.to(ovriga.concat(['.fore', efter, '.forklaring']), { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(prickar[fokus], { attr: { fill: '#C2793A', 'stroke-width': 28 }, duration: 0.6 }, tF);
+  tl.to(namnEl[fokus], { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.from('.slutsats', { opacity: 0, y: 24 }, tF + 1.0);
+
+  tl.to({}, { duration: 2 }, tF + 1.8);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>
