@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M10 · Unit dots</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Rutnätet med 100 prickar ----------
+     10 × 10 prickar, en prick per elev av 100. Rutnätet börjar vid
+     x 160, y 300 och varje ruta är 64 px (pricken 46 px + luft).
+     Det slutar vid x 782 och y 922, långt från kamerazonen. */
+  .natet { position: absolute; left: 160px; top: 300px; width: 622px; height: 622px; }
+
+  /* En prick. Från början ljusgrå: den räknas inte än.
+     Skriptet lägger ut prickarna och sätter left/top. */
+  .prick {
+    position: absolute; width: 46px; height: 46px; border-radius: 50%;
+    background: var(--cw-kant-ljus);
+  }
+
+  /* ---------- Talet ----------
+     Nyckeltalet står till höger om rutnätet: stort och tunt.
+     "in 100" står under, så att talet kan växa utan att något flyttar sig. */
+  .tal {
+    position: absolute; left: 920px; top: 420px; margin: 0;
+    font-size: 240px; font-weight: var(--cw-vikt-tunn); line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .av {
+    position: absolute; left: 928px; top: 690px; margin: 0;
+    font-size: 84px; font-weight: var(--cw-vikt-display); line-height: 1;
+    color: var(--cw-text-ljus-dampad);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <!-- Rubriken är frågan som prickarna svarar på. -->
+  <h1 class="rubrik">How many pupils use AI for homework?</h1>
+  <!-- Byts mot riktiga siffror med källa innan boarden används. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Rutnätet. De 100 prickarna läggs ut av skriptet nedan. -->
+  <div class="natet"></div>
+
+  <!-- Talet räknar upp medan prickarna tänds. Det börjar på 0. -->
+  <p class="tal">0</p>
+  <p class="av">in 100</p>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== SIFFRAN =====
+     Hur många av 100 som räknas. Exempeldata: byt mot den riktiga siffran.
+     Allt annat (prickarna, tiderna) räknas fram ur den här siffran. */
+  var ANTAL = 37;
+
+  /* ===== PRICKARNA =====
+     100 prickar i 10 rader. De läggs i en lista i den ordning de ska tändas:
+     nedersta raden först, från vänster till höger, sedan raden ovanför. */
+  var natet = document.querySelector('.natet');
+  var prickar = [];
+  for (var k = 0; k < 100; k++) {
+    var rad = 9 - Math.floor(k / 10), kol = k % 10;
+    var p = document.createElement('div');
+    p.className = 'prick';
+    p.style.left = (kol * 64) + 'px';
+    p.style.top = (rad * 64) + 'px';
+    natet.appendChild(p);
+    prickar.push(p);
+  }
+  var tanda = prickar.slice(0, ANTAL);     // prickarna som räknas
+  var slackta = prickar.slice(ANTAL);      // resten
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar sista pricken när Johan säger talet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märke, alla 100 grå prickar, talet 0 och "in 100".
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from(prickar, { opacity: 0, scale: 0.6, duration: 0.6, stagger: { amount: 0.8, from: 'start' } }, 0.3);
+  tl.from('.tal, .av', { opacity: 0, y: 24, stagger: STEG }, 0.6);
+
+  // Talet räknar upp från 0 och bromsar in mot slutet. Ett räkneobjekt
+  // tweenas och talet skrivs ut i onUpdate, så att det går att spola.
+  var START = 2.0, RAKNA = 4.5;
+  var raknare = { v: 0 };
+  var tal = document.querySelector('.tal');
+  tl.to(raknare, { v: ANTAL, duration: RAKNA, ease: EASE,
+    onUpdate: function () { tal.textContent = Math.floor(raknare.v + 1e-6); } }, START);
+
+  // Varje prick tänds i samma ögonblick som talet når den. Talet följer
+  // kurvan power2.out (v = 1 − (1 − p)²), så tiden räknas baklänges ur den.
+  tanda.forEach(function (p, k) {
+    var andel = 1 - Math.sqrt(1 - (k + 1) / ANTAL);
+    var t = START + RAKNA * andel - 0.05;
+    tl.to(p, { backgroundColor: '#0B3A6F', duration: 0.25 }, t);
+  });
+
+  // Fokus: när sista pricken har landat blir gruppen och talet koppar,
+  // och de prickar som inte räknas tonas ned. Ett klick när fokus landar.
+  var tF = START + RAKNA + 0.1;
+  tl.to(tanda, { backgroundColor: '#C2793A', boxShadow: '0 0 0 6px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to(tal, { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to(slackta, { opacity: 0.38, duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF, 'landa');
+
+  tl.to({}, { duration: 2 }, tF + 0.8);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

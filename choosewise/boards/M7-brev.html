@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M7 · Letter home</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Kuvertet ----------
+     Tre platta delar som ligger i lager, bakifrån och fram:
+     baksidan, fickan (framsidan med V-formad kant) och fliken.
+     Brevet ligger mellan baksidan och fickan tills det har glidit ut.
+     Kuvertet står mitt i bilden och slutar vid x 1360, långt från kamerazonen. */
+  .bak {
+    position: absolute; left: 560px; top: 600px; width: 800px; height: 380px;
+    background: var(--cw-kant-ljus); border-radius: 24px; z-index: 1;
+  }
+  .ficka { position: absolute; left: 560px; top: 600px; width: 800px; height: 380px; z-index: 3; overflow: visible; }
+  .ficka path { fill: var(--cw-ljus-alt); stroke: var(--cw-kant-ljus); stroke-width: 2; }
+  /* Fliken viks upp kring sin överkant (transform-origin: överst i mitten). */
+  .flik {
+    position: absolute; left: 560px; top: 600px; width: 800px; height: 240px; z-index: 4;
+    overflow: visible; transform-origin: 50% 0;
+  }
+  .flik polygon { fill: #FFFFFF; stroke: var(--cw-kant-ljus); stroke-width: 2; stroke-linejoin: round; }
+
+  /* ---------- Brevet ----------
+     Ett vitt papper vikt i tre delar. Delarna två och tre är hopvikta
+     (höjd 0) när brevet ligger i kuvertet och vecklas ut nedåt en i taget.
+     Strecken mellan delarna är vikarna. */
+  .brev {
+    position: absolute; left: 600px; top: 800px; width: 720px; height: 510px; z-index: 2;
+  }
+  .del {
+    position: absolute; left: 0; width: 720px; height: 170px; padding: 0 56px;
+    display: flex; align-items: center;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    font-size: 56px; line-height: 1.2; transform-origin: 50% 0;
+  }
+  .d1 { top: 0; border-radius: 16px 16px 0 0; }
+  .d2 { top: 170px; border-top: none; }
+  .d3 { top: 340px; border-top: none; border-radius: 0 0 16px 16px; }
+  /* Hälsningen: kursiv antikva, så att brevet känns handskrivet. */
+  .halsning { font-family: var(--cw-font-serif); font-style: italic; font-size: 72px; }
+
+  /* Nyckelorden. Kopparstrecket under dem ritas fram vid fokus. */
+  .nyckel { position: relative; }
+  .nyckel .streck {
+    position: absolute; left: 0; right: 0; bottom: -6px; height: 5px; border-radius: 3px;
+    background: var(--cw-glod); transform-origin: 0 50%; transform: scaleX(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Tell parents first</h1>
+
+  <!-- Kuvertets baksida. -->
+  <div class="bak"></div>
+
+  <!-- Brevet: hälsningen och en mening delad på två vikta delar.
+       "using AI in class" får kopparstrecket. -->
+  <div class="brev">
+    <div class="del d1"><span class="halsning">Dear parents,</span></div>
+    <div class="del d2">this term we start</div>
+    <div class="del d3"><span class="nyckel">using AI in class<b class="streck"></b></span>.</div>
+  </div>
+
+  <!-- Fickan: kuvertets framsida. Överkanten går ned i ett grunt V. -->
+  <svg class="ficka" viewBox="0 0 800 380">
+    <path d="M0 90 L400 190 L800 90 L800 356 Q800 380 776 380 L24 380 Q0 380 0 356 Z"/>
+  </svg>
+
+  <!-- Fliken: en triangel som pekar nedåt när kuvertet är stängt. -->
+  <svg class="flik" viewBox="0 0 800 240">
+    <polygon points="2,1 400,228 798,1"/>
+  </svg>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk öppnas kuvertet när Johan nämner brevet, och
+     strecket ritas när han säger "using AI in class". */
+  var IN = 0.8, EASE = 'power2.out';   // tempot "Lugn"
+  var kuvert = ['.bak', '.ficka', '.flik'];
+
+  // Delarna två och tre är hopvikta från början.
+  gsap.set('.d2, .d3', { scaleY: 0 });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och det stängda kuvertet (framväxt, tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from(kuvert, { opacity: 0, y: 40 }, 0.3);
+
+  // Fliken viks upp: den vänds kring överkanten tills den pekar uppåt.
+  // Halvvägs läggs den bakom brevet, så att brevet kan glida ut framför den.
+  tl.to('.flik', { scaleY: -1, duration: 0.9, ease: 'power2.inOut' }, 1.6);
+  tl.set('.flik', { zIndex: 0 }, 2.05);
+
+  // Brevet glider upp ur kuvertet. När det är helt ute läggs det
+  // överst, så att det kan vecklas ut framför kuvertet.
+  tl.to('.brev', { y: -530, duration: 1.4, ease: 'power2.inOut' }, 2.6);
+  tl.set('.brev', { zIndex: 5 }, 4.0);
+
+  // Brevet vecklas upp, en vikt i taget.
+  tl.to('.d2', { scaleY: 1, duration: 0.7 }, 4.2);
+  tl.to('.d3', { scaleY: 1, duration: 0.7 }, 4.9);
+
+  // Fokus: kopparstrecket ritas under nyckelorden, som blir koppar.
+  // Kuvertet tonas ned. Ett klick när strecket är klart.
+  var tF = 6.2;
+  tl.to('.nyckel .streck', { scaleX: 1, duration: 0.9 }, tF);
+  tl.to('.nyckel', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to(kuvert, { opacity: 0.38, duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.9, 'landa');
+  tl.to({}, { duration: 2 }, tF + 0.9);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

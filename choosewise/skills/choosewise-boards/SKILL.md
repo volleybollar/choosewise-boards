@@ -1,6 +1,6 @@
 ---
 name: choosewise-boards
-description: Choosewise-boardsens utseende, rörelse och katalog (142 animerade förklarboards i HTML + GSAP), och hur en board anpassas till en film eller byggs ny. Steg 2 av 3 i Choosewise-boardsflödet (plan → boards → synk). OPT-IN: använd BARA när Johan uttryckligen nämner "choosewise-boards", "choosewise boards", "boardsen" i den här betydelsen eller "/choosewise-boards". Starta inte på generella ord som grafik, slides, animation eller video; grafikramverket, motion-os och andra stilar är egna system och blandas aldrig in.
+description: Choosewise-boardsens utseende, rörelse och katalog (166 animerade förklarboards i HTML + GSAP), och hur en board anpassas till en film eller byggs ny. Steg 2 av 3 i Choosewise-boardsflödet (plan → boards → synk). OPT-IN: använd BARA när Johan uttryckligen nämner "choosewise-boards", "choosewise boards", "boardsen" i den här betydelsen eller "/choosewise-boards". Starta inte på generella ord som grafik, slides, animation eller video; grafikramverket, motion-os och andra stilar är egna system och blandas aldrig in.
 ---
 
 # Choosewise boards
@@ -11,7 +11,7 @@ Repot: `~/Projekt/choosewise-boards` (en fork av Sirio Beratis YouTube-AI-Motion
 
 | Fil | Vad |
 |---|---|
-| `choosewise/katalog.md` | Alla 142 boards: syfte, "say it when", scen, ljud, vad som måste bytas |
+| `choosewise/katalog.md` | Alla 166 boards: syfte, "say it when", scen, ljud, vad som måste bytas |
 | `choosewise/boards/` | Boardsen. `index.html` är galleriet, `../oversikt.jpg` alla på en bild |
 | `choosewise/OMBYGGNAD.md` | **Reglerna** för utseende, innehåll, rörelse, ljud och kontroll. Läs före varje ändring |
 | `choosewise/tema.css` | Färger, typsnitt, storlekar (ur grafikramverkets Choosewise-stil) |

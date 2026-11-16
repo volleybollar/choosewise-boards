@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M16 · Calendar week</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Veckan ----------
+     Fem dagar (måndag–fredag) som kolumner, 264 px breda med 20 px
+     mellanrum. De börjar vid x 120 och slutar vid x 1520, så att
+     kamerazonen (x 1570 och nedåt från y 720) är tom. Varje dag har plats
+     för fyra block. Kolumnerna och dagarnas namn byggs i skriptet. */
+  .dag {
+    position: absolute; top: 296px; width: 264px; text-align: center;
+    font-size: var(--cw-min-etikett); line-height: 1.2; color: var(--cw-text-ljus-dampad);
+  }
+  .kolumn {
+    position: absolute; top: 370px; width: 264px; height: 600px;
+    background: var(--cw-ljus-alt); border-radius: var(--cw-radie-media);
+  }
+
+  /* Ett block i kalendern: en kort etikett mitt i en platt ruta. */
+  .block {
+    position: absolute; width: 240px; height: 135px; border-radius: 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: var(--cw-min-etikett); line-height: 1.15; text-align: center;
+  }
+  /* En färg per sorts arbete, ur seriefärgerna. */
+  .Teach { background: var(--cw-serie-1); color: var(--cw-ljus); }
+  .Mark  { background: var(--cw-serie-2); color: var(--cw-ljus); }
+  .Meet  { background: var(--cw-serie-3); color: var(--cw-text-ljus); }
+  .Admin { background: var(--cw-kant-ljus); color: var(--cw-text-ljus); }
+
+  /* Kopparblocket som landar på onsdagen. Det ligger överst (z-index),
+     så att det syns när det faller ned mellan grannarna. */
+  .ai { background: var(--cw-glod); color: var(--cw-ljus); z-index: 2; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">A teacher’s week fills up</h1>
+  <!-- Veckan är ett påhittat exempel. Byts mot ett riktigt schema med källa. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with real numbers and source</div>
+
+  <!-- Kolumnerna, dagarna och blocken byggs i skriptet från listan VECKA. -->
+
+  <!-- Kopparblocket. Det får sin plats (onsdag, tredje raden) i skriptet. -->
+  <div class="block ai"><span>AI planning</span><span>45 min</span></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== DATA =====
+     En rad per dag, fyra block per dag uppifrån och ned. null är luckan
+     där kopparblocket landar. Etiketterna måste vara korta (ett ord),
+     annars ryms de inte i 42 px. Ändra här. */
+  var DAGAR = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  var VECKA = [
+    ['Teach', 'Teach', 'Mark',  'Meet'],
+    ['Teach', 'Admin', 'Teach', 'Mark'],
+    ['Teach', 'Teach', null,    'Meet'],
+    ['Teach', 'Mark',  'Teach', 'Admin'],
+    ['Teach', 'Meet',  'Teach', 'Mark']
+  ];
+  // Ordningen blocken landar i: först morgnarna, sedan resten av veckan.
+  // [dag, rad] räknat från 0.
+  var ORDNING = [
+    [0,0], [2,0], [4,0], [1,0], [3,0],
+    [0,1], [3,1], [1,1], [4,1], [2,1],
+    [1,2], [4,3], [0,2], [3,2], [2,3], [0,3], [4,2], [1,3], [3,3]
+  ];
+  var X0 = 120, KOLSTEG = 284;          // kolumnbredd 264 + mellanrum 20
+  var Y0 = 382, RADSTEG = 147;          // blockhöjd 135 + mellanrum 12
+  var KNUFF = 40;                       // hur långt grannarna knuffas
+  var cw = document.querySelector('.cw');
+
+  function ny(klass, stil, text) {
+    var d = document.createElement('div');
+    d.className = klass; d.style.cssText = stil; if (text) d.textContent = text;
+    cw.insertBefore(d, document.querySelector('.ai')); return d;
+  }
+
+  // Dagarnas namn och de tomma kolumnerna.
+  DAGAR.forEach(function (namn, k) {
+    ny('dag', 'left:' + (X0 + k * KOLSTEG) + 'px', namn);
+    ny('kolumn', 'left:' + (X0 + k * KOLSTEG) + 'px');
+  });
+
+  // Blocken. Onsdagens grannar till luckan står först lite för nära
+  // varandra; när kopparblocket landar knuffas de till sina platser.
+  var block = {};
+  VECKA.forEach(function (dag, k) {
+    dag.forEach(function (namn, r) {
+      if (!namn) return;
+      var b = ny('block ' + namn, 'left:' + (X0 + k * KOLSTEG + 12) + 'px; top:' + (Y0 + r * RADSTEG) + 'px', namn);
+      block[k + ',' + r] = b;
+    });
+  });
+  var ovanfor = block['2,1'], nedanfor = block['2,3'];
+  gsap.set(ovanfor, { y: KNUFF });
+  gsap.set(nedanfor, { y: -KNUFF });
+
+  var ai = document.querySelector('.ai');
+  ai.style.left = (X0 + 2 * KOLSTEG + 12) + 'px';
+  ai.style.top = (Y0 + 2 * RADSTEG) + 'px';
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk landar kopparblocket när Johan säger
+     "AI planning". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubrik, märket, dagarna och de tomma kolumnerna.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.kolumn', { opacity: 0, stagger: 0.08, duration: 0.6 }, 0.3);
+  tl.from('.dag', { opacity: 0, y: 16, stagger: 0.08 }, 0.4);
+
+  // Blocken faller in uppifrån, allt tätare: varje mellanrum är lite
+  // kortare än det förra, tills veckan är full (tyst).
+  var t = 1.6, glapp = 0.7;
+  ORDNING.forEach(function (p) {
+    tl.from(block[p[0] + ',' + p[1]], { opacity: 0, y: '-=60', duration: 0.6 }, t);
+    t += glapp;
+    glapp = Math.max(0.12, glapp * 0.86);
+  });
+
+  // Kopparblocket sjunker ned en kort bit i onsdagens lucka och knuffar
+  // grannarna isär samtidigt. Fallet är kort med flit: ett långt fall
+  // skulle dra kopparblocket över blocket ovanför. Ett klick när det landar.
+  var tAI = t + 1.2;
+  tl.from(ai, { opacity: 0, y: -30, duration: 0.7 }, tAI);
+  tl.to([ovanfor, nedanfor], { y: 0, duration: 0.6 }, tAI);
+  Tavla.ljud(tl, tAI + 0.6, 'landa');
+
+  // Fokus: resten av veckan tonas ned och kopparblocket får sitt sken.
+  var tF = tAI + 1.1;
+  tl.to('.block:not(.ai)', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to(ai, { boxShadow: '0 0 0 10px rgba(194,121,58,.34)', duration: 0.6 }, tF);
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

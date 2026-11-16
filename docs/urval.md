@@ -191,3 +191,34 @@ Har du fler skärmdumpar tar jag med dem.
 | Hoppa nu, andra format senare | 8 |
 | Egna nya (N1–N10) | 10 |
 | Claudes förslag (F1–F6), godkända | 6 |
+
+## M-boards: idéer ur motion-director (2026-11-16)
+
+Johan valde 2026-11-16 att bygga 22 boards ur idéer i [motion-director](https://github.com/sharbelxyz/motion-director) (MIT). Där är allt skrivbord i läder, glas och fotografi; här översätts **idén och rörelsen** till Choosewise-stilen (platta Keynote-ytor, ljus scen, `tema.css`). Fyra liknar befintliga boards men byggs ändå (Johans val): M5 ~ S135, M8 ~ Scribble fill, M9 ~ S10, M19 ~ F4. 3D-scenen M22 byggs i ren CSS-3D med generiska enheter (Johans val: inga Apple-former, inga bibliotek).
+
+Allt innehåll är exempel som byts före filmen; siffror, rubriker och citat märks med exempelmärket.
+
+| Id | Namn (EN) | Board | Rörelse och fokus |
+|---|---|---|---|
+| M1 | Report card | Ett omdömeskort med ämnesrader (Reading, Writing, Maths, Science). Rubrik: "One grade hides a lot". | Kortet glider in; betygen skrivs rad för rad (Instrument Serif kursiv, avslöjas med mask från vänster); slutbetyget landar stort och en kopparring ritas runt det. Klick när ringen sluts. |
+| M2 | Certificate | Ett intyg: "Certificate of completion", kursnamn "AI in the classroom · Level 1", "Teacher name" som platshållare. | Rullen vecklas ut uppifrån (mask), ramen ritas, namnet skrivs fram; ett sigill i koppar trycks på (skala från 1,3 till 1). Klick på sigillet. |
+| M3 | Book highlight | Ett uppslaget bokuppslag med textrader (grå streck) och en riktig mening. Exempeltext. | En överstrykning i koppar drar över nyckelmeningen; en marginalanteckning skrivs ("Key idea") och en pil ritas upp till raden. |
+| M4 | Newspaper front | En vikt tidning med påhittat namn ("The School Times"), stor serifrubrik ovanför vikningen. Exempelrubrik. | Tidningen landar vikt; nedre halvan fälls ned och visar en bildplatshållare och två notiser. Fokus på rubriken. |
+| M5 | Headline highlight | Ett tidningsurklipp tejpat på ytan, rubrik i serif. Exempelrubrik. Källkritik: "Read past the headline". | Urklippet landar, två tejpbitar fäster det; en koppar-överstrykning drar över nyckelorden. |
+| M6 | Typewriter | Ett papper i en enkel, platt skrivmaskin. Raden "Write the first draft yourself." | Raden skrivs tecken för tecken medan pappret stegar åt vänster; sist matas pappret upp en rad. Tyst (inget tangentljud). |
+| M7 | Letter home | Ett kuvert och ett brev till vårdnadshavare: "Dear parents, this term we start using AI in class." | Fliken öppnas, brevet glider ut, vecklas upp; nyckelorden får ett koppar-streck. |
+| M8 | Notebook list | Ett linjerat block med tre rader: "What do I want to learn?", "What do I already know?", "How will I check it?" | Raderna skrivs en i taget (mask); ordet "check" ringas in i koppar. |
+| M9 | Sticky note | En lapp tejpas fast på en sida med text: "Ask: what is the goal?" | Lappen slår ned med en liten studs och tejp; texten skrivs fram. Fokus på lappen. |
+| M10 | Unit dots | 100 prickar i ett rutnät 10 × 10. "37 in 100" (exempeldata) med frågan som rubrik. | Prickarna tänds nedifrån rad för rad medan talet räknar upp; den sista landar med klick och gruppen blir koppar. |
+| M11 | Two bell curves | Två normalfördelningar, "Without" och "With", förskjutna med d. Överlappet räknas fram ur d (OVL = 2Φ(−d/2)), d = 0,4 som exempel. | Första kurvan ritas, den andra glider åt höger till d; överlappet skuggas och "Overlap 84 %" landar. Relativt språk ("the groups overlap a lot"), aldrig "low effect". |
+| M12 | Iceberg | Ett platt isberg vid en vattenlinje. Toppen: "What pupils hand in". Under ytan: "Drafts", "Feedback", "Thinking". | Toppen syns först; vattnet klarnar uppifrån och den stora delen under ytan avslöjas med sina tre etiketter. Fokus under ytan. |
+| M13 | Radar chart | Fem ekrar: Prompting, Checking, Ethics, Subject use, Teaching. Grå form (start of year) och accentform (after training). Exempeldata. | Nätet ritas; den grå formen växer; accentformen växer förbi ekervis; hörnprickarna landar. |
+| M14 | Treemap | Block efter andel: Planning, Feedback, Differentiation, Admin (exempeldata, rubrik om var AI-tiden går). | En yta delas upp i block, störst först; värdena räknar upp; det största blir koppar, de andra tonas ned. |
+| M15 | Bar race | 4 liggande staplar: vilka uppgifter sparar mest tid (exempeldata). | Staplarna växer med lång inbromsning, värdet åker med spetsen; vinnaren blir koppar. Klick. |
+| M16 | Calendar week | Mån–fre, en lärares vecka; block faller in i dagarna. | Blocken landar allt tätare tills veckan är full; ett koppar-block "AI planning · 45 min" landar på onsdagen och knuffar grannarna. |
+| M17 | Context meter | En mätare "Context window" som fylls när filer läggs till (Syllabus, Lesson plan, 30 essays). | Filerna faller in en i taget och mätaren fylls i seriefärger; sista filen tar den till kanten och den slår om till koppar: "Too much: it forgets the start". |
+| M18 | AI memory | En generisk chatt: läraren skriver en preferens, svaret får chipet "Memory updated"; en minnespanel med sparade minnen. | Chippet dyker upp, panelen reser sig, minnena kliver ned ett steg och det nya landar överst med taggen "New". |
+| M19 | Cited answer | Ett AI-svar med numrerade källchips [1] [2] [3] och en källista under. Källorna är platshållare. | Svaret skrivs fram, chipsen landar efter varje påstående; ett chip tänds, resten tonas ned och källkortet lyfts fram med det citerade stycket understruket. |
+| M20 | Knowledge base | Tre dokument (Curriculum, Lesson plans, School policy) blir en egen kunskapsbas. | Dokumenten faller in, bryts upp i rutor som flyger in i rutnätet; räknaren går upp; status "Indexing" blir "Ready". |
+| M21 | Agent steps | En körlogg: uppgift "Make a quiz from chapter 3", stegen "Read chapter 3", "Write 10 questions", "Check the answers". | Varje steg öppnas, får en bock och sin tid och viks ihop; svaret skrivs fram; status "Running" blir "Done". |
+| M22 | Laptop and phone | Generisk laptop och telefon i CSS-3D (perspektiv), skärmarna visar platshållare för en riktig sida. | Locket fälls upp, laptopen vrids till lätt vinkel, telefonen glider in framför; skärmen rullar till ett stopp och en koppar-ring markerar en del. |

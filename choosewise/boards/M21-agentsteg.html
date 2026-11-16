@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M21 · Agent steps</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Körloggen ----------
+     Ett kort som visar en AI-agent som arbetar: uppgiften och status
+     överst, stegen i mitten, resultatet nederst. Kortet går från x 120 till
+     x 1540 och slutar vid y 890, så att kamerazonen alltid är tom. */
+  .logg {
+    position: absolute; left: 120px; top: 270px; width: 1420px; height: 620px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .10);
+  }
+  /* Uppgiften: stor och tunn text uppe till vänster. */
+  .uppgift {
+    position: absolute; left: 64px; top: 52px;
+    font-size: 60px; font-weight: var(--cw-vikt-display); line-height: 1.2;
+  }
+  /* Status uppe till höger: "Running" tonas ut och "Done" tonas in på samma
+     plats, en i taget, så att de aldrig syns ovanpå varandra. */
+  .status {
+    position: absolute; right: 64px; top: 52px; height: 72px; padding: 0 30px;
+    display: flex; align-items: center; gap: 16px; border-radius: 999px;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+  }
+  .status.kor { background: var(--cw-ljus-alt); color: var(--cw-text-ljus-dampad); }
+  .status.kor i { width: 18px; height: 18px; border-radius: 50%; background: var(--cw-serie-2); }
+  .status.klar { background: var(--cw-accent); color: #FFFFFF; opacity: 0; }
+  .linje { position: absolute; left: 64px; right: 64px; top: 164px; height: 2px; background: var(--cw-kant-ljus); transform-origin: 0 50%; }
+
+  /* ---------- Stegen ----------
+     Varje steg är en rad med en ring, namnet och tiden. Under raden finns
+     en detaljrad i kodtypsnitt som fälls ut medan steget pågår och viks
+     ihop när det är klart (höjden går från 0 till 70 px och tillbaka). */
+  .stegen { position: absolute; left: 64px; right: 64px; top: 196px; }
+  .rad { display: flex; align-items: center; gap: 32px; height: 90px; }
+  .ring {
+    flex: 0 0 52px; height: 52px; border-radius: 50%;
+    border: 4px solid var(--cw-kant-ljus);
+  }
+  .ring svg { display: block; }
+  .rad .namn { flex: 1; font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .rad .tid { font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+  .detalj { height: 0; overflow: hidden; padding-left: 84px; }
+  .detalj span {
+    display: block; line-height: 60px;
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+
+  /* ---------- Resultatet ----------
+     Står under stegen. Den syns först när alla steg är ihopvikta, så att
+     den utfällda detaljraden aldrig hamnar ovanpå den. */
+  .resultat {
+    position: absolute; left: 64px; right: 64px; top: 506px;
+    display: flex; align-items: baseline; gap: 32px; font-size: var(--cw-min-etikett);
+  }
+  .resultat .etikett { color: var(--cw-text-ljus-dampad); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">An agent works in steps</h1>
+  <!-- Statusorden och tiderna är exempel och byts före filmen. -->
+  <div class="exempel" style="left:120px; top:205px">Example values · replace times and status words</div>
+
+  <div class="logg">
+    <div class="uppgift">Make a quiz from chapter 3</div>
+    <div class="status kor"><i></i>Running</div>
+    <div class="status klar">Done</div>
+    <div class="linje"></div>
+
+    <!-- Stegen. Bocken i varje ring ritas fram när steget är klart. -->
+    <div class="stegen">
+      <div class="steg">
+        <div class="rad"><div class="ring"><svg width="44" height="44" viewBox="0 0 44 44"><path d="M12 23 L19 30 L32 15" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="namn">Read chapter 3</span><span class="tid">0:08</span></div>
+        <div class="detalj"><span>Reading the chapter …</span></div>
+      </div>
+      <div class="steg">
+        <div class="rad"><div class="ring"><svg width="44" height="44" viewBox="0 0 44 44"><path d="M12 23 L19 30 L32 15" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="namn">Write 10 questions</span><span class="tid">0:21</span></div>
+        <div class="detalj"><span>Writing the questions …</span></div>
+      </div>
+      <div class="steg">
+        <div class="rad"><div class="ring"><svg width="44" height="44" viewBox="0 0 44 44"><path d="M12 23 L19 30 L32 15" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="namn">Check the answers</span><span class="tid">0:06</span></div>
+        <div class="detalj"><span>Comparing with the text …</span></div>
+      </div>
+    </div>
+
+    <!-- Resultatet. Texten står i data-text och skrivs fram ord för ord. -->
+    <div class="resultat"><span class="etikett">Result</span><span class="text" data-text="A 10-question quiz with an answer key."></span></div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk öppnas varje steg när Johan nämner det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var steg = gsap.utils.toArray('.steg');
+
+  // Bockarna och tiderna gömda till att börja med.
+  gsap.set('.ring path', { strokeDasharray: 40, strokeDashoffset: 40 });
+  gsap.set('.rad .tid', { opacity: 0 });
+
+  // Resultatet skrivs fram ord för ord. Texten skrivs om i onUpdate, så att
+  // exporten kan hoppa till vilken bildruta som helst.
+  var falt = document.querySelector('.resultat .text');
+  var ord = falt.dataset.text.split(' ');
+  var r = { n: 0 };
+  function visa() { falt.textContent = ord.slice(0, Math.round(r.n)).join(' '); }
+  visa();
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, märket, loggen med uppgift, status och
+  // alla steg (dämpade, de väntar på sin tur). Tyst.
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.logg', { opacity: 0, y: 40 }, 0.3);
+  tl.from('.uppgift, .status.kor', { opacity: 0, y: 20, stagger: STEG }, 0.6);
+  tl.from('.linje', { scaleX: 0, duration: 1.0, ease: 'power2.inOut' }, 0.8);
+  tl.from('.rad', { opacity: 0, y: 16, stagger: STEG }, 1.1);
+
+  // Varje steg: raden blir mörk, detaljraden fälls ut, ringen fylls och
+  // bocken ritas, tiden kommer fram, och detaljraden viks ihop igen.
+  steg.forEach(function (s, i) {
+    var t = 2.2 + i * 2.3;
+    tl.to(s.querySelector('.ring'), { borderColor: '#0B3A6F', duration: 0.4 }, t);
+    tl.to(s.querySelector('.namn'), { color: '#0C1A2E', duration: 0.4 }, t);
+    tl.to(s.querySelector('.detalj'), { height: 70, duration: 0.6 }, t);
+    tl.fromTo(s.querySelector('.detalj span'), { opacity: 0 }, { opacity: 1, duration: 0.5 }, t + 0.1);
+    tl.to(s.querySelector('.ring'), { backgroundColor: '#0B3A6F', duration: 0.4 }, t + 1.2);
+    tl.to(s.querySelector('.ring path'), { strokeDashoffset: 0, duration: 0.4 }, t + 1.4);
+    tl.to(s.querySelector('.tid'), { opacity: 1, duration: 0.4 }, t + 1.4);
+    tl.to(s.querySelector('.detalj span'), { opacity: 0, duration: 0.3 }, t + 1.6);
+    tl.to(s.querySelector('.detalj'), { height: 0, duration: 0.6, ease: 'power2.inOut' }, t + 1.6);
+  });
+
+  // Resultatet skrivs fram, ungefär fyra ord i sekunden.
+  var tR = 2.2 + steg.length * 2.3 + 0.2;
+  tl.from('.resultat .etikett', { opacity: 0, duration: 0.5 }, tR);
+  tl.to(r, { n: ord.length, duration: ord.length / 4, ease: 'none', onUpdate: visa }, tR + 0.3);
+
+  // "Running" tonas ut och "Done" tonas in.
+  var tD = tR + 0.3 + ord.length / 4 + 0.3;
+  tl.to('.status.kor', { opacity: 0, duration: 0.3 }, tD);
+  tl.fromTo('.status.klar', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.6 }, tD + 0.3);
+
+  // Fokus: stegen tonas ned och resultatet blir koppar. Ett klick.
+  var tF = tD + 1.2;
+  tl.to('.stegen', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.resultat .text', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

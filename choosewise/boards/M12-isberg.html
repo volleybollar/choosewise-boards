@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M12 · Iceberg</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Vattnet ----------
+     Ett platt tvärsnitt: vattenytan ligger på y 440 och vattnet går ner
+     till y 1000. Det slutar vid x 1500, så kamerazonen nere till höger är tom.
+     Klart vatten är en ljus blandning av seriefärg 3 och bakgrunden. */
+  .vatten {
+    position: absolute; left: 120px; top: 440px; width: 1380px; height: 560px;
+    background: color-mix(in srgb, var(--cw-serie-3) 30%, var(--cw-ljus));
+    border-radius: 0 0 var(--cw-radie-kort) var(--cw-radie-kort);
+  }
+  /* Grumligt vatten: täcker allt under ytan tills det klarnar uppifrån. */
+  .grumligt {
+    position: absolute; left: 120px; top: 440px; width: 1380px; height: 560px;
+    background: var(--cw-serie-3);
+    border-radius: 0 0 var(--cw-radie-kort) var(--cw-radie-kort);
+    transform-origin: 50% 100%;
+  }
+  /* Vattenlinjen. */
+  .ytan {
+    position: absolute; left: 120px; top: 438px; width: 1380px; height: 4px;
+    background: var(--cw-accent); transform-origin: 0 50%;
+  }
+
+  /* ---------- Isberget ----------
+     Två SVG:er över hela boarden: delen under ytan ligger under det
+     grumliga vattnet, toppen ligger ovanför allt. */
+  .is { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+
+  /* Etiketterna. Toppens etikett står till höger om toppen,
+     de tre under ytan står mitt i isberget. */
+  .topptext {
+    position: absolute; left: 980px; top: 300px; margin: 0; white-space: nowrap;
+    font-size: 56px; font-weight: var(--cw-vikt-display);
+  }
+  .under {
+    position: absolute; left: 590px; width: 400px; text-align: center; margin: 0;
+    font-size: 56px; font-weight: var(--cw-vikt-display);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Most of the work is below the surface</h1>
+
+  <!-- Lager 1: det klara vattnet. -->
+  <div class="vatten"></div>
+
+  <!-- Lager 2: isberget under ytan. Fyllningen är en sluten form; kanten
+       är en öppen linje runt sidorna och botten, så att ingen kant ritas
+       längs vattenytan. Den bredare kopparkanten (skenet) ligger bakom och
+       syns först när fokus landar. Klippet döljer allt ovanför y 440. -->
+  <svg class="is" viewBox="0 0 1920 1080" aria-hidden="true">
+    <defs><clipPath id="underYtan"><rect x="0" y="440" width="1920" height="640"/></clipPath></defs>
+    <g clip-path="url(#underYtan)">
+      <polyline class="sken" fill="none" stroke="rgba(194,121,58,.34)" stroke-width="0" stroke-linejoin="round"
+        points="640,440 560,520 420,620 330,760 380,880 520,960 780,980 1040,950 1200,860 1240,720 1140,580 1000,480 960,440"/>
+      <polygon class="fyllning" fill="#FBFAF8" stroke="none"
+        points="640,440 560,520 420,620 330,760 380,880 520,960 780,980 1040,950 1200,860 1240,720 1140,580 1000,480 960,440"/>
+      <polyline class="kropp" fill="none" stroke="#0B3A6F" stroke-width="6" stroke-linejoin="round"
+        points="640,440 560,520 420,620 330,760 380,880 520,960 780,980 1040,950 1200,860 1240,720 1140,580 1000,480 960,440"/>
+    </g>
+  </svg>
+
+  <!-- Lager 3: det grumliga vattnet, som klarnar uppifrån. -->
+  <div class="grumligt"></div>
+
+  <!-- Lager 4: toppen ovanför ytan och vattenlinjen. -->
+  <svg class="is" viewBox="0 0 1920 1080" aria-hidden="true">
+    <g class="topp">
+      <polygon fill="#FBFAF8" stroke="none" points="640,440 710,340 770,310 800,250 850,320 910,370 960,440"/>
+      <polyline fill="none" stroke="#0B3A6F" stroke-width="6" stroke-linejoin="round"
+        points="640,440 710,340 770,310 800,250 850,320 910,370 960,440"/>
+    </g>
+  </svg>
+  <div class="ytan"></div>
+
+  <!-- Det som syns: etiketten vid toppen. -->
+  <p class="topptext">What pupils hand in</p>
+
+  <!-- Det som inte syns: tre etiketter under ytan, uppifrån och ned. -->
+  <p class="under" style="top:540px">Drafts</p>
+  <p class="under" style="top:670px">Feedback</p>
+  <p class="under" style="top:800px">Thinking</p>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk klarnar vattnet när Johan börjar prata om det
+     som inte syns, och varje etikett kommer när han säger ordet. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, vattnet (grumligt) och vattenlinjen.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.vatten, .grumligt', { opacity: 0, duration: 0.8 }, 0.3);
+  tl.from('.ytan', { scaleX: 0, duration: 1.2, ease: 'power2.inOut' }, 0.3);
+
+  // Toppen reser sig ur vattnet och etiketten kommer (tyst: framväxt).
+  tl.from('.topp', { scaleY: 0, svgOrigin: '800 440', duration: 1.0 }, 1.4);
+  tl.from('.topptext', { opacity: 0, x: -24 }, 2.2);
+
+  // Vattnet klarnar uppifrån: det grumliga lagret krymper mot botten
+  // och visar den stora delen av isberget under ytan.
+  tl.to('.grumligt', { scaleY: 0, duration: 2.0, ease: 'power2.inOut' }, 3.6);
+
+  // Etiketterna under ytan, en i taget.
+  tl.from('.under', { opacity: 0, y: 24, stagger: 0.7 }, 5.4);
+
+  // Fokus: delen under ytan får en kopparkant med sken och kopparfärgade
+  // etiketter. Toppen och dess etikett tonas ned. Ett klick när fokus landar.
+  var tF = 8.0;
+  tl.to('.topp, .topptext', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.kropp', { stroke: '#C2793A', duration: 0.6 }, tF);
+  tl.to('.sken', { attr: { 'stroke-width': 34 }, duration: 0.6 }, tF);
+  tl.to('.under', { color: '#9C5A24', duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2 }, tF + 0.8);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

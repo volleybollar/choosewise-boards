@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M6 · Typewriter</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Skrivmaskinens kropp ----------
+     En platt, bred platta med tre rader runda tangenter och ett mellanslag.
+     Den slutar vid x 1480, så kamerazonen nere till höger är tom. */
+  .kropp {
+    position: absolute; left: 160px; top: 672px; width: 1320px; height: 328px;
+    background: var(--cw-ljus-alt); border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  }
+  .tangentrad { display: flex; gap: 26px; }
+  .tangentrad i {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+  }
+  .mellanslag {
+    width: 520px; height: 36px; border-radius: 18px; margin-top: 8px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+  }
+
+  /* ---------- Pappersfacket ----------
+     Ett osynligt fönster som slutar mitt i valsen (y 624). Det papper som
+     ligger nedanför syns inte, precis som när pappret går in i maskinen.
+     Därför kan pappret matas uppåt utan att dess underkant syns. */
+  .fack { position: absolute; left: 0; top: 0; width: 1920px; height: 624px; overflow: hidden; }
+
+  /* Pappret. Det börjar långt till höger: skrivpunkten ligger vid x 1340
+     och pappret stegar åt vänster för varje tecken, som en riktig vagn.
+     När raden är klar står hela pappret i bilden. */
+  .papper {
+    position: absolute; left: 1276px; top: 320px; width: 1264px; height: 600px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: 12px 12px 0 0;
+  }
+  /* Raden som skrivs. Skrivmaskinstext = typsnittet med fast teckenbredd. */
+  .rad {
+    position: absolute; left: 64px; top: 160px; white-space: pre;
+    font-family: var(--cw-font-mono); font-size: 60px; line-height: 84px;
+    color: var(--cw-text-ljus);
+  }
+
+  /* ---------- Valsen ----------
+     Den mörkblå rullen som pappret sitter i. Den följer med pappret i
+     sidled men står still när pappret matas upp. */
+  .vals {
+    position: absolute; left: 1236px; top: 592px; width: 1344px; height: 64px;
+    background: var(--cw-accent); border-radius: 32px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Before you ask the AI</h1>
+
+  <!-- Maskinens kropp. Tangenterna läggs in av skriptet nedan
+       (tre rader med sexton tangenter), så att HTML-koden blir kort. -->
+  <div class="kropp">
+    <div class="tangentrad"></div>
+    <div class="tangentrad"></div>
+    <div class="tangentrad"></div>
+    <div class="mellanslag"></div>
+  </div>
+
+  <!-- Pappret i sitt fack. Raden är delad i tre delar så att ordet
+       "yourself" kan få fokus i koppar på slutet. -->
+  <div class="fack">
+    <div class="papper">
+      <div class="rad"><span class="del">Write the first draft </span><span class="del nyckel">yourself</span><span class="del">.</span></div>
+    </div>
+  </div>
+
+  <!-- Valsen ligger efter facket i koden, så den hamnar framför pappret. -->
+  <div class="vals"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== TANGENTERNA ===== Sexton runda tangenter i varje rad. */
+  document.querySelectorAll('.tangentrad').forEach(function (rad) {
+    for (var i = 0; i < 16; i++) rad.appendChild(document.createElement('i'));
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk börjar skrivandet när Johan säger meningen.
+     Tyst: inget tangentljud (Johans regel). */
+  var IN = 0.8, EASE = 'power2.out';   // tempot "Lugn"
+  var delar = gsap.utils.toArray('.rad .del');
+  var vagn = ['.papper', '.vals'];      // det som stegar åt vänster
+
+  // Mät hur bred ett tecken är (alla tecken är lika breda i det här typsnittet).
+  var texter = delar.map(function (d) { return d.firstChild.textContent; });
+  var totalt = texter.join('').length;
+  var tecken = document.querySelector('.rad').getBoundingClientRect().width / totalt;
+
+  // Visar de n första tecknen och tömmer resten.
+  function visa(n) {
+    texter.forEach(function (t, i) {
+      var synligt = Math.max(0, Math.min(t.length, n));
+      delar[i].firstChild.textContent = t.slice(0, synligt);
+      n -= t.length;
+    });
+  }
+  visa(0);
+
+  // Vagnen: när ett tecken har slagits an stegar pappret ett tecken åt
+  // vänster. Steget tar en fjärdedel av tiden till nästa tecken och
+  // bromsar in mjukt, så att rörelsen blir lugn men ändå stegvis.
+  var mjuk = gsap.parseEase('power2.out');
+  function skriv(n) {
+    var hela = Math.floor(n);
+    visa(Math.min(totalt, hela));
+    var steg = hela - 1 + mjuk(Math.min(1, (n - hela) * 4));
+    steg = Math.max(0, Math.min(totalt, steg));
+    gsap.set(vagn, { x: -steg * tecken });
+  }
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, maskinen och pappret i valsen (framväxt, tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.kropp', { opacity: 0, y: 40 }, 0.3);
+  tl.from('.papper, .vals', { opacity: 0 }, 0.5);
+
+  // Raden skrivs, ungefär tio tecken i sekunden. Räknaren går ett steg
+  // förbi sista tecknet, så att vagnen hinner ta sitt sista steg.
+  var skrivStart = 1.6, skrivTid = (totalt + 1) / 10;
+  var raknare = { n: 0 };
+  tl.to(raknare, { n: totalt + 1, duration: skrivTid, ease: 'none',
+    onUpdate: function () { skriv(raknare.n); } }, skrivStart);
+
+  // Pappret matas upp en rad. Valsen står still.
+  var tMata = skrivStart + skrivTid + 0.5;
+  tl.to('.papper', { y: -84, duration: IN, ease: 'power2.inOut' }, tMata);
+
+  // Fokus: "yourself" blir koppar, maskinen tonas ned (tyst). Valsen får en
+  // ljusare blå i stället för genomskinlighet, annars syns pappret igenom den.
+  var tF = tMata + 1.2;
+  tl.to('.nyckel', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.to('.kropp', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.vals', { backgroundColor: '#A9BBD0', duration: 0.6 }, tF);
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

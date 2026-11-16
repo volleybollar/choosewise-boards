@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M20 · Knowledge base</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Dokumenten (vänster) ----------
+     Tre dokumentkort, ett per seriefärg, från x 120 till x 700. Varje kort
+     har en liten sida med textrader; sidan bryts upp i rutor som flyger
+     över till kunskapsbasen. */
+  .dok {
+    position: absolute; left: 120px; width: 580px; height: 170px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    box-shadow: 0 18px 44px rgba(11, 58, 111, .10);
+  }
+  /* Den lilla sidan: en färgad kant överst och fyra grå textrader. */
+  .sida {
+    position: absolute; left: 36px; top: 21px; width: 100px; height: 128px;
+    border-radius: 12px; background: var(--cw-ljus-alt); border-top: 12px solid;
+    padding: 18px 14px 0;
+  }
+  .sida i { display: block; height: 10px; border-radius: 5px; background: var(--cw-kant-ljus); margin-bottom: 14px; }
+  .sida i:last-child { width: 60%; }
+  .dok .namn {
+    position: absolute; left: 172px; top: 58px;
+    font-size: var(--cw-min-etikett); line-height: 1.2;
+  }
+
+  /* ---------- Kunskapsbasen (höger) ----------
+     En panel med rubrik, status, ett rutnät med 48 platser och en räknare.
+     Panelen slutar vid x 1540 och y 960, så att kamerazonen alltid är tom. */
+  .bas {
+    position: absolute; left: 800px; top: 250px; width: 740px; height: 710px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .12);
+  }
+  .bas .huvud {
+    position: absolute; left: 104px; top: 48px;
+    font-size: var(--cw-min-etikett); font-weight: var(--cw-vikt-stark);
+  }
+  /* Status nere till höger, i höjd med räknaren: "Indexing" tonas ut och
+     "Ready" tonas in på samma plats, en i taget, så att de aldrig syns
+     ovanpå varandra. */
+  .status {
+    position: absolute; right: 104px; top: 578px; height: 66px; padding: 0 28px;
+    border-radius: 999px; line-height: 66px; font-size: var(--cw-min-etikett);
+  }
+  .status.indexerar { background: var(--cw-ljus-alt); color: var(--cw-text-ljus-dampad); }
+  .status.klar { background: #FFFFFF; color: var(--cw-glod-text); border: 3px solid var(--cw-glod); line-height: 60px; }
+
+  /* Räknaren: ett tunt nyckeltal (minst 96 px) och ordet "pieces". */
+  .raknare { position: absolute; left: 104px; top: 556px; display: flex; align-items: baseline; gap: 22px; }
+  .raknare .tal { font-size: var(--cw-min-siffra); font-weight: var(--cw-vikt-tunn); line-height: 1; }
+  .raknare .ord { font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad); }
+
+  /* Platserna i rutnätet och rutorna som flyger dit. Båda ligger i
+     boardens koordinater (inte i panelen), så att en ruta kan flyga från
+     ett dokument till sin plats. Lägena räknas fram i skriptet. */
+  .plats, .bit { position: absolute; width: 56px; height: 56px; border-radius: 12px; }
+  .plats { background: var(--cw-ljus-alt); }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Your own knowledge base</h1>
+  <!-- Antalet bitar är ett exempel och byts mot det verkliga antalet. -->
+  <div class="exempel" style="left:120px; top:205px">Example data · replace with your own documents</div>
+
+  <!-- De tre dokumenten. data-farg är seriefärgen som deras rutor får. -->
+  <div class="dok" style="top:300px" data-farg="#0B3A6F"><div class="sida" style="border-top-color:#0B3A6F"><i></i><i></i><i></i><i></i></div><div class="namn">Curriculum</div></div>
+  <div class="dok" style="top:510px" data-farg="#4A7FB5"><div class="sida" style="border-top-color:#4A7FB5"><i></i><i></i><i></i><i></i></div><div class="namn">Lesson plans</div></div>
+  <div class="dok" style="top:720px" data-farg="#A9BBD0"><div class="sida" style="border-top-color:#A9BBD0"><i></i><i></i><i></i><i></i></div><div class="namn">School policy</div></div>
+
+  <!-- Kunskapsbasen. Rutnätet fylls i av skriptet. -->
+  <div class="bas">
+    <div class="huvud">Knowledge base</div>
+    <div class="status indexerar">Indexing</div>
+    <div class="status klar">Ready</div>
+    <div class="raknare"><span class="tal">0</span><span class="ord">pieces</span></div>
+  </div>
+  <div class="natet"></div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk faller varje dokument in när Johan nämner det. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var dokument = gsap.utils.toArray('.dok');
+
+  // ---- Bygg rutnätet: 8 kolumner × 6 rader = 48 platser. ----
+  // Rutnätet börjar vid x 904, y 384 (i panelen), 68 px mellan rutorna.
+  var KOL = 8, X0 = 904, Y0 = 384, AVST = 68, PER_DOK = 16;
+  var natet = document.querySelector('.natet');
+  var bitar = [];
+  for (var i = 0; i < KOL * 6; i++) {
+    var x = X0 + (i % KOL) * AVST, y = Y0 + Math.floor(i / KOL) * AVST;
+    var plats = document.createElement('div');
+    plats.className = 'plats';
+    plats.style.left = x + 'px'; plats.style.top = y + 'px';
+    natet.appendChild(plats);
+    // Rutan som flyger hit. Den börjar som en liten ruta på dokumentets
+    // sida (4 × 4 rutor över sidan) och är osynlig tills sidan bryts upp.
+    var d = dokument[Math.floor(i / PER_DOK)], k = i % PER_DOK;
+    var bit = document.createElement('div');
+    bit.className = 'bit';
+    bit.style.left = x + 'px'; bit.style.top = y + 'px';
+    bit.style.background = d.dataset.farg;
+    natet.appendChild(bit);
+    var startX = 120 + 36 + 8 + (k % 4) * 22, startY = parseFloat(d.style.top) + 21 + 16 + Math.floor(k / 4) * 26;
+    gsap.set(bit, { x: startX - x, y: startY - y, scale: 0.32, opacity: 0, transformOrigin: '0 0' });
+    bitar.push(bit);
+  }
+
+  // Räknaren skrivs om i onUpdate, så att exporten kan hoppa fritt.
+  var talEl = document.querySelector('.raknare .tal');
+  var rakna = { n: 0 };
+  function visaTal() { talEl.textContent = Math.round(rakna.n); }
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken, märket och den tomma kunskapsbasen (tyst).
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.bas, .natet .plats', { opacity: 0, y: 30, stagger: 0 }, 0.3);
+
+  // Dokumenten faller in ovanifrån, ett i taget.
+  tl.from(dokument, { opacity: 0, y: -80, stagger: 0.4 }, 1.2);
+
+  // Varje dokument bryts upp: sidans rader tonas bort, rutorna tänds på
+  // sidan och flyger till sina platser i rutnätet. Räknaren går upp.
+  dokument.forEach(function (d, n) {
+    var t = 3.0 + n * 1.7;
+    var mina = bitar.slice(n * PER_DOK, (n + 1) * PER_DOK);
+    tl.to(d.querySelectorAll('.sida i'), { opacity: 0, duration: 0.3 }, t);
+    tl.to(mina, { opacity: 1, duration: 0.2 }, t);
+    tl.to(mina, { x: 0, y: 0, scale: 1, duration: 0.9, ease: 'power2.inOut', stagger: 0.04 }, t + 0.2);
+    tl.to(rakna, { n: (n + 1) * PER_DOK, duration: 1.5, ease: 'none', onUpdate: visaTal }, t + 0.3);
+    tl.to(d, { opacity: 0.38, duration: 0.6 }, t + 1.2);
+  });
+
+  // Fokus: "Indexing" tonas ut och "Ready" landar i koppar. Ett klick.
+  var tF = 3.0 + 3 * 1.7 + 0.4;
+  tl.to('.status.indexerar', { opacity: 0, duration: 0.3 }, tF);
+  tl.fromTo('.status.klar', { opacity: 0, y: 12 }, { opacity: 1, y: 0, boxShadow: '0 0 0 12px rgba(194,121,58,.34)', duration: 0.6 }, tF + 0.3);
+  Tavla.ljud(tl, tF + 0.5, 'landa');
+
+  tl.to({}, { duration: 2.5 });  // vila på slutbilden
+
+  visaTal();
+  Tavla.start(tl);
+</script>
+</body>
+</html>

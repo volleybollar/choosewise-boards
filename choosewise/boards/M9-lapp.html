@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M9 · Sticky note</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Sidan ----------
+     En vit sida med rubriken "Lesson plan". Texten på sidan är bara grå
+     streck: det är lappen som ska läsas, inte sidan. */
+  .sida {
+    position: absolute; left: 160px; top: 250px; width: 900px; height: 760px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media); padding: 64px;
+  }
+  .sida h2 { margin: 0 0 56px; font-size: 56px; font-weight: var(--cw-vikt-stark); }
+  .rader { display: flex; flex-direction: column; gap: 44px; }
+  .rader i { display: block; height: 22px; border-radius: 11px; background: var(--cw-kant-ljus); }
+
+  /* ---------- Lappen ----------
+     En kvadratisk lapp som ligger snett över sidans högra kant.
+     Den slutar vid x 1460 och ovanför y 740, långt från kamerazonen.
+     Snedställningen (−3 grader) sätts i skriptet, så att rörelsen
+     kan skala och flytta lappen utan att tappa vinkeln. */
+  .lapp {
+    position: absolute; left: 820px; top: 300px; width: 640px; height: 420px;
+    background: var(--cw-ljus-alt); border-radius: 12px; padding: 96px 60px 0;
+    box-shadow: 0 16px 40px rgba(11, 58, 111, .10);
+  }
+  /* Kopparskenet som lägger sig över lappen när den får fokus. */
+  .ton { position: absolute; inset: 0; border-radius: 12px; background: var(--cw-glod-sken); opacity: 0; }
+
+  /* Tejpbiten överst. Den rullas ut från vänster när lappen har landat. */
+  .tejp {
+    position: absolute; left: 220px; top: -26px; width: 200px; height: 56px;
+    background: var(--cw-kant-ljus); opacity: .9; transform: rotate(4deg); transform-origin: 0 50%;
+  }
+
+  /* Texten: kursiv antikva, så att lappen känns handskriven. */
+  .lapprad {
+    position: relative; white-space: nowrap;
+    font-family: var(--cw-font-serif); font-style: italic; font-size: 80px; line-height: 1.25;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Start with the goal</h1>
+
+  <!-- Sidan som lappen fästs på. -->
+  <div class="sida">
+    <h2>Lesson plan</h2>
+    <div class="rader">
+      <i style="width:90%"></i><i style="width:74%"></i><i style="width:84%"></i><i style="width:60%"></i>
+      <i style="width:88%"></i><i style="width:70%"></i><i style="width:80%"></i><i style="width:48%"></i>
+    </div>
+  </div>
+
+  <!-- Lappen med sitt kopparsken, sin tejp och två handskrivna rader. -->
+  <div class="lapp">
+    <div class="ton"></div>
+    <div class="tejp"></div>
+    <div class="lapprad">Ask:</div>
+    <div class="lapprad">what is the goal?</div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk slår lappen ned när Johan säger frågan. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var rader = gsap.utils.toArray('.lapprad');
+
+  // Lappen står lite snett.
+  gsap.set('.lapp', { rotation: -3 });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och sidan med sina grå rader (framväxt, tyst).
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.sida', { opacity: 0, y: 40 }, 0.3);
+  tl.from('.rader i', { opacity: 0, stagger: 0.08, duration: 0.5 }, 0.7);
+
+  // Lappen slår ned uppifrån med en liten studs (back.out ger studsen).
+  var tLapp = 2.0;
+  tl.from('.lapp', { y: -160, scale: 1.12, duration: 0.7, ease: 'back.out(1.6)' }, tLapp);
+  tl.from('.lapp', { opacity: 0, duration: 0.2, ease: 'none' }, tLapp);
+
+  // Tejpen rullas ut över lappens överkant.
+  tl.from('.tejp', { scaleX: 0, duration: 0.5 }, tLapp + 0.6);
+
+  // Texten skrivs fram rad för rad från vänster, som med en penna.
+  tl.fromTo(rader[0], { clipPath: 'inset(-20px 100% -20px 0px)' },
+    { clipPath: 'inset(-20px -40px -20px -20px)', duration: 0.8, ease: 'power1.inOut' }, tLapp + 1.3);
+  tl.fromTo(rader[1], { clipPath: 'inset(-20px 100% -20px 0px)' },
+    { clipPath: 'inset(-20px -40px -20px -20px)', duration: 1.4, ease: 'power1.inOut' }, tLapp + 2.2);
+
+  // Fokus: lappen får kopparsken och sidan tonas ned. Ett klick.
+  var tF = tLapp + 4.2;
+  tl.to('.sida', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.ton', { opacity: 1, duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+  tl.to({}, { duration: 2 }, tF + 0.6);  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

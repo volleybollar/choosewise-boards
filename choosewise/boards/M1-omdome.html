@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M1 · Report card</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Omdömeskortet ----------
+     Ett vitt kort till vänster med fyra ämnen och ett betyg per ämne.
+     Kortet slutar vid x 1080 och y 970, långt från kamerazonen. */
+  .kort {
+    position: absolute; left: 120px; top: 270px; width: 960px; height: 700px;
+    padding: 56px 64px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-kort);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  /* Kortets överrad: årskurs och termin, i dämpad skrivmaskinsstil. */
+  .huvud {
+    font-family: var(--cw-font-mono); font-size: var(--cw-min-etikett);
+    letter-spacing: .06em; text-transform: uppercase; color: var(--cw-text-ljus-dampad);
+    margin-bottom: 28px;
+  }
+  /* En ämnesrad: ämnet till vänster, betyget till höger, ett tunt streck ovanför. */
+  .amne {
+    display: flex; justify-content: space-between; align-items: center;
+    height: 128px; border-top: 2px solid var(--cw-kant-ljus);
+  }
+  .amne .namn { font-size: 54px; font-weight: var(--cw-vikt-display); }
+  /* Betyget ser handskrivet ut: den kursiva antikvan Instrument Serif.
+     inline-block och lite luft i sidled, så att masken inte klipper
+     den lutande bokstaven. */
+  .betyg {
+    display: inline-block; padding: 0 16px;
+    font-family: var(--cw-font-serif); font-style: italic;
+    font-size: 104px; line-height: 1; color: var(--cw-accent);
+  }
+
+  /* ---------- Slutbetyget ----------
+     Till höger om kortet: ordet "Overall", ett stort betyg och en ring runt det.
+     Ringen slutar vid x 1540 och y 730, så kamerazonen hålls tom. */
+  .samlat-etikett {
+    position: absolute; left: 1200px; top: 290px; width: 340px; text-align: center;
+    font-size: var(--cw-min-etikett); color: var(--cw-text-ljus-dampad);
+  }
+  .samlat {
+    position: absolute; left: 1200px; top: 390px; width: 340px; height: 340px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--cw-font-serif); font-style: italic;
+    font-size: 260px; line-height: 1; color: var(--cw-text-ljus);
+  }
+  /* Ringen är en SVG-cirkel vars streck ritas fram. */
+  .ring { position: absolute; left: 1190px; top: 380px; width: 360px; height: 360px; overflow: visible; }
+  .ring circle { fill: none; stroke: var(--cw-glod); stroke-width: 8; stroke-linecap: round; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">One grade hides a lot</h1>
+  <!-- Betygen är påhittade. Byt mot ett eget exempel innan filmen. -->
+  <div class="exempel" style="left:120px; top:205px">Example grades · replace with your own example</div>
+
+  <!-- Omdömeskortet. Byt ämnen och betyg direkt i raderna. -->
+  <div class="kort">
+    <div class="huvud">Year 7 · Spring term</div>
+    <div class="amne"><span class="namn">Reading</span><span class="betyg">A</span></div>
+    <div class="amne"><span class="namn">Writing</span><span class="betyg">E</span></div>
+    <div class="amne"><span class="namn">Maths</span><span class="betyg">B</span></div>
+    <div class="amne"><span class="namn">Science</span><span class="betyg">A</span></div>
+  </div>
+
+  <!-- Slutbetyget och ringen runt det. -->
+  <div class="samlat-etikett">Overall</div>
+  <div class="samlat">B</div>
+  <svg class="ring" viewBox="0 0 360 360">
+    <!-- Cirkeln börjar högst upp (vriden −90°) och ritas medurs. -->
+    <circle cx="180" cy="180" r="170" transform="rotate(-90 180 180)"/>
+  </svg>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk skrivs varje betyg när Johan säger ämnet,
+     och ringen sluts när han säger slutbetyget. */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var betyg = gsap.utils.toArray('.betyg');
+  var ring = document.querySelector('.ring circle');
+
+  // Ringens streck göms: strecket är lika långt som cirkeln och skjuts undan helt.
+  var omkrets = 2 * Math.PI * 170;
+  gsap.set(ring, { strokeDasharray: omkrets, strokeDashoffset: omkrets, opacity: 0 });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och märket, sedan glider kortet in från vänster
+  // med sina ämnen. Betygen är ännu inte skrivna (tyst).
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.kort', { opacity: 0, x: -80, duration: 1.0 }, 0.4);
+  tl.from('.huvud, .amne', { opacity: 0, y: 16, stagger: STEG }, 1.0);
+
+  // Betygen skrivs rad för rad: en mask öppnas från vänster till höger.
+  betyg.forEach(function (b, i) {
+    tl.fromTo(b, { clipPath: 'inset(0% 100% 0% 0%)' },
+      { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: 'power1.inOut' }, 2.4 + i * 0.9);
+  });
+
+  // Slutbetyget landar stort: det börjar lite större och genomskinligt (tyst).
+  tl.from('.samlat-etikett', { opacity: 0, y: 16 }, 6.0);
+  tl.fromTo('.samlat', { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.6 }, 6.4);
+
+  // Fokus: kortet tonas ned, slutbetyget blir koppar och ringen ritas runt det.
+  // Ett klick när ringen sluts.
+  var tF = 7.2;
+  tl.to('.kort', { opacity: 0.38, duration: 0.6 }, tF);
+  tl.to('.samlat', { color: '#9C5A24', duration: 0.6 }, tF);
+  tl.set(ring, { opacity: 1 }, tF);
+  tl.to(ring, { strokeDashoffset: 0, duration: 1.0, ease: 'power2.inOut' }, tF);
+  Tavla.ljud(tl, tF + 1.0, 'landa');
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M3 · Book highlight</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* ---------- Boken ----------
+     Ett uppslaget bokuppslag: två vita sidor med ett mittveck. Boken slutar
+     vid x 1440 och y 900, så kamerazonen nere till höger är tom. */
+  .bok {
+    position: absolute; left: 120px; top: 280px; width: 1320px; height: 620px;
+    background: #FFFFFF; border: 2px solid var(--cw-kant-ljus);
+    border-radius: var(--cw-radie-media);
+    box-shadow: 0 24px 60px rgba(11, 58, 111, .14);
+  }
+  /* Mittvecket: ett ljust band med en tunn linje i mitten. */
+  .rygg {
+    position: absolute; left: 640px; top: 0; width: 40px; height: 100%;
+    background: var(--cw-ljus-alt);
+    border-left: 2px solid var(--cw-kant-ljus); border-right: 2px solid var(--cw-kant-ljus);
+  }
+  /* En sida: luft runt texten, 600 px bred. */
+  .sida { position: absolute; top: 0; width: 640px; height: 100%; padding: 72px 60px; }
+  .sida.hoger { left: 680px; }
+
+  /* Textrader som inte ska läsas: grå streck. Bredden sätts per rad. */
+  .streck {
+    height: 16px; border-radius: 8px; background: var(--cw-kant-ljus);
+    margin-bottom: 40px;
+  }
+
+  /* ---------- Nyckelmeningen ----------
+     Den enda riktiga texten på sidan, två rader. Varje rad har en egen
+     överstrykningspenna (.penna) bakom texten, som dras fram från vänster. */
+  .mening { font-size: 48px; line-height: 1.35; margin: -6px 0 34px; }
+  .rad { position: relative; z-index: 0; display: inline-block; white-space: nowrap; }
+  .penna {
+    position: absolute; left: -14px; right: -14px; top: 8%; bottom: 4%; z-index: -1;
+    background: var(--cw-glod-sken); border-radius: 10px 22px 12px 26px;
+    transform-origin: 0 50%;
+  }
+
+  /* ---------- Marginalanteckningen ----------
+     Handskriven känsla (Instrument Serif kursiv, koppar) till höger om boken,
+     ovanför y 720 där kamerazonen inte är. */
+  .anteckning {
+    position: absolute; left: 1500px; top: 300px; padding: 0 12px;
+    font-family: var(--cw-font-serif); font-style: italic;
+    font-size: 80px; line-height: 1.1; color: var(--cw-glod-text); white-space: nowrap;
+    transform: rotate(-4deg);
+  }
+
+  /* ---------- Pilen ----------
+     En SVG över boarden: en böjd linje från anteckningen ned till meningen,
+     och en spets. Linjerna ritas fram med strecket. */
+  .pil { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; overflow: visible; }
+  .pil path { fill: none; stroke: var(--cw-glod); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Mark the one big idea</h1>
+  <!-- Meningen är ett påhittat exempel. Byt mot ett riktigt citat med källa. -->
+  <div class="exempel" style="left:120px; top:205px">Example text · replace with a real quote and its source</div>
+
+  <div class="bok">
+    <div class="rygg"></div>
+
+    <!-- Vänster sida: bara grå streck. -->
+    <div class="sida vanster">
+      <div class="streck" style="width:100%"></div>
+      <div class="streck" style="width:94%"></div>
+      <div class="streck" style="width:98%"></div>
+      <div class="streck" style="width:60%"></div>
+      <div class="streck" style="width:96%"></div>
+      <div class="streck" style="width:100%"></div>
+      <div class="streck" style="width:92%"></div>
+      <div class="streck" style="width:97%"></div>
+      <div class="streck" style="width:45%"></div>
+    </div>
+
+    <!-- Höger sida: streck, nyckelmeningen på två rader, streck. -->
+    <div class="sida hoger">
+      <div class="streck" style="width:96%"></div>
+      <div class="streck" style="width:100%"></div>
+      <div class="streck" style="width:70%"></div>
+      <div class="mening">
+        <span class="rad"><b class="penna"></b>Pupils remember what</span><br>
+        <span class="rad"><b class="penna"></b>they think hard about.</span>
+      </div>
+      <div class="streck" style="width:98%"></div>
+      <div class="streck" style="width:93%"></div>
+      <div class="streck" style="width:55%"></div>
+    </div>
+  </div>
+
+  <div class="anteckning">Key idea</div>
+
+  <!-- Pilen: från anteckningen ned till slutet av meningens första rad.
+       Koordinaterna är board-pixlar; flytta dem om texten ändras. -->
+  <svg class="pil" viewBox="0 0 1920 1080">
+    <path class="linje" d="M1610 410 C 1600 500, 1510 556, 1388 556"/>
+    <path class="spets" d="M1412 534 L1386 556 L1412 578"/>
+  </svg>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk drar pennan fram när Johan läser meningen,
+     och anteckningen skrivs när han säger "key idea". */
+  var IN = 0.8, STEG = 0.18, EASE = 'power2.out';   // tempot "Lugn"
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Pennorna börjar med bredden noll och lutar en grad.
+  gsap.set('.penna', { rotation: -1, scaleX: 0 });
+  // Pilens linjer görs osynliga; opacity 0 också, annars syns linjeänden som en prick.
+  gsap.utils.toArray('.pil path').forEach(function (p) {
+    var l = p.getTotalLength();
+    gsap.set(p, { strokeDasharray: l, strokeDashoffset: l, opacity: 0 });
+  });
+
+  // Struktur först: rubriken, märket och boken med sin text (tyst).
+  tl.from('.rubrik, .exempel', { opacity: 0, y: 24, stagger: STEG }, 0);
+  tl.from('.bok', { opacity: 0, y: 40, duration: 1.0 }, 0.4);
+  tl.from('.mening', { opacity: 0, y: 16 }, 1.4);
+
+  // Fokus: pennan drar fram över meningen, rad för rad. Meningen blir koppar
+  // och de grå strecken tonas ned.
+  var tF = 3.0;
+  tl.to('.rad:nth-of-type(1) .penna', { scaleX: 1, duration: 0.8, ease: 'power3.inOut' }, tF);
+  tl.to('.rad:nth-of-type(2) .penna', { scaleX: 1, duration: 0.8, ease: 'power3.inOut' }, tF + 0.8);
+  tl.to('.mening', { color: '#9C5A24', duration: 0.6 }, tF + 0.4);
+  tl.to('.streck', { opacity: 0.38, duration: 0.6 }, tF + 0.4);
+
+  // Anteckningen "skrivs" fram från vänster med en mask.
+  var tA = 5.0;
+  tl.fromTo('.anteckning', { clipPath: 'inset(0% 100% 0% 0%)' },
+    { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.2, ease: 'power1.inOut' }, tA);
+
+  // Pilen ritas från anteckningen ned till raden, sedan spetsen (tyst).
+  tl.set('.pil .linje', { opacity: 1 }, tA + 1.3);
+  tl.to('.pil .linje', { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut' }, tA + 1.3);
+  tl.set('.pil .spets', { opacity: 1 }, tA + 2.1);
+  tl.to('.pil .spets', { strokeDashoffset: 0, duration: 0.3 }, tA + 2.1);
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>

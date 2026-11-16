@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M22 · Laptop and phone</title>
+<link rel="stylesheet" href="../tema.css">
+<style>
+  /* =====================================================================
+     M22 · EN LAPTOP OCH EN TELEFON I 3D
+
+     Båda enheterna är byggda av vanliga rutor (div) som vrids i 3D med CSS:
+     - perspective  = hur långt bort "kameran" står (större tal = plattare)
+     - transform-style: preserve-3d = barnen får ligga kvar i 3D i stället
+       för att plattas till en bild
+     - rotateX / rotateY = vrid runt den liggande / stående axeln
+     Inga bibliotek, inga bilder: bara platta ytor i temats färger.
+
+     Kamerazonen: allt i viloläget slutar till vänster om x 1570 (telefonen
+     slutar vid ungefär x 1500), så rutan nere till höger är alltid tom.
+     ===================================================================== */
+
+  /* ---------- Scenerna ----------
+     Varje enhet har en egen scen över hela boarden med eget perspektiv.
+     Spelaren skalar hela boarden med transform; eftersom perspektivet sitter
+     här, inne i boarden, blir 3D-bilden rätt i alla fönsterstorlekar.
+     Samma perspektivpunkt i båda scenerna gör att de ser ut att stå i
+     samma rum. */
+  .scen {
+    position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+    perspective: 3000px; perspective-origin: 1000px 460px;
+  }
+
+  /* ---------- Laptopen ----------
+     .vinkel lutar hela datorn lite mot oss (vi ser den snett ovanifrån).
+     .laptop inuti vrids runt sin stående axel, som på ett snurrbord.
+     Båda är en 880 px bred punkt vid gångjärnet; delarna ritas ut därifrån.
+     Vridpunkten (transform-origin) ligger mitt på tangentbordsdelen. */
+  .vinkel, .laptop {
+    position: absolute; width: 880px; height: 0;
+    transform-style: preserve-3d; transform-origin: 440px 0 285px;
+  }
+  /* scale3d krymper hela datorn till 72 % utan att 3D-formen ändras. */
+  .vinkel { left: 360px; top: 765px; transform: rotateX(-20deg) scale3d(.72, .72, .72); }
+  .laptop { left: 0; top: 0; transform: rotateY(-20deg); }
+
+  /* Lager: tunna kopior av en yta staplade bakom varandra. Tillsammans
+     ser de ut som en kant med tjocklek, även runt rundade hörn.
+     Skriptet längst ned lägger dem på rätt djup (translateZ). */
+  .lager { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+
+  /* Foten (tangentbordsdelen): en 880 × 570 px platta som fälls ned så att
+     den ligger plant och sträcker sig från gångjärnet fram mot oss. */
+  .bas {
+    position: absolute; left: 0; top: 0; width: 880px; height: 570px;
+    transform-style: preserve-3d; transform-origin: 50% 0; transform: rotateX(90deg);
+  }
+  .bas .lager { background: var(--cw-serie-3); border-radius: 26px; }
+  .bas .dack {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: var(--cw-kant-ljus); border-radius: 26px;
+  }
+  /* Tangentbordet: ett rutnät av tangenter (skriptet ritar ut dem). */
+  .tangenter {
+    position: absolute; left: 80px; top: 50px; width: 720px; height: 262px;
+    display: grid; grid-template-columns: repeat(13, 1fr); gap: 8px;
+  }
+  .tangenter i { background: var(--cw-ljus-alt); border-radius: 7px; }
+  .tangenter .mellanslag { grid-column: span 7; }
+  .styrplatta {
+    position: absolute; left: 280px; top: 346px; width: 320px; height: 190px;
+    border-radius: 18px; background: var(--cw-ljus-alt);
+  }
+  /* En mjuk skugga på bordet under datorn. */
+  .skugga {
+    position: absolute; left: -90px; top: -40px; width: 1060px; height: 700px;
+    background: radial-gradient(closest-side, rgba(11, 58, 111, .16), rgba(11, 58, 111, 0));
+    transform: translateZ(-22px);   /* på bordet, en bit under fotens undersida */
+  }
+
+  /* Locket (skärmen): gångjärnet är lockets nederkant, som sitter i
+     fotens bakre kant. Locket vrids runt den kanten när det fälls upp. */
+  .lock {
+    position: absolute; left: 0; top: -570px; width: 880px; height: 570px;
+    transform-style: preserve-3d; transform-origin: 50% 100%; transform: rotateX(-90deg);
+  }
+  .lock .lager { background: var(--cw-serie-3); border-radius: 26px; }
+  /* Lockets baksida syns när datorn är stängd. Den ligger bakom lagren
+     och är vänd åt andra hållet (rotateY 180°). */
+  .lock .bak {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: var(--cw-kant-ljus); border-radius: 26px;
+    transform: translateZ(-13px) rotateY(180deg);
+  }
+  /* Lockets framsida: en mörk ram runt själva skärmen. backface-visibility
+     gör att ytan inte syns när den vänder ryggen mot oss (stängt lock). */
+  .ram {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: var(--cw-text-ljus); border-radius: 26px; padding: 18px 18px 25px;
+    backface-visibility: hidden;
+    /* 1 px bakom gångjärnet, så att skärmen inte nuddar tangentbordet
+       när locket är stängt. */
+    transform: translateZ(-1px);
+  }
+  /* Själva skärmen: 844 × 527 px (16:10). Avstängd är den mörk. */
+  .skarm {
+    position: relative; width: 100%; height: 100%; border-radius: 10px;
+    background: var(--cw-text-ljus); overflow: hidden;
+  }
+
+  /* ---------- Sidan i laptopens skärm (platshållare) ----------
+     .sida är en hög sida som rullar uppåt inne i skärmen. Här är den byggd
+     av platta block: en meny, ett stort block med etiketten och kort.
+
+     SÅ BYTER DU TILL EN RIKTIG SKÄRMDUMP:
+     1. Ta en helsidesskärmdump av sidan (hela sidan, inte bara det som syns),
+        helst 1688 px bred (dubbla skärmens 844 px), t.ex. 1688 × 3000 px.
+        En vanlig datorskärmdump i 16:10, t.ex. 2880 × 1800, går också.
+     2. Lägg bilden i mappen choosewise/boards/ (t.ex. min-sida.png).
+     3. Ta bort allt mellan <div class="sida"> och kommentaren "fokusringen"
+        och skriv i stället:  <img src="min-sida.png" alt="">
+     4. Flytta fokusringen (.fokus nedan) så att den ligger runt den del du
+        vill visa: ändra left, top, width och height i dess style.
+     5. Rullningens längd (RULLA i skriptet) bestämmer hur långt sidan rullar. */
+  .sida { position: absolute; left: 0; top: 0; width: 100%; background: #FFFFFF; }
+  .sida img { display: block; width: 100%; }
+  .meny { height: 58px; background: var(--cw-ljus-alt); display: flex; align-items: center; gap: 18px; padding: 0 30px; }
+  .meny .logga { width: 110px; height: 20px; border-radius: 10px; background: var(--cw-serie-3); margin-right: auto; }
+  .meny i { width: 64px; height: 14px; border-radius: 7px; background: var(--cw-kant-ljus); }
+  .hjalte {
+    margin: 30px 30px 0; height: 300px; border-radius: 18px; background: var(--cw-ljus-alt);
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* Etiketten är den enda texten i skärmen. Datorn är krympt och står
+     snett, så 84 px här blir ungefär 60 px i bild (uppmätt), alltså
+     över gränsen 42 px. Gör den inte mindre än 64 px. */
+  .hjalte .etikett { font-size: 84px; font-weight: var(--cw-vikt-display); color: var(--cw-text-ljus-dampad); }
+  .rad { display: flex; gap: 24px; margin: 30px 30px 0; }
+  .kort { flex: 1; height: 230px; border-radius: 18px; background: var(--cw-ljus-alt); padding: 20px; }
+  .kort .bildyta { height: 110px; border-radius: 12px; background: var(--cw-kant-ljus); margin-bottom: 20px; }
+  .streck { height: 14px; border-radius: 7px; background: var(--cw-kant-ljus); margin-bottom: 14px; }
+  .text { margin: 36px 30px 0; }
+  .text .streck { height: 16px; margin-bottom: 18px; }
+
+  /* Fokusringen: en kopparring runt ett område på sidan. Dess skugga
+     (box-shadow) lägger också en vit slöja över resten av skärmen, så att
+     allt annat ser ut att tonas ned till 0,38, även en riktig skärmdump.
+     Ringen ligger i sidan och rullar alltså med den. */
+  .fokus {
+    position: absolute; left: 299px; top: 418px; width: 246px; height: 230px;
+    border-radius: 18px;
+    box-shadow: 0 0 0 0px rgba(194, 121, 58, 0), 0 0 0 0px rgba(194, 121, 58, 0), 0 0 0 2000px rgba(255, 255, 255, 0);
+  }
+
+  /* ---------- Telefonen ----------
+     En vanlig rundad telefon utan märke: mörk glasfront med skärm och en
+     tunn högtalarspringa, och en ljus kant (lagren) runt om.
+     Den står framför laptopen till höger och slutar vid x ≈ 1500. */
+  .telefon {
+    position: absolute; left: 1065px; top: 470px; width: 270px; height: 560px;
+    transform-style: preserve-3d;
+  }
+  .telefon .lager { background: var(--cw-serie-3); border-radius: 46px; }
+  /* En mjuk skugga bakom det understa lagret (det näst sista barnet;
+     det sista är framsidan). */
+  .telefon .lager:nth-last-child(2) { box-shadow: 0 40px 70px rgba(11, 58, 111, .16); }
+  .telefon .front {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: var(--cw-text-ljus); border-radius: 46px; padding: 30px 13px;
+    backface-visibility: hidden;
+  }
+  .springa { position: absolute; left: 50%; top: 12px; width: 56px; height: 7px; margin-left: -28px; border-radius: 4px; background: var(--cw-text-ljus-dampad); }
+
+  /* Telefonens skärm: 244 × 500 px.
+     SÅ BYTER DU TILL EN RIKTIG SKÄRMDUMP: ta en mobilskärmdump (t.ex.
+     1170 × 2532 px, eller minst 732 × 1500 px), lägg den i choosewise/boards/
+     och byt allt inne i <div class="sida"> i telefonen mot
+     <img src="min-mobil.png" alt="">. Bilden fyller bredden automatiskt. */
+  .telefon .skarm { border-radius: 14px; background: #FFFFFF; }
+  .telefon .meny { height: 46px; padding: 0 18px; }
+  .telefon .meny .logga { width: 70px; height: 14px; }
+  .telefon .meny i { width: 26px; height: 12px; }
+  .telefon .hjalte { margin: 16px 16px 0; height: 150px; border-radius: 14px; }
+  .telefon .kort { flex: none; margin: 16px 16px 0; height: 120px; border-radius: 14px; padding: 14px; }
+  .telefon .kort .bildyta { height: 50px; margin-bottom: 14px; }
+  .telefon .streck { height: 10px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOARDEN (ljus scen: kameran syns) ===== -->
+<div class="cw ljus">
+
+  <h1 class="rubrik">Works on every screen</h1>
+
+  <!-- ===== LAPTOPEN ===== -->
+  <div class="scen scen-laptop">
+    <div class="vinkel">
+      <div class="laptop">
+
+        <!-- Foten: lager för tjockleken, skuggan och ovansidan med tangentbordet. -->
+        <div class="bas" data-lager="7" data-djup="20">
+          <div class="skugga"></div>
+          <div class="dack">
+            <div class="tangenter"></div>
+            <div class="styrplatta"></div>
+          </div>
+        </div>
+
+        <!-- Locket: baksidan, lager för tjockleken och framsidan med skärmen. -->
+        <div class="lock" data-lager="5" data-djup="10" data-fran="2">
+          <div class="bak"></div>
+          <div class="ram">
+            <div class="skarm">
+              <div class="sida">
+                <!-- Platshållare: byt allt härifrån ... -->
+                <div class="meny"><div class="logga"></div><i></i><i></i><i></i></div>
+                <div class="hjalte"><span class="etikett">Your page here</span></div>
+                <div class="rad">
+                  <div class="kort"><div class="bildyta"></div><div class="streck" style="width:80%"></div><div class="streck" style="width:55%"></div></div>
+                  <div class="kort"><div class="bildyta"></div><div class="streck" style="width:85%"></div><div class="streck" style="width:60%"></div></div>
+                  <div class="kort"><div class="bildyta"></div><div class="streck" style="width:75%"></div><div class="streck" style="width:50%"></div></div>
+                </div>
+                <div class="text">
+                  <div class="streck" style="width:92%"></div><div class="streck" style="width:86%"></div>
+                  <div class="streck" style="width:90%"></div><div class="streck" style="width:58%"></div>
+                </div>
+                <div class="rad">
+                  <div class="kort"><div class="bildyta"></div><div class="streck" style="width:70%"></div></div>
+                  <div class="kort"><div class="bildyta"></div><div class="streck" style="width:80%"></div></div>
+                </div>
+                <!-- ... hit, mot <img src="min-sida.png" alt=""> -->
+
+                <!-- fokusringen: flytta den så att den ringar in rätt del av din sida -->
+                <div class="fokus"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TELEFONEN =====
+       Vill du bara visa laptopen? Lägg till  style="display:none"  på raden
+       nedan:  <div class="scen scen-telefon" style="display:none">  -->
+  <div class="scen scen-telefon">
+    <div class="telefon" data-lager="6" data-djup="16">
+      <div class="front">
+        <div class="springa"></div>
+        <div class="skarm">
+          <div class="sida">
+            <!-- Platshållare: byt allt inne i den här sidan mot <img src="min-mobil.png" alt=""> -->
+            <div class="meny"><div class="logga"></div><i></i></div>
+            <div class="hjalte"></div>
+            <div class="kort"><div class="bildyta"></div><div class="streck" style="width:80%"></div></div>
+            <div class="kort"><div class="bildyta"></div><div class="streck" style="width:65%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../skills/board-sync/assets/gsap.min.js"></script>
+<script src="../spelare.js"></script>
+<script>
+  /* ===== BYGGET =====
+     Tangenterna och tjockleken (lagren) ritas ut här, så att HTML-koden
+     ovan blir kort. Inget av detta rör sig. */
+
+  // Tangentbordet: fem rader med 13 tangenter, sist en rad med mellanslag.
+  var tangenter = document.querySelector('.tangenter');
+  for (var i = 0; i < 71; i++) {
+    var t = document.createElement('i');
+    if (i === 68) t.className = 'mellanslag';
+    tangenter.appendChild(t);
+  }
+
+  // Lagren: data-lager säger hur många kopior, data-djup hur tjock delen är
+  // i px och data-fran (om det finns) hur långt bakom ytan första lagret
+  // börjar. Kopiorna läggs bakom (eller under) ytan, jämnt fördelade.
+  document.querySelectorAll('[data-lager]').forEach(function (del) {
+    var antal = +del.dataset.lager, djup = +del.dataset.djup, fran = +(del.dataset.fran || 0);
+    var yta = del.querySelector('.dack, .ram, .front');
+    for (var n = 1; n <= antal; n++) {
+      var l = document.createElement('div');
+      l.className = 'lager';
+      l.style.transform = 'translateZ(' + -(fran + djup * n / antal) + 'px)';
+      del.insertBefore(l, yta);
+    }
+  });
+
+  /* ===== RÖRELSEN =====
+     Provtider. Vid synk kan locket öppnas på "open your laptop" och ringen
+     landa när Johan säger vad tittaren ska se. */
+  var IN = 0.8, EASE = 'power2.out';   // tempot "Lugn"
+  var RULLA = -300;                    // hur långt sidan rullar (px, minus = uppåt)
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: EASE, duration: IN } });
+
+  // Struktur först: rubriken och den stängda laptopen, lite mer vriden.
+  tl.from('.rubrik', { opacity: 0, y: 24 }, 0);
+  tl.from('.scen-laptop', { opacity: 0, y: 50, duration: 1.0 }, 0.3);
+
+  // Locket fälls upp på gångjärnet: från stängt (−90°) till lätt bakåtlutat (12°).
+  tl.fromTo('.lock', { rotationX: -90 }, { rotationX: 12, duration: 1.8, ease: 'power2.inOut' }, 1.4);
+
+  // Skärmen tänds: sidan tonas fram ur den mörka skärmen.
+  tl.from('.scen-laptop .sida', { opacity: 0, duration: 0.6 }, 3.0);
+
+  // Laptopen vrids till en lätt trekvartsvinkel.
+  tl.fromTo('.laptop', { rotationY: -38 }, { rotationY: -20, duration: 1.6, ease: 'power2.inOut' }, 3.2);
+
+  // Telefonen glider in framför, nere till höger (nedifrån, inte genom kamerazonen).
+  // Den tonas fram snabbt (0,4 s), så att den inte ser genomskinlig ut medan den glider.
+  tl.from('.scen-telefon', { y: 140, duration: 1.2 }, 4.6);
+  tl.from('.scen-telefon', { opacity: 0, duration: 0.4 }, 4.6);
+  // Telefonen vrids samtidigt till sitt viloläge: lite vänd mot laptopen.
+  tl.fromTo('.telefon', { z: 120, rotationY: 34, rotationX: -5, scale: 0.72 },
+                        { z: 120, rotationY: 14, rotationX: -5, scale: 0.72, duration: 1.2 }, 4.6);
+
+  // Sidan i laptopen rullar och bromsar mjukt in till ett stopp.
+  tl.to('.scen-laptop .sida', { y: RULLA, duration: 2.0, ease: 'power2.out' }, 6.2);
+
+  // Fokus: kopparringen landar runt kortet, resten av skärmen och telefonens
+  // skärm tonas ned till 0,38. Ett klick när fokus landar.
+  var tF = 8.8;
+  tl.to('.fokus', {
+    boxShadow: '0 0 0 6px rgba(194, 121, 58, 1), 0 0 0 18px rgba(194, 121, 58, .34), 0 0 0 2000px rgba(255, 255, 255, .62)',
+    duration: 0.6
+  }, tF);
+  tl.to('.telefon .sida', { opacity: 0.38, duration: 0.6 }, tF);
+  Tavla.ljud(tl, tF + 0.1, 'landa');
+
+  tl.to({}, { duration: 2 });  // vila på slutbilden
+
+  Tavla.start(tl);
+</script>
+</body>
+</html>
